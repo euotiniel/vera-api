@@ -1,0 +1,134 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum DocumentStatus {
+  PENDING
+  VALID
+  REVOKED
+  REPLACED
+  EXPIRED
+}
+
+enum DocumentLifecycleEventType {
+  REGISTERED
+  STATUS_CHANGED
+}
+
+model Organization {
+  id       String  @id @default(cuid())
+  name     String
+  slug     String  @unique
+  verified Boolean @default(false)
+
+  documents Document[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Document {
+  id        String         @id @default(cuid())
+  publicId  String         @unique
+  title     String
+  type      String?
+  reference String?
+  status    DocumentStatus @default(VALID)
+  issuedAt  DateTime?
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  versions        DocumentVersion[]
+  lifecycleEvents DocumentLifecycleEvent[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId])
+}
+
+model DocumentVersion {
+  id       String @id @default(cuid())
+  version  Int
+  filename String
+  mimeType String
+  size     Int
+  sha256   String @unique
+
+  documentId String
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  attestation Attestation?
+
+  createdAt DateTime @default(now())
+
+  @@unique([documentId, version])
+  @@index([sha256])
+}
+
+model Attestation {
+  id String @id @default(cuid())
+
+  documentVersionId String          @unique
+  documentVersion   DocumentVersion @relation(fields: [documentVersionId], references: [id], onDelete: Cascade)
+
+  payload   String
+  signature String
+  algorithm String
+  keyId     String
+
+  createdAt DateTime @default(now())
+
+  @@index([keyId])
+}
+
+model DocumentLifecycleEvent {
+  id String @id @default(cuid())
+
+  documentId String
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  sequence Int
+
+  type DocumentLifecycleEventType
+
+  fromStatus DocumentStatus?
+  toStatus   DocumentStatus
+
+  reason String?
+
+  previousEventHash String?
+
+  payload   String
+  signature String
+
+  algorithm String
+  keyId     String
+
+  eventHash String @unique
+
+  createdAt DateTime @default(now())
+
+  @@unique([documentId, sequence])
+  @@index([documentId, createdAt])
+  @@index([previousEventHash])
+}
+
+model VerificationEvent {
+  id String @id @default(cuid())
+
+  hash       String
+  matched    Boolean
+  documentId String?
+
+  createdAt DateTime @default(now())
+
+  @@index([hash])
+  @@index([documentId])
+}

@@ -1,0 +1,19 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: vera-postgres
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_USER: vera
+      POSTGRES_PASSWORD: vera_dev
+      POSTGRES_DB: vera
+
+    ports:
+      - "5433:5432"
+
+    volumes:
+      - vera_postgres_data:/var/lib/postgresql/data
+
+volumes:
+  vera_postgres_data:

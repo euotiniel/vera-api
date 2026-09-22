@@ -95,6 +95,7 @@ export const DocumentScalarFieldEnum = {
   reference: 'reference',
   status: 'status',
   issuedAt: 'issuedAt',
+  originalFileAccess: 'originalFileAccess',
   organizationId: 'organizationId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -110,6 +111,7 @@ export const DocumentVersionScalarFieldEnum = {
   mimeType: 'mimeType',
   size: 'size',
   sha256: 'sha256',
+  storageKey: 'storageKey',
   documentId: 'documentId',
   createdAt: 'createdAt'
 } as const

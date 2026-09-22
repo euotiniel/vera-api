@@ -925,6 +925,7 @@ export const DocumentScalarFieldEnum = {
   reference: 'reference',
   status: 'status',
   issuedAt: 'issuedAt',
+  originalFileAccess: 'originalFileAccess',
   organizationId: 'organizationId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -940,6 +941,7 @@ export const DocumentVersionScalarFieldEnum = {
   mimeType: 'mimeType',
   size: 'size',
   sha256: 'sha256',
+  storageKey: 'storageKey',
   documentId: 'documentId',
   createdAt: 'createdAt'
 } as const
@@ -1067,6 +1069,20 @@ export type EnumDocumentStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$P
  * Reference to a field of type 'DocumentStatus[]'
  */
 export type ListEnumDocumentStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DocumentStatus[]'>
+    
+
+
+/**
+ * Reference to a field of type 'OriginalFileAccess'
+ */
+export type EnumOriginalFileAccessFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'OriginalFileAccess'>
+    
+
+
+/**
+ * Reference to a field of type 'OriginalFileAccess[]'
+ */
+export type ListEnumOriginalFileAccessFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'OriginalFileAccess[]'>
     
 
 

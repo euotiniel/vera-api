@@ -15,5 +15,26 @@ services:
     volumes:
       - vera_postgres_data:/var/lib/postgresql/data
 
+  storage:
+    image: chrislusf/seaweedfs:4.47
+    container_name: vera-storage
+    restart: unless-stopped
+
+    command:
+      - "mini"
+      - "-dir=/data"
+
+    environment:
+      AWS_ACCESS_KEY_ID: vera
+      AWS_SECRET_ACCESS_KEY: vera_dev_storage_secret
+      S3_BUCKET: vera-documents
+
+    ports:
+      - "59000:8333"
+
+    volumes:
+      - vera_storage_data:/data
+
 volumes:
   vera_postgres_data:
+  vera_storage_data:

@@ -118,6 +118,13 @@ export type DateTimeNullableFilter<$PrismaModel = never> = {
   not?: Prisma.NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
 }
 
+export type EnumOriginalFileAccessFilter<$PrismaModel = never> = {
+  equals?: $Enums.OriginalFileAccess | Prisma.EnumOriginalFileAccessFieldRefInput<$PrismaModel>
+  in?: $Enums.OriginalFileAccess[] | Prisma.ListEnumOriginalFileAccessFieldRefInput<$PrismaModel>
+  notIn?: $Enums.OriginalFileAccess[] | Prisma.ListEnumOriginalFileAccessFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumOriginalFileAccessFilter<$PrismaModel> | $Enums.OriginalFileAccess
+}
+
 export type SortOrderInput = {
   sort: Prisma.SortOrder
   nulls?: Prisma.NullsOrder
@@ -163,6 +170,16 @@ export type DateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
   _count?: Prisma.NestedIntNullableFilter<$PrismaModel>
   _min?: Prisma.NestedDateTimeNullableFilter<$PrismaModel>
   _max?: Prisma.NestedDateTimeNullableFilter<$PrismaModel>
+}
+
+export type EnumOriginalFileAccessWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.OriginalFileAccess | Prisma.EnumOriginalFileAccessFieldRefInput<$PrismaModel>
+  in?: $Enums.OriginalFileAccess[] | Prisma.ListEnumOriginalFileAccessFieldRefInput<$PrismaModel>
+  notIn?: $Enums.OriginalFileAccess[] | Prisma.ListEnumOriginalFileAccessFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumOriginalFileAccessWithAggregatesFilter<$PrismaModel> | $Enums.OriginalFileAccess
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumOriginalFileAccessFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumOriginalFileAccessFilter<$PrismaModel>
 }
 
 export type IntFilter<$PrismaModel = never> = {
@@ -338,6 +355,13 @@ export type NestedDateTimeNullableFilter<$PrismaModel = never> = {
   not?: Prisma.NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
 }
 
+export type NestedEnumOriginalFileAccessFilter<$PrismaModel = never> = {
+  equals?: $Enums.OriginalFileAccess | Prisma.EnumOriginalFileAccessFieldRefInput<$PrismaModel>
+  in?: $Enums.OriginalFileAccess[] | Prisma.ListEnumOriginalFileAccessFieldRefInput<$PrismaModel>
+  notIn?: $Enums.OriginalFileAccess[] | Prisma.ListEnumOriginalFileAccessFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumOriginalFileAccessFilter<$PrismaModel> | $Enums.OriginalFileAccess
+}
+
 export type NestedStringNullableWithAggregatesFilter<$PrismaModel = never> = {
   equals?: string | Prisma.StringFieldRefInput<$PrismaModel> | null
   in?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel> | null
@@ -388,6 +412,16 @@ export type NestedDateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
   _count?: Prisma.NestedIntNullableFilter<$PrismaModel>
   _min?: Prisma.NestedDateTimeNullableFilter<$PrismaModel>
   _max?: Prisma.NestedDateTimeNullableFilter<$PrismaModel>
+}
+
+export type NestedEnumOriginalFileAccessWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.OriginalFileAccess | Prisma.EnumOriginalFileAccessFieldRefInput<$PrismaModel>
+  in?: $Enums.OriginalFileAccess[] | Prisma.ListEnumOriginalFileAccessFieldRefInput<$PrismaModel>
+  notIn?: $Enums.OriginalFileAccess[] | Prisma.ListEnumOriginalFileAccessFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumOriginalFileAccessWithAggregatesFilter<$PrismaModel> | $Enums.OriginalFileAccess
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumOriginalFileAccessFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumOriginalFileAccessFilter<$PrismaModel>
 }
 
 export type NestedIntWithAggregatesFilter<$PrismaModel = never> = {

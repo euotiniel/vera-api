@@ -32,6 +32,7 @@ export type DocumentMinAggregateOutputType = {
   reference: string | null
   status: $Enums.DocumentStatus | null
   issuedAt: Date | null
+  originalFileAccess: $Enums.OriginalFileAccess | null
   organizationId: string | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -45,6 +46,7 @@ export type DocumentMaxAggregateOutputType = {
   reference: string | null
   status: $Enums.DocumentStatus | null
   issuedAt: Date | null
+  originalFileAccess: $Enums.OriginalFileAccess | null
   organizationId: string | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -58,6 +60,7 @@ export type DocumentCountAggregateOutputType = {
   reference: number
   status: number
   issuedAt: number
+  originalFileAccess: number
   organizationId: number
   createdAt: number
   updatedAt: number
@@ -73,6 +76,7 @@ export type DocumentMinAggregateInputType = {
   reference?: true
   status?: true
   issuedAt?: true
+  originalFileAccess?: true
   organizationId?: true
   createdAt?: true
   updatedAt?: true
@@ -86,6 +90,7 @@ export type DocumentMaxAggregateInputType = {
   reference?: true
   status?: true
   issuedAt?: true
+  originalFileAccess?: true
   organizationId?: true
   createdAt?: true
   updatedAt?: true
@@ -99,6 +104,7 @@ export type DocumentCountAggregateInputType = {
   reference?: true
   status?: true
   issuedAt?: true
+  originalFileAccess?: true
   organizationId?: true
   createdAt?: true
   updatedAt?: true
@@ -185,6 +191,7 @@ export type DocumentGroupByOutputType = {
   reference: string | null
   status: $Enums.DocumentStatus
   issuedAt: Date | null
+  originalFileAccess: $Enums.OriginalFileAccess
   organizationId: string
   createdAt: Date
   updatedAt: Date
@@ -219,6 +226,7 @@ export type DocumentWhereInput = {
   reference?: Prisma.StringNullableFilter<"Document"> | string | null
   status?: Prisma.EnumDocumentStatusFilter<"Document"> | $Enums.DocumentStatus
   issuedAt?: Prisma.DateTimeNullableFilter<"Document"> | Date | string | null
+  originalFileAccess?: Prisma.EnumOriginalFileAccessFilter<"Document"> | $Enums.OriginalFileAccess
   organizationId?: Prisma.StringFilter<"Document"> | string
   createdAt?: Prisma.DateTimeFilter<"Document"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Document"> | Date | string
@@ -235,6 +243,7 @@ export type DocumentOrderByWithRelationInput = {
   reference?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   issuedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  originalFileAccess?: Prisma.SortOrder
   organizationId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -254,6 +263,7 @@ export type DocumentWhereUniqueInput = Prisma.AtLeast<{
   reference?: Prisma.StringNullableFilter<"Document"> | string | null
   status?: Prisma.EnumDocumentStatusFilter<"Document"> | $Enums.DocumentStatus
   issuedAt?: Prisma.DateTimeNullableFilter<"Document"> | Date | string | null
+  originalFileAccess?: Prisma.EnumOriginalFileAccessFilter<"Document"> | $Enums.OriginalFileAccess
   organizationId?: Prisma.StringFilter<"Document"> | string
   createdAt?: Prisma.DateTimeFilter<"Document"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Document"> | Date | string
@@ -270,6 +280,7 @@ export type DocumentOrderByWithAggregationInput = {
   reference?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   issuedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  originalFileAccess?: Prisma.SortOrder
   organizationId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -289,6 +300,7 @@ export type DocumentScalarWhereWithAggregatesInput = {
   reference?: Prisma.StringNullableWithAggregatesFilter<"Document"> | string | null
   status?: Prisma.EnumDocumentStatusWithAggregatesFilter<"Document"> | $Enums.DocumentStatus
   issuedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Document"> | Date | string | null
+  originalFileAccess?: Prisma.EnumOriginalFileAccessWithAggregatesFilter<"Document"> | $Enums.OriginalFileAccess
   organizationId?: Prisma.StringWithAggregatesFilter<"Document"> | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Document"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Document"> | Date | string
@@ -302,6 +314,7 @@ export type DocumentCreateInput = {
   reference?: string | null
   status?: $Enums.DocumentStatus
   issuedAt?: Date | string | null
+  originalFileAccess?: $Enums.OriginalFileAccess
   createdAt?: Date | string
   updatedAt?: Date | string
   organization: Prisma.OrganizationCreateNestedOneWithoutDocumentsInput
@@ -317,6 +330,7 @@ export type DocumentUncheckedCreateInput = {
   reference?: string | null
   status?: $Enums.DocumentStatus
   issuedAt?: Date | string | null
+  originalFileAccess?: $Enums.OriginalFileAccess
   organizationId: string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -332,6 +346,7 @@ export type DocumentUpdateInput = {
   reference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumDocumentStatusFieldUpdateOperationsInput | $Enums.DocumentStatus
   issuedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  originalFileAccess?: Prisma.EnumOriginalFileAccessFieldUpdateOperationsInput | $Enums.OriginalFileAccess
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   organization?: Prisma.OrganizationUpdateOneRequiredWithoutDocumentsNestedInput
@@ -347,6 +362,7 @@ export type DocumentUncheckedUpdateInput = {
   reference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumDocumentStatusFieldUpdateOperationsInput | $Enums.DocumentStatus
   issuedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  originalFileAccess?: Prisma.EnumOriginalFileAccessFieldUpdateOperationsInput | $Enums.OriginalFileAccess
   organizationId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -362,6 +378,7 @@ export type DocumentCreateManyInput = {
   reference?: string | null
   status?: $Enums.DocumentStatus
   issuedAt?: Date | string | null
+  originalFileAccess?: $Enums.OriginalFileAccess
   organizationId: string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -375,6 +392,7 @@ export type DocumentUpdateManyMutationInput = {
   reference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumDocumentStatusFieldUpdateOperationsInput | $Enums.DocumentStatus
   issuedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  originalFileAccess?: Prisma.EnumOriginalFileAccessFieldUpdateOperationsInput | $Enums.OriginalFileAccess
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -387,6 +405,7 @@ export type DocumentUncheckedUpdateManyInput = {
   reference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumDocumentStatusFieldUpdateOperationsInput | $Enums.DocumentStatus
   issuedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  originalFileAccess?: Prisma.EnumOriginalFileAccessFieldUpdateOperationsInput | $Enums.OriginalFileAccess
   organizationId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -410,6 +429,7 @@ export type DocumentCountOrderByAggregateInput = {
   reference?: Prisma.SortOrder
   status?: Prisma.SortOrder
   issuedAt?: Prisma.SortOrder
+  originalFileAccess?: Prisma.SortOrder
   organizationId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -423,6 +443,7 @@ export type DocumentMaxOrderByAggregateInput = {
   reference?: Prisma.SortOrder
   status?: Prisma.SortOrder
   issuedAt?: Prisma.SortOrder
+  originalFileAccess?: Prisma.SortOrder
   organizationId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -436,6 +457,7 @@ export type DocumentMinOrderByAggregateInput = {
   reference?: Prisma.SortOrder
   status?: Prisma.SortOrder
   issuedAt?: Prisma.SortOrder
+  originalFileAccess?: Prisma.SortOrder
   organizationId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -500,6 +522,10 @@ export type NullableDateTimeFieldUpdateOperationsInput = {
   set?: Date | string | null
 }
 
+export type EnumOriginalFileAccessFieldUpdateOperationsInput = {
+  set?: $Enums.OriginalFileAccess
+}
+
 export type DocumentCreateNestedOneWithoutVersionsInput = {
   create?: Prisma.XOR<Prisma.DocumentCreateWithoutVersionsInput, Prisma.DocumentUncheckedCreateWithoutVersionsInput>
   connectOrCreate?: Prisma.DocumentCreateOrConnectWithoutVersionsInput
@@ -536,6 +562,7 @@ export type DocumentCreateWithoutOrganizationInput = {
   reference?: string | null
   status?: $Enums.DocumentStatus
   issuedAt?: Date | string | null
+  originalFileAccess?: $Enums.OriginalFileAccess
   createdAt?: Date | string
   updatedAt?: Date | string
   versions?: Prisma.DocumentVersionCreateNestedManyWithoutDocumentInput
@@ -550,6 +577,7 @@ export type DocumentUncheckedCreateWithoutOrganizationInput = {
   reference?: string | null
   status?: $Enums.DocumentStatus
   issuedAt?: Date | string | null
+  originalFileAccess?: $Enums.OriginalFileAccess
   createdAt?: Date | string
   updatedAt?: Date | string
   versions?: Prisma.DocumentVersionUncheckedCreateNestedManyWithoutDocumentInput
@@ -593,6 +621,7 @@ export type DocumentScalarWhereInput = {
   reference?: Prisma.StringNullableFilter<"Document"> | string | null
   status?: Prisma.EnumDocumentStatusFilter<"Document"> | $Enums.DocumentStatus
   issuedAt?: Prisma.DateTimeNullableFilter<"Document"> | Date | string | null
+  originalFileAccess?: Prisma.EnumOriginalFileAccessFilter<"Document"> | $Enums.OriginalFileAccess
   organizationId?: Prisma.StringFilter<"Document"> | string
   createdAt?: Prisma.DateTimeFilter<"Document"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Document"> | Date | string
@@ -606,6 +635,7 @@ export type DocumentCreateWithoutVersionsInput = {
   reference?: string | null
   status?: $Enums.DocumentStatus
   issuedAt?: Date | string | null
+  originalFileAccess?: $Enums.OriginalFileAccess
   createdAt?: Date | string
   updatedAt?: Date | string
   organization: Prisma.OrganizationCreateNestedOneWithoutDocumentsInput
@@ -620,6 +650,7 @@ export type DocumentUncheckedCreateWithoutVersionsInput = {
   reference?: string | null
   status?: $Enums.DocumentStatus
   issuedAt?: Date | string | null
+  originalFileAccess?: $Enums.OriginalFileAccess
   organizationId: string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -650,6 +681,7 @@ export type DocumentUpdateWithoutVersionsInput = {
   reference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumDocumentStatusFieldUpdateOperationsInput | $Enums.DocumentStatus
   issuedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  originalFileAccess?: Prisma.EnumOriginalFileAccessFieldUpdateOperationsInput | $Enums.OriginalFileAccess
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   organization?: Prisma.OrganizationUpdateOneRequiredWithoutDocumentsNestedInput
@@ -664,6 +696,7 @@ export type DocumentUncheckedUpdateWithoutVersionsInput = {
   reference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumDocumentStatusFieldUpdateOperationsInput | $Enums.DocumentStatus
   issuedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  originalFileAccess?: Prisma.EnumOriginalFileAccessFieldUpdateOperationsInput | $Enums.OriginalFileAccess
   organizationId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -678,6 +711,7 @@ export type DocumentCreateWithoutLifecycleEventsInput = {
   reference?: string | null
   status?: $Enums.DocumentStatus
   issuedAt?: Date | string | null
+  originalFileAccess?: $Enums.OriginalFileAccess
   createdAt?: Date | string
   updatedAt?: Date | string
   organization: Prisma.OrganizationCreateNestedOneWithoutDocumentsInput
@@ -692,6 +726,7 @@ export type DocumentUncheckedCreateWithoutLifecycleEventsInput = {
   reference?: string | null
   status?: $Enums.DocumentStatus
   issuedAt?: Date | string | null
+  originalFileAccess?: $Enums.OriginalFileAccess
   organizationId: string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -722,6 +757,7 @@ export type DocumentUpdateWithoutLifecycleEventsInput = {
   reference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumDocumentStatusFieldUpdateOperationsInput | $Enums.DocumentStatus
   issuedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  originalFileAccess?: Prisma.EnumOriginalFileAccessFieldUpdateOperationsInput | $Enums.OriginalFileAccess
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   organization?: Prisma.OrganizationUpdateOneRequiredWithoutDocumentsNestedInput
@@ -736,6 +772,7 @@ export type DocumentUncheckedUpdateWithoutLifecycleEventsInput = {
   reference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumDocumentStatusFieldUpdateOperationsInput | $Enums.DocumentStatus
   issuedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  originalFileAccess?: Prisma.EnumOriginalFileAccessFieldUpdateOperationsInput | $Enums.OriginalFileAccess
   organizationId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -750,6 +787,7 @@ export type DocumentCreateManyOrganizationInput = {
   reference?: string | null
   status?: $Enums.DocumentStatus
   issuedAt?: Date | string | null
+  originalFileAccess?: $Enums.OriginalFileAccess
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -762,6 +800,7 @@ export type DocumentUpdateWithoutOrganizationInput = {
   reference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumDocumentStatusFieldUpdateOperationsInput | $Enums.DocumentStatus
   issuedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  originalFileAccess?: Prisma.EnumOriginalFileAccessFieldUpdateOperationsInput | $Enums.OriginalFileAccess
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   versions?: Prisma.DocumentVersionUpdateManyWithoutDocumentNestedInput
@@ -776,6 +815,7 @@ export type DocumentUncheckedUpdateWithoutOrganizationInput = {
   reference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumDocumentStatusFieldUpdateOperationsInput | $Enums.DocumentStatus
   issuedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  originalFileAccess?: Prisma.EnumOriginalFileAccessFieldUpdateOperationsInput | $Enums.OriginalFileAccess
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   versions?: Prisma.DocumentVersionUncheckedUpdateManyWithoutDocumentNestedInput
@@ -790,6 +830,7 @@ export type DocumentUncheckedUpdateManyWithoutOrganizationInput = {
   reference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumDocumentStatusFieldUpdateOperationsInput | $Enums.DocumentStatus
   issuedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  originalFileAccess?: Prisma.EnumOriginalFileAccessFieldUpdateOperationsInput | $Enums.OriginalFileAccess
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -842,6 +883,7 @@ export type DocumentSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   reference?: boolean
   status?: boolean
   issuedAt?: boolean
+  originalFileAccess?: boolean
   organizationId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -859,6 +901,7 @@ export type DocumentSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
   reference?: boolean
   status?: boolean
   issuedAt?: boolean
+  originalFileAccess?: boolean
   organizationId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -873,6 +916,7 @@ export type DocumentSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
   reference?: boolean
   status?: boolean
   issuedAt?: boolean
+  originalFileAccess?: boolean
   organizationId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -887,12 +931,13 @@ export type DocumentSelectScalar = {
   reference?: boolean
   status?: boolean
   issuedAt?: boolean
+  originalFileAccess?: boolean
   organizationId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type DocumentOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "publicId" | "title" | "type" | "reference" | "status" | "issuedAt" | "organizationId" | "createdAt" | "updatedAt", ExtArgs["result"]["document"]>
+export type DocumentOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "publicId" | "title" | "type" | "reference" | "status" | "issuedAt" | "originalFileAccess" | "organizationId" | "createdAt" | "updatedAt", ExtArgs["result"]["document"]>
 export type DocumentInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
   versions?: boolean | Prisma.Document$versionsArgs<ExtArgs>
@@ -921,6 +966,7 @@ export type $DocumentPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     reference: string | null
     status: $Enums.DocumentStatus
     issuedAt: Date | null
+    originalFileAccess: $Enums.OriginalFileAccess
     organizationId: string
     createdAt: Date
     updatedAt: Date
@@ -1357,6 +1403,7 @@ export interface DocumentFieldRefs {
   readonly reference: Prisma.FieldRef<"Document", 'String'>
   readonly status: Prisma.FieldRef<"Document", 'DocumentStatus'>
   readonly issuedAt: Prisma.FieldRef<"Document", 'DateTime'>
+  readonly originalFileAccess: Prisma.FieldRef<"Document", 'OriginalFileAccess'>
   readonly organizationId: Prisma.FieldRef<"Document", 'String'>
   readonly createdAt: Prisma.FieldRef<"Document", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Document", 'DateTime'>

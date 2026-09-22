@@ -26,3 +26,12 @@ export const DocumentLifecycleEventType = {
 } as const
 
 export type DocumentLifecycleEventType = (typeof DocumentLifecycleEventType)[keyof typeof DocumentLifecycleEventType]
+
+
+export const OriginalFileAccess = {
+  PUBLIC: 'PUBLIC',
+  RESTRICTED: 'RESTRICTED',
+  PRIVATE: 'PRIVATE'
+} as const
+
+export type OriginalFileAccess = (typeof OriginalFileAccess)[keyof typeof OriginalFileAccess]

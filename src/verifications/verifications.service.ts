@@ -1,157 +1,1423 @@
 import { Injectable } from '@nestjs/common';
 import { createHash } from 'node:crypto';
-import { PrismaService } from '../prisma/prisma.service.js';
-import { AttestationService } from '../trust/attestation.service.js';
 
-interface AttestationPayload {
-  schema: string;
+import { PrismaService } from '../prisma/prisma.service.js';
+import { StorageService } from '../storage/storage.service.js';
+
+import { AttestationService } from '../trust/attestation.service.js';
+import { LifecycleService } from '../trust/lifecycle.service.js';
+
+import { isValidPublicId } from '../trust/public-id.js';
+
+import {
+  type DocumentStatusValue,
+  VerificationPolicyService,
+} from './verification-policy.service.js';
+
+type OriginalFileAccessValue =
+  | 'PUBLIC'
+  | 'RESTRICTED'
+  | 'PRIVATE';
+
+interface AttestationV2Payload {
+  schema: 'vera.attestation.v2';
+
+  document: {
+    publicId: string;
+    title: string;
+    type: string | null;
+    reference: string | null;
+    issuedAt: string | null;
+  };
+
+  issuer: {
+    id: string;
+    slug: string;
+    name: string;
+  };
+
+  version: {
+    number: number;
+    filename: string;
+    mimeType: string;
+    size: number;
+    sha256: string;
+    registeredAt: string;
+  };
+}
+
+interface LifecyclePayload {
+  schema: 'vera.lifecycle.v1';
+
   documentPublicId: string;
-  organization: string;
+
+  sequence: number;
+
+  type:
+    | 'REGISTERED'
+    | 'STATUS_CHANGED';
+
+  fromStatus:
+    | DocumentStatusValue
+    | null;
+
+  toStatus:
+    DocumentStatusValue;
+
+  reason: string | null;
+
+  previousEventHash:
+    string | null;
+
+  occurredAt: string;
+}
+
+interface AttestationInput {
+  payload: string;
+  signature: string;
+  algorithm: string;
+  keyId: string;
+}
+
+interface VersionInput {
   version: number;
+
+  filename: string;
+
+  mimeType: string;
+
+  size: number;
+
   sha256: string;
-  registeredAt: string;
+
+  storageKey:
+    | string
+    | null;
+
+  createdAt: Date;
+
+  attestation:
+    | AttestationInput
+    | null;
+}
+
+interface LifecycleEventInput {
+  sequence: number;
+
+  type:
+    | 'REGISTERED'
+    | 'STATUS_CHANGED';
+
+  fromStatus:
+    | DocumentStatusValue
+    | null;
+
+  toStatus:
+    DocumentStatusValue;
+
+  reason:
+    | string
+    | null;
+
+  previousEventHash:
+    | string
+    | null;
+
+  payload: string;
+
+  signature: string;
+
+  algorithm: string;
+
+  keyId: string;
+
+  eventHash: string;
+
+  createdAt: Date;
 }
 
 @Injectable()
 export class VerificationsService {
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly attestationService: AttestationService,
+    private readonly prisma:
+      PrismaService,
+
+    private readonly attestationService:
+      AttestationService,
+
+    private readonly lifecycleService:
+      LifecycleService,
+
+    private readonly verificationPolicyService:
+      VerificationPolicyService,
+
+    private readonly storageService:
+      StorageService,
   ) {}
 
-  async verifyFile(file: Express.Multer.File) {
-    const sha256 = createHash('sha256')
-      .update(file.buffer)
-      .digest('hex');
+  async verifyByPublicId(
+    publicId: string,
+  ) {
+    const normalizedPublicId =
+      publicId
+        .trim()
+        .toUpperCase();
 
-    const version =
-      await this.prisma.documentVersion.findUnique({
-        where: {
-          sha256,
-        },
+    /*
+     * Checksum antes de qualquer consulta
+     * à base de dados.
+     */
+    const idChecksumValid =
+      isValidPublicId(
+        normalizedPublicId,
+      );
 
-        include: {
-          attestation: true,
+    if (!idChecksumValid) {
+      const verdict =
+        this.verificationPolicyService
+          .evaluate({
+            method:
+              'PUBLIC_ID',
 
-          document: {
-            include: {
-              organization: true,
-            },
-          },
-        },
-      });
+            idChecksumValid:
+              false,
 
-    if (!version) {
-      await this.prisma.verificationEvent.create({
-        data: {
-          hash: sha256,
-          matched: false,
-        },
-      });
+            recordFound:
+              false,
+          });
 
       return {
-        match: false,
-        exactMatch: false,
-        sha256,
+        method:
+          'PUBLIC_ID',
 
-        message:
-          'Não foi encontrada uma correspondência exata para este ficheiro.',
+        policy:
+          this.verificationPolicyService
+            .policyId,
+
+        verdict,
+
+        publicId:
+          normalizedPublicId,
+
+        checks: {
+          idChecksumValid:
+            false,
+
+          recordFound:
+            false,
+        },
       };
     }
 
-    const document = version.document;
-    const attestation = version.attestation;
+    /*
+     * Para PUBLIC_ID usamos a versão
+     * mais recente do documento.
+     */
+    const document =
+      await this.prisma.document
+        .findUnique({
+          where: {
+            publicId:
+              normalizedPublicId,
+          },
 
-    let signatureValid = false;
-    let claimsMatch = false;
+          include: {
+            organization:
+              true,
 
-    if (attestation) {
-      signatureValid =
-        attestation.algorithm === 'Ed25519' &&
-        this.attestationService.verify(
-          attestation.payload,
-          attestation.signature,
-        );
+            versions: {
+              orderBy: {
+                version:
+                  'desc',
+              },
 
-      try {
-        const payload = JSON.parse(
-          attestation.payload,
-        ) as AttestationPayload;
+              include: {
+                attestation:
+                  true,
+              },
+            },
 
-        claimsMatch =
-          payload.schema === 'vera.attestation.v1' &&
-          payload.documentPublicId ===
-            document.publicId &&
-          payload.organization ===
-            document.organization.slug &&
-          payload.version === version.version &&
-          payload.sha256 === version.sha256 &&
-          payload.sha256 === sha256 &&
-          payload.registeredAt ===
-            version.createdAt.toISOString();
-      } catch {
-        claimsMatch = false;
-      }
+            lifecycleEvents: {
+              orderBy: {
+                sequence:
+                  'asc',
+              },
+            },
+          },
+        });
+
+    if (!document) {
+      const verdict =
+        this.verificationPolicyService
+          .evaluate({
+            method:
+              'PUBLIC_ID',
+
+            idChecksumValid:
+              true,
+
+            recordFound:
+              false,
+          });
+
+      return {
+        method:
+          'PUBLIC_ID',
+
+        policy:
+          this.verificationPolicyService
+            .policyId,
+
+        verdict,
+
+        publicId:
+          normalizedPublicId,
+
+        checks: {
+          idChecksumValid:
+            true,
+
+          recordFound:
+            false,
+        },
+      };
     }
 
-    const attestationValid =
-      signatureValid && claimsMatch;
+    const version =
+      document.versions[0] ??
+      null;
 
-    await this.prisma.verificationEvent.create({
-      data: {
-        hash: sha256,
-        matched: true,
-        documentId: document.id,
-      },
-    });
+    /*
+     * Avaliação da Attestation.
+     */
+    const attestation =
+      version
+        ? this.evaluateAttestation(
+            {
+              publicId:
+                document.publicId,
+
+              title:
+                document.title,
+
+              type:
+                document.type,
+
+              reference:
+                document.reference,
+
+              issuedAt:
+                document.issuedAt,
+            },
+
+            {
+              id:
+                document.organization.id,
+
+              slug:
+                document.organization.slug,
+
+              name:
+                document.organization.name,
+            },
+
+            version,
+
+            version.attestation,
+          )
+        : {
+            valid: false,
+            signatureValid:
+              false,
+            claimsMatch:
+              false,
+          };
+
+    /*
+     * Avaliação da cadeia assinada
+     * de lifecycle.
+     */
+    const lifecycle =
+      this.evaluateLifecycle(
+        document.publicId,
+
+        document.status as
+          DocumentStatusValue,
+
+        document.lifecycleEvents as
+          LifecycleEventInput[],
+      );
+
+    /*
+     * Verificação real dos bytes
+     * armazenados.
+     *
+     * O nível PUBLIC/PRIVATE não
+     * desativa esta verificação.
+     */
+    const originalFile =
+      await this.evaluateOriginalFile(
+        document.versions as
+          VersionInput[],
+      );
+
+    const verdict =
+      this.verificationPolicyService
+        .evaluate({
+          method:
+            'PUBLIC_ID',
+
+          idChecksumValid:
+            true,
+
+          recordFound:
+            true,
+
+          issuerVerified:
+            document.organization
+              .verified,
+
+          attestationValid:
+            attestation.valid,
+
+          lifecycleValid:
+            lifecycle.valid,
+
+          databaseStatusMatches:
+            lifecycle
+              .databaseStatusMatches,
+
+          derivedStatus:
+            lifecycle
+              .derivedStatus,
+
+          originalFileRequired:
+            true,
+
+          originalFileAvailable:
+            originalFile.available,
+
+          originalFileIntegrityValid:
+            originalFile
+              .integrityValid,
+        });
 
     return {
-      match: true,
-      exactMatch: true,
+      method:
+        'PUBLIC_ID',
 
-      trust: {
-        attestationValid,
-        signatureValid,
-        claimsMatch,
+      policy:
+        this.verificationPolicyService
+          .policyId,
+
+      verdict,
+
+      publicId:
+        document.publicId,
+
+      checks: {
+        idChecksumValid:
+          true,
+
+        recordFound:
+          true,
+
+        issuerVerified:
+          document.organization
+            .verified,
+
+        attestationValid:
+          attestation.valid,
+
+        lifecycleValid:
+          lifecycle.valid,
+
+        databaseStatusMatches:
+          lifecycle
+            .databaseStatusMatches,
+
+        originalFileAvailable:
+          originalFile.available,
+
+        originalFileIntegrityValid:
+          originalFile
+            .integrityValid,
       },
 
-      sha256,
+      trust: {
+        attestation,
+
+        lifecycle: {
+          valid:
+            lifecycle.valid,
+
+          signaturesValid:
+            lifecycle
+              .signaturesValid,
+
+          eventHashesValid:
+            lifecycle
+              .eventHashesValid,
+
+          claimsMatch:
+            lifecycle
+              .claimsMatch,
+
+          chainLinksValid:
+            lifecycle
+              .chainLinksValid,
+
+          sequenceValid:
+            lifecycle
+              .sequenceValid,
+        },
+      },
+
+      originalFile: {
+        access:
+          document.originalFileAccess,
+
+        stored:
+          originalFile.available,
+
+        integrityValid:
+          originalFile
+            .integrityValid,
+
+        canDisplay:
+          document.originalFileAccess ===
+            'PUBLIC' &&
+          originalFile.available ===
+            true &&
+          originalFile.integrityValid ===
+            true,
+      },
+
+      status: {
+        derived:
+          lifecycle
+            .derivedStatus,
+
+        database:
+          document.status,
+      },
 
       document: {
-        id: document.id,
-        publicId: document.publicId,
-        title: document.title,
-        type: document.type,
-        reference: document.reference,
-        status: document.status,
-        issuedAt: document.issuedAt,
+        publicId:
+          document.publicId,
+
+        title:
+          document.title,
+
+        type:
+          document.type,
+
+        reference:
+          document.reference,
+
+        issuedAt:
+          document.issuedAt,
 
         organization: {
-          name: document.organization.name,
-          slug: document.organization.slug,
+          name:
+            document.organization
+              .name,
+
+          slug:
+            document.organization
+              .slug,
+
           verified:
-            document.organization.verified,
+            document.organization
+              .verified,
+        },
+
+        version:
+          version
+            ? {
+                version:
+                  version.version,
+
+                filename:
+                  version.filename,
+
+                mimeType:
+                  version.mimeType,
+
+                size:
+                  version.size,
+
+                registeredAt:
+                  version.createdAt,
+              }
+            : null,
+      },
+    };
+  }
+
+  async verifyFile(
+    file: Express.Multer.File,
+  ) {
+    /*
+     * Hash dos bytes recebidos.
+     */
+    const sha256 =
+      createHash('sha256')
+        .update(file.buffer)
+        .digest('hex');
+
+    /*
+     * sha256 é unique em
+     * DocumentVersion.
+     */
+    const version =
+      await this.prisma
+        .documentVersion
+        .findUnique({
+          where: {
+            sha256,
+          },
+
+          include: {
+            attestation:
+              true,
+
+            document: {
+              include: {
+                organization:
+                  true,
+
+                lifecycleEvents: {
+                  orderBy: {
+                    sequence:
+                      'asc',
+                  },
+                },
+              },
+            },
+          },
+        });
+
+    /*
+     * Nenhum conjunto idêntico de bytes
+     * registado.
+     */
+    if (!version) {
+      await this.prisma
+        .verificationEvent
+        .create({
+          data: {
+            hash:
+              sha256,
+
+            matched:
+              false,
+          },
+        });
+
+      const verdict =
+        this.verificationPolicyService
+          .evaluate({
+            method:
+              'FILE',
+
+            exactMatch:
+              false,
+
+            recordFound:
+              false,
+          });
+
+      return {
+        method:
+          'FILE',
+
+        policy:
+          this.verificationPolicyService
+            .policyId,
+
+        verdict,
+
+        hash:
+          sha256,
+
+        exactMatch:
+          false,
+
+        checks: {
+          exactMatch:
+            false,
+
+          recordFound:
+            false,
+        },
+      };
+    }
+
+    const document =
+      version.document;
+
+    /*
+     * Registo de auditoria da tentativa
+     * de verificação.
+     */
+    await this.prisma
+      .verificationEvent
+      .create({
+        data: {
+          hash:
+            sha256,
+
+          matched:
+            true,
+
+          documentId:
+            document.id,
+        },
+      });
+
+    const attestation =
+      this.evaluateAttestation(
+        {
+          publicId:
+            document.publicId,
+
+          title:
+            document.title,
+
+          type:
+            document.type,
+
+          reference:
+            document.reference,
+
+          issuedAt:
+            document.issuedAt,
+        },
+
+        {
+          id:
+            document.organization.id,
+
+          slug:
+            document.organization.slug,
+
+          name:
+            document.organization.name,
+        },
+
+        version,
+
+        version.attestation,
+      );
+
+    const lifecycle =
+      this.evaluateLifecycle(
+        document.publicId,
+
+        document.status as
+          DocumentStatusValue,
+
+        document.lifecycleEvents as
+          LifecycleEventInput[],
+      );
+
+    /*
+     * FILE não depende do object storage.
+     *
+     * Os próprios bytes enviados pelo
+     * utilizador já foram comparados
+     * diretamente pelo SHA-256.
+     */
+    const verdict =
+      this.verificationPolicyService
+        .evaluate({
+          method:
+            'FILE',
+
+          exactMatch:
+            true,
+
+          recordFound:
+            true,
+
+          issuerVerified:
+            document.organization
+              .verified,
+
+          attestationValid:
+            attestation.valid,
+
+          lifecycleValid:
+            lifecycle.valid,
+
+          databaseStatusMatches:
+            lifecycle
+              .databaseStatusMatches,
+
+          derivedStatus:
+            lifecycle
+              .derivedStatus,
+
+          originalFileRequired:
+            false,
+        });
+
+    return {
+      method:
+        'FILE',
+
+      policy:
+        this.verificationPolicyService
+          .policyId,
+
+      verdict,
+
+      hash:
+        sha256,
+
+      exactMatch:
+        true,
+
+      checks: {
+        exactMatch:
+          true,
+
+        recordFound:
+          true,
+
+        issuerVerified:
+          document.organization
+            .verified,
+
+        attestationValid:
+          attestation.valid,
+
+        lifecycleValid:
+          lifecycle.valid,
+
+        databaseStatusMatches:
+          lifecycle
+            .databaseStatusMatches,
+      },
+
+      trust: {
+        attestation,
+
+        lifecycle: {
+          valid:
+            lifecycle.valid,
+
+          signaturesValid:
+            lifecycle
+              .signaturesValid,
+
+          eventHashesValid:
+            lifecycle
+              .eventHashesValid,
+
+          claimsMatch:
+            lifecycle
+              .claimsMatch,
+
+          chainLinksValid:
+            lifecycle
+              .chainLinksValid,
+
+          sequenceValid:
+            lifecycle
+              .sequenceValid,
+        },
+      },
+
+      status: {
+        derived:
+          lifecycle
+            .derivedStatus,
+
+        database:
+          document.status,
+      },
+
+      document: {
+        publicId:
+          document.publicId,
+
+        title:
+          document.title,
+
+        type:
+          document.type,
+
+        reference:
+          document.reference,
+
+        issuedAt:
+          document.issuedAt,
+
+        organization: {
+          name:
+            document.organization
+              .name,
+
+          slug:
+            document.organization
+              .slug,
+
+          verified:
+            document.organization
+              .verified,
         },
 
         version: {
-          version: version.version,
-          filename: version.filename,
-          mimeType: version.mimeType,
-          size: version.size,
-          registeredAt: version.createdAt,
-        },
+          version:
+            version.version,
 
-        attestation: attestation
-          ? {
-              valid: attestationValid,
-              signatureValid,
-              claimsMatch,
-              algorithm: attestation.algorithm,
-              keyId: attestation.keyId,
-              createdAt: attestation.createdAt,
-            }
-          : null,
+          filename:
+            version.filename,
+
+          mimeType:
+            version.mimeType,
+
+          size:
+            version.size,
+
+          registeredAt:
+            version.createdAt,
+        },
       },
+    };
+  }
+
+  /*
+   * ============================================================
+   * ATTESTATION
+   * ============================================================
+   */
+
+  private evaluateAttestation(
+    document: {
+      publicId: string;
+      title: string;
+      type: string | null;
+      reference: string | null;
+      issuedAt: Date | null;
+    },
+
+    organization: {
+      id: string;
+      slug: string;
+      name: string;
+    },
+
+    version: {
+      version: number;
+      filename: string;
+      mimeType: string;
+      size: number;
+      sha256: string;
+      createdAt: Date;
+    },
+
+    attestation:
+      | AttestationInput
+      | null,
+  ) {
+    if (!attestation) {
+      return {
+        valid:
+          false,
+
+        signatureValid:
+          false,
+
+        claimsMatch:
+          false,
+      };
+    }
+
+    let signatureValid =
+      false;
+
+    try {
+      signatureValid =
+        this.attestationService
+          .verify(
+            attestation.payload,
+
+            attestation.signature,
+
+            attestation.algorithm,
+
+            attestation.keyId,
+          );
+    } catch {
+      signatureValid =
+        false;
+    }
+
+    let claimsMatch =
+      false;
+
+    try {
+      const payload =
+        JSON.parse(
+          attestation.payload,
+        ) as AttestationV2Payload;
+
+      claimsMatch =
+        payload.schema ===
+          'vera.attestation.v2' &&
+
+        payload.document.publicId ===
+          document.publicId &&
+
+        payload.document.title ===
+          document.title &&
+
+        payload.document.type ===
+          document.type &&
+
+        payload.document.reference ===
+          document.reference &&
+
+        payload.document.issuedAt ===
+          (
+            document.issuedAt
+              ?.toISOString() ??
+            null
+          ) &&
+
+        payload.issuer.id ===
+          organization.id &&
+
+        payload.issuer.slug ===
+          organization.slug &&
+
+        payload.issuer.name ===
+          organization.name &&
+
+        payload.version.number ===
+          version.version &&
+
+        payload.version.filename ===
+          version.filename &&
+
+        payload.version.mimeType ===
+          version.mimeType &&
+
+        payload.version.size ===
+          version.size &&
+
+        payload.version.sha256 ===
+          version.sha256 &&
+
+        payload.version.registeredAt ===
+          version.createdAt
+            .toISOString();
+    } catch {
+      claimsMatch =
+        false;
+    }
+
+    return {
+      valid:
+        signatureValid &&
+        claimsMatch,
+
+      signatureValid,
+
+      claimsMatch,
+    };
+  }
+
+  /*
+   * ============================================================
+   * ORIGINAL FILE
+   * ============================================================
+   */
+
+  private async evaluateOriginalFile(
+    versions: VersionInput[],
+  ) {
+    /*
+     * PUBLIC_ID sempre usa a versão
+     * mais recente.
+     *
+     * As versões já chegam ordenadas
+     * desc pelo Prisma.
+     */
+    const version =
+      versions[0];
+
+    if (
+      !version ||
+      !version.storageKey
+    ) {
+      return {
+        available:
+          false,
+
+        integrityValid:
+          false,
+      };
+    }
+
+    try {
+      /*
+       * A Vera lê os bytes reais
+       * do object storage.
+       */
+      const storedFile =
+        await this.storageService
+          .getFile(
+            version.storageKey,
+          );
+
+      /*
+       * Hash calculado no momento
+       * da verificação.
+       */
+      const storedSha256 =
+        createHash('sha256')
+          .update(
+            storedFile.body,
+          )
+          .digest('hex');
+
+      const integrityValid =
+        storedSha256 ===
+          version.sha256 &&
+
+        storedFile.body.length ===
+          version.size;
+
+      return {
+        available:
+          true,
+
+        integrityValid,
+      };
+    } catch {
+      /*
+       * Storage fora do ar, objecto apagado,
+       * key inexistente etc.
+       */
+      return {
+        available:
+          false,
+
+        integrityValid:
+          false,
+      };
+    }
+  }
+
+  /*
+   * ============================================================
+   * LIFECYCLE
+   * ============================================================
+   */
+
+  private evaluateLifecycle(
+    documentPublicId: string,
+
+    databaseStatus:
+      DocumentStatusValue,
+
+    events:
+      LifecycleEventInput[],
+  ) {
+    /*
+     * Documento sem lifecycle não satisfaz
+     * a política atual.
+     */
+    if (events.length === 0) {
+      return {
+        valid:
+          false,
+
+        signaturesValid:
+          false,
+
+        eventHashesValid:
+          false,
+
+        claimsMatch:
+          false,
+
+        chainLinksValid:
+          false,
+
+        sequenceValid:
+          false,
+
+        derivedStatus:
+          null as
+            DocumentStatusValue |
+            null,
+
+        databaseStatusMatches:
+          false,
+      };
+    }
+
+    let signaturesValid =
+      true;
+
+    let eventHashesValid =
+      true;
+
+    let claimsMatch =
+      true;
+
+    let chainLinksValid =
+      true;
+
+    let sequenceValid =
+      true;
+
+    for (
+      let index = 0;
+      index < events.length;
+      index += 1
+    ) {
+      const event =
+        events[index];
+
+      const previousEvent =
+        index > 0
+          ? events[index - 1]
+          : null;
+
+      /*
+       * Sequência monotónica:
+       * 1, 2, 3, ...
+       */
+      const expectedSequence =
+        index + 1;
+
+      if (
+        event.sequence !==
+        expectedSequence
+      ) {
+        sequenceValid =
+          false;
+      }
+
+      /*
+       * Assinatura Ed25519.
+       */
+      let signatureValid =
+        false;
+
+      try {
+        signatureValid =
+          this.lifecycleService
+            .verifySignature({
+              payload:
+                event.payload,
+
+              signature:
+                event.signature,
+
+              algorithm:
+                event.algorithm,
+
+              keyId:
+                event.keyId,
+            });
+      } catch {
+        signatureValid =
+          false;
+      }
+
+      if (!signatureValid) {
+        signaturesValid =
+          false;
+      }
+
+      /*
+       * Hash do envelope do evento.
+       */
+      let calculatedEventHash:
+        string | null = null;
+
+      try {
+        calculatedEventHash =
+          this.lifecycleService
+            .calculateEventHash({
+              payload:
+                event.payload,
+
+              signature:
+                event.signature,
+
+              algorithm:
+                event.algorithm,
+
+              keyId:
+                event.keyId,
+            });
+      } catch {
+        calculatedEventHash =
+          null;
+      }
+
+      if (
+        calculatedEventHash !==
+        event.eventHash
+      ) {
+        eventHashesValid =
+          false;
+      }
+
+      /*
+       * Claims assinadas precisam
+       * corresponder exatamente ao
+       * registo materializado.
+       */
+      try {
+        const payload =
+          JSON.parse(
+            event.payload,
+          ) as LifecyclePayload;
+
+        const currentClaimsMatch =
+          payload.schema ===
+            'vera.lifecycle.v1' &&
+
+          payload.documentPublicId ===
+            documentPublicId &&
+
+          payload.sequence ===
+            event.sequence &&
+
+          payload.type ===
+            event.type &&
+
+          payload.fromStatus ===
+            event.fromStatus &&
+
+          payload.toStatus ===
+            event.toStatus &&
+
+          payload.reason ===
+            event.reason &&
+
+          payload.previousEventHash ===
+            event.previousEventHash &&
+
+          payload.occurredAt ===
+            event.createdAt
+              .toISOString();
+
+        if (!currentClaimsMatch) {
+          claimsMatch =
+            false;
+        }
+      } catch {
+        claimsMatch =
+          false;
+      }
+
+      /*
+       * Primeiro evento.
+       */
+      if (index === 0) {
+        if (
+          event.sequence !== 1 ||
+          event.type !==
+            'REGISTERED' ||
+          event.fromStatus !==
+            null ||
+          event.previousEventHash !==
+            null
+        ) {
+          chainLinksValid =
+            false;
+        }
+
+        continue;
+      }
+
+      /*
+       * Eventos posteriores precisam
+       * encadear corretamente o anterior.
+       */
+      if (!previousEvent) {
+        chainLinksValid =
+          false;
+
+        continue;
+      }
+
+      if (
+        event.type !==
+        'STATUS_CHANGED'
+      ) {
+        chainLinksValid =
+          false;
+      }
+
+      if (
+        event.previousEventHash !==
+        previousEvent.eventHash
+      ) {
+        chainLinksValid =
+          false;
+      }
+
+      if (
+        event.fromStatus !==
+        previousEvent.toStatus
+      ) {
+        chainLinksValid =
+          false;
+      }
+    }
+
+    const valid =
+      signaturesValid &&
+      eventHashesValid &&
+      claimsMatch &&
+      chainLinksValid &&
+      sequenceValid;
+
+    /*
+     * Só derivamos o estado quando
+     * TODA a cadeia é válida.
+     */
+    const derivedStatus:
+      DocumentStatusValue |
+      null =
+        valid
+          ? events[
+              events.length - 1
+            ].toStatus
+          : null;
+
+    const databaseStatusMatches =
+      valid &&
+      derivedStatus ===
+        databaseStatus;
+
+    return {
+      valid,
+
+      signaturesValid,
+
+      eventHashesValid,
+
+      claimsMatch,
+
+      chainLinksValid,
+
+      sequenceValid,
+
+      derivedStatus,
+
+      databaseStatusMatches,
     };
   }
 }

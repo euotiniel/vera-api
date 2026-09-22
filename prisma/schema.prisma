@@ -20,6 +20,12 @@ enum DocumentLifecycleEventType {
   STATUS_CHANGED
 }
 
+enum OriginalFileAccess {
+  PUBLIC
+  RESTRICTED
+  PRIVATE
+}
+
 model Organization {
   id       String  @id @default(cuid())
   name     String
@@ -41,6 +47,8 @@ model Document {
   status    DocumentStatus @default(VALID)
   issuedAt  DateTime?
 
+  originalFileAccess OriginalFileAccess @default(PUBLIC)
+
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id])
 
@@ -60,6 +68,8 @@ model DocumentVersion {
   mimeType String
   size     Int
   sha256   String @unique
+
+  storageKey String? @unique
 
   documentId String
   document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
@@ -107,7 +117,6 @@ model DocumentLifecycleEvent {
 
   payload   String
   signature String
-
   algorithm String
   keyId     String
 

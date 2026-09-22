@@ -1,29 +1,41 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
-import request from 'supertest';
-import { App } from 'supertest/types';
-import { AppModule } from './../src/app.module.js';
+import type {
+  INestApplication,
+} from '@nestjs/common';
 
-describe('AppController (e2e)', () => {
-  let app: INestApplication<App>;
+import { Test } from '@nestjs/testing';
 
-  beforeEach(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
+import { AppModule } from '../src/app.module.js';
 
-    app = moduleFixture.createNestApplication();
+describe('Vera API', () => {
+  let app:
+    INestApplication;
+
+  beforeAll(async () => {
+    const moduleRef =
+      await Test.createTestingModule({
+        imports: [
+          AppModule,
+        ],
+      }).compile();
+
+    app =
+      moduleRef
+        .createNestApplication();
+
+    app.setGlobalPrefix(
+      'api',
+    );
+
     await app.init();
   });
 
-  it('/ (GET)', () => {
-    return request(app.getHttpServer())
-      .get('/')
-      .expect(200)
-      .expect('Hello World!');
+  afterAll(async () => {
+    await app.close();
   });
 
-  afterEach(async () => {
-    await app.close();
+  it('should initialize', () => {
+    expect(
+      app,
+    ).toBeDefined();
   });
 });

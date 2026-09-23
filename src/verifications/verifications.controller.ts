@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  Body,
   Controller,
   Get,
   HttpCode,
@@ -14,11 +15,16 @@ import { FileInterceptor } from '@nestjs/platform-express';
 
 import { VerificationsService } from './verifications.service.js';
 
+import { QrVerificationService } from './qr-verification.service.js';
+
 @Controller('verifications')
 export class VerificationsController {
   constructor(
     private readonly verificationsService:
       VerificationsService,
+
+    private readonly qrVerificationService:
+      QrVerificationService,
   ) {}
 
   @Get('id/:publicId')
@@ -33,7 +39,9 @@ export class VerificationsController {
   }
 
   @Post('file')
-  @HttpCode(HttpStatus.OK)
+  @HttpCode(
+    HttpStatus.OK,
+  )
   @UseInterceptors(
     FileInterceptor(
       'file',
@@ -47,7 +55,8 @@ export class VerificationsController {
   )
   async verifyFile(
     @UploadedFile()
-    file: Express.Multer.File,
+    file:
+      Express.Multer.File,
   ) {
     if (!file) {
       throw new BadRequestException(
@@ -65,6 +74,32 @@ export class VerificationsController {
     }
 
     return this.verificationsService
-      .verifyFile(file);
+      .verifyFile(
+        file,
+      );
+  }
+
+  @Post('qr')
+  @HttpCode(
+    HttpStatus.OK,
+  )
+  async verifyQr(
+    @Body('proof')
+    proof: string,
+  ) {
+    if (
+      !proof ||
+      typeof proof !==
+        'string'
+    ) {
+      throw new BadRequestException(
+        'A prova QR é obrigatória.',
+      );
+    }
+
+    return this.qrVerificationService
+      .verify(
+        proof,
+      );
   }
 }

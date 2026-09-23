@@ -6,62 +6,115 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
+
 import { createHash } from 'node:crypto';
 
 import { PrismaService } from '../prisma/prisma.service.js';
 import { StorageService } from '../storage/storage.service.js';
+
 import { AttestationService } from '../trust/attestation.service.js';
 import { LifecycleService } from '../trust/lifecycle.service.js';
+import { QrProofService } from '../trust/qr-proof.service.js';
 import { generatePublicId } from '../trust/public-id.js';
 
 interface CreateDocumentInput {
-  file: Express.Multer.File;
-  organizationSlug: string;
-  title: string;
-  type?: string;
-  reference?: string;
+  file:
+    Express.Multer.File;
+
+  organizationSlug:
+    string;
+
+  title:
+    string;
+
+  type?:
+    string;
+
+  reference?:
+    string;
 }
 
 interface AttestationV2Payload {
-  schema: 'vera.attestation.v2';
+  schema:
+    'vera.attestation.v2';
 
   document: {
-    publicId: string;
-    title: string;
-    type: string | null;
-    reference: string | null;
-    issuedAt: string | null;
+    publicId:
+      string;
+
+    title:
+      string;
+
+    type:
+      string | null;
+
+    reference:
+      string | null;
+
+    issuedAt:
+      string | null;
   };
 
   issuer: {
-    id: string;
-    slug: string;
-    name: string;
+    id:
+      string;
+
+    slug:
+      string;
+
+    name:
+      string;
   };
 
   version: {
-    number: number;
-    filename: string;
-    mimeType: string;
-    size: number;
-    sha256: string;
-    registeredAt: string;
+    number:
+      number;
+
+    filename:
+      string;
+
+    mimeType:
+      string;
+
+    size:
+      number;
+
+    sha256:
+      string;
+
+    registeredAt:
+      string;
   };
 }
 
 @Injectable()
 export class DocumentsService {
   private readonly logger =
-    new Logger(DocumentsService.name);
+    new Logger(
+      DocumentsService.name,
+    );
 
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly storageService: StorageService,
-    private readonly attestationService: AttestationService,
-    private readonly lifecycleService: LifecycleService,
+    private readonly prisma:
+      PrismaService,
+
+    private readonly storageService:
+      StorageService,
+
+    private readonly attestationService:
+      AttestationService,
+
+    private readonly lifecycleService:
+      LifecycleService,
+
+    private readonly qrProofService:
+      QrProofService,
   ) {}
 
-  async create(input: CreateDocumentInput) {
+  async create(
+    input:
+      CreateDocumentInput,
+  ) {
     const {
       file,
       organizationSlug,
@@ -71,11 +124,14 @@ export class DocumentsService {
     } = input;
 
     const organization =
-      await this.prisma.organization.findUnique({
-        where: {
-          slug: organizationSlug,
-        },
-      });
+      await this.prisma
+        .organization
+        .findUnique({
+          where: {
+            slug:
+              organizationSlug,
+          },
+        });
 
     if (!organization) {
       throw new NotFoundException(
@@ -89,23 +145,21 @@ export class DocumentsService {
       );
     }
 
-    /*
-     * Fingerprint do ficheiro recebido.
-     */
-    const sha256 = createHash('sha256')
-      .update(file.buffer)
-      .digest('hex');
+    const sha256 =
+      createHash('sha256')
+        .update(
+          file.buffer,
+        )
+        .digest('hex');
 
-    /*
-     * O mesmo conjunto exato de bytes
-     * não pode ser registado duas vezes.
-     */
     const existingVersion =
-      await this.prisma.documentVersion.findUnique({
-        where: {
-          sha256,
-        },
-      });
+      await this.prisma
+        .documentVersion
+        .findUnique({
+          where: {
+            sha256,
+          },
+        });
 
     if (existingVersion) {
       throw new ConflictException(
@@ -113,287 +167,359 @@ export class DocumentsService {
       );
     }
 
-    const publicId = generatePublicId();
+    const publicId =
+      generatePublicId();
 
-    const versionNumber = 1;
+    const versionNumber =
+      1;
 
-    const registeredAt = new Date();
+    const registeredAt =
+      new Date();
 
-    /*
-     * O caminho físico do objecto não é público.
-     *
-     * O utilizador nunca precisa conhecer
-     * este storageKey.
-     */
     const storageKey =
-      this.storageService.buildDocumentKey(
-        publicId,
-        versionNumber,
-      );
+      this.storageService
+        .buildDocumentKey(
+          publicId,
+          versionNumber,
+        );
 
-    /*
-     * Primeiro guardamos o ficheiro.
-     */
-    await this.storageService.putFile({
-      key: storageKey,
-      body: file.buffer,
-      contentType: file.mimetype,
-    });
+    await this.storageService
+      .putFile({
+        key:
+          storageKey,
+
+        body:
+          file.buffer,
+
+        contentType:
+          file.mimetype,
+      });
 
     try {
       /*
-       * Não confiamos cegamente nem no próprio
-       * object storage.
-       *
-       * Lemos o objecto de volta e verificamos
-       * se os bytes guardados produzem o mesmo
-       * SHA-256.
+       * Verificação read-after-write.
        */
       const storedFile =
-        await this.storageService.getFile(
-          storageKey,
-        );
+        await this.storageService
+          .getFile(
+            storageKey,
+          );
 
       const storedSha256 =
         createHash('sha256')
-          .update(storedFile.body)
+          .update(
+            storedFile.body,
+          )
           .digest('hex');
 
       if (
-        storedSha256 !== sha256 ||
-        storedFile.body.length !== file.size
+        storedSha256 !==
+          sha256 ||
+        storedFile.body.length !==
+          file.size
       ) {
         throw new InternalServerErrorException(
           'A integridade do ficheiro armazenado não pôde ser confirmada.',
         );
       }
 
-      /*
-       * Só depois de comprovarmos o storage
-       * criamos o registo definitivo.
-       */
       const result =
-        await this.prisma.$transaction(
-          async (tx) => {
-            const document =
-              await tx.document.create({
-                data: {
-                  publicId,
+        await this.prisma
+          .$transaction(
+            async (tx) => {
+              const document =
+                await tx.document
+                  .create({
+                    data: {
+                      publicId,
 
-                  title:
-                    title.trim(),
+                      title:
+                        title.trim(),
 
-                  type:
-                    type?.trim() || null,
+                      type:
+                        type
+                          ?.trim() ||
+                        null,
 
-                  reference:
-                    reference?.trim() || null,
+                      reference:
+                        reference
+                          ?.trim() ||
+                        null,
 
-                  status: 'VALID',
+                      status:
+                        'VALID',
 
-                  issuedAt:
-                    registeredAt,
+                      issuedAt:
+                        registeredAt,
 
-                  /*
-                   * Para os nossos ofícios de
-                   * laboratório o original pode
-                   * ser apresentado publicamente.
-                   */
-                  originalFileAccess:
-                    'PUBLIC',
+                      originalFileAccess:
+                        'PUBLIC',
 
-                  organization: {
-                    connect: {
-                      id:
-                        organization.id,
+                      organization: {
+                        connect: {
+                          id:
+                            organization.id,
+                        },
+                      },
+
+                      createdAt:
+                        registeredAt,
                     },
-                  },
+                  });
 
-                  createdAt:
-                    registeredAt,
-                },
-              });
+              const version =
+                await tx
+                  .documentVersion
+                  .create({
+                    data: {
+                      version:
+                        versionNumber,
 
-            const version =
-              await tx.documentVersion.create({
-                data: {
-                  version:
-                    versionNumber,
+                      filename:
+                        file.originalname,
 
-                  filename:
-                    file.originalname,
+                      mimeType:
+                        file.mimetype,
 
-                  mimeType:
-                    file.mimetype,
+                      size:
+                        file.size,
 
-                  size:
-                    file.size,
+                      sha256,
 
-                  sha256,
+                      storageKey,
 
-                  storageKey,
+                      qrProof:
+                        null,
 
-                  createdAt:
-                    registeredAt,
+                      createdAt:
+                        registeredAt,
 
-                  document: {
-                    connect: {
-                      id:
-                        document.id,
+                      document: {
+                        connect: {
+                          id:
+                            document.id,
+                        },
+                      },
                     },
-                  },
-                },
-              });
+                  });
 
-            /*
-             * Attestation v2:
-             * snapshot criptograficamente assinado
-             * dos dados essenciais do documento
-             * e da versão.
-             */
-            const signedAttestation =
-              this.attestationService.create({
-                documentPublicId:
-                  document.publicId,
+              const signedAttestation =
+                this.attestationService
+                  .create({
+                    documentPublicId:
+                      document.publicId,
 
-                organizationId:
-                  organization.id,
+                    organizationId:
+                      organization.id,
 
-                organizationSlug:
-                  organization.slug,
+                    organizationSlug:
+                      organization.slug,
 
-                organizationName:
-                  organization.name,
+                    organizationName:
+                      organization.name,
 
-                title:
-                  document.title,
-
-                type:
-                  document.type,
-
-                reference:
-                  document.reference,
-
-                issuedAt:
-                  document.issuedAt
-                    ?.toISOString() ??
-                  null,
-
-                version:
-                  version.version,
-
-                filename:
-                  version.filename,
-
-                mimeType:
-                  version.mimeType,
-
-                size:
-                  version.size,
-
-                sha256:
-                  version.sha256,
-
-                registeredAt:
-                  version.createdAt
-                    .toISOString(),
-              });
-
-            const attestation =
-              await tx.attestation.create({
-                data: {
-                  documentVersionId:
-                    version.id,
-
-                  payload:
-                    signedAttestation.payload,
-
-                  signature:
-                    signedAttestation.signature,
-
-                  algorithm:
-                    signedAttestation.algorithm,
-
-                  keyId:
-                    signedAttestation.keyId,
-
-                  createdAt:
-                    registeredAt,
-                },
-              });
-
-            /*
-             * Primeiro evento da cadeia
-             * de lifecycle.
-             */
-            const signedLifecycle =
-              this.lifecycleService
-                .createRegisteredEvent({
-                  documentPublicId:
-                    document.publicId,
-
-                  toStatus:
-                    document.status,
-
-                  occurredAt:
-                    registeredAt
-                      .toISOString(),
-                });
-
-            const lifecycleEvent =
-              await tx.documentLifecycleEvent
-                .create({
-                  data: {
-                    documentId:
-                      document.id,
-
-                    sequence:
-                      signedLifecycle.sequence,
+                    title:
+                      document.title,
 
                     type:
-                      signedLifecycle.type,
+                      document.type,
 
-                    fromStatus:
-                      signedLifecycle.fromStatus,
+                    reference:
+                      document.reference,
+
+                    issuedAt:
+                      document.issuedAt
+                        ?.toISOString() ??
+                      null,
+
+                    version:
+                      version.version,
+
+                    filename:
+                      version.filename,
+
+                    mimeType:
+                      version.mimeType,
+
+                    size:
+                      version.size,
+
+                    sha256:
+                      version.sha256,
+
+                    registeredAt:
+                      version.createdAt
+                        .toISOString(),
+                  });
+
+              const attestation =
+                await tx.attestation
+                  .create({
+                    data: {
+                      documentVersionId:
+                        version.id,
+
+                      payload:
+                        signedAttestation
+                          .payload,
+
+                      signature:
+                        signedAttestation
+                          .signature,
+
+                      algorithm:
+                        signedAttestation
+                          .algorithm,
+
+                      keyId:
+                        signedAttestation
+                          .keyId,
+
+                      createdAt:
+                        registeredAt,
+                    },
+                  });
+
+              /*
+               * O QR é emitido exatamente
+               * uma vez no registo.
+               *
+               * Não existe signing-on-demand
+               * no endpoint público.
+               */
+              const signedQrProof =
+                this.qrProofService
+                  .create({
+                    publicId:
+                      document.publicId,
+
+                    version:
+                      version.version,
+
+                    sha256:
+                      version.sha256,
+
+                    registeredAt:
+                      version.createdAt
+                        .toISOString(),
+
+                    attestation: {
+                      payload:
+                        attestation.payload,
+
+                      signature:
+                        attestation.signature,
+
+                      algorithm:
+                        attestation.algorithm,
+
+                      keyId:
+                        attestation.keyId,
+                    },
+                  });
+
+              const versionWithQr =
+                await tx
+                  .documentVersion
+                  .update({
+                    where: {
+                      id:
+                        version.id,
+                    },
+
+                    data: {
+                      qrProof:
+                        signedQrProof
+                          .token,
+                    },
+                  });
+
+              const signedLifecycle =
+                this.lifecycleService
+                  .createRegisteredEvent({
+                    documentPublicId:
+                      document.publicId,
 
                     toStatus:
-                      signedLifecycle.toStatus,
+                      document.status,
 
-                    reason:
-                      signedLifecycle.reason,
+                    occurredAt:
+                      registeredAt
+                        .toISOString(),
+                  });
 
-                    previousEventHash:
-                      signedLifecycle
-                        .previousEventHash,
+              const lifecycleEvent =
+                await tx
+                  .documentLifecycleEvent
+                  .create({
+                    data: {
+                      documentId:
+                        document.id,
 
-                    payload:
-                      signedLifecycle.payload,
+                      sequence:
+                        signedLifecycle
+                          .sequence,
 
-                    signature:
-                      signedLifecycle.signature,
+                      type:
+                        signedLifecycle
+                          .type,
 
-                    algorithm:
-                      signedLifecycle.algorithm,
+                      fromStatus:
+                        signedLifecycle
+                          .fromStatus,
 
-                    keyId:
-                      signedLifecycle.keyId,
+                      toStatus:
+                        signedLifecycle
+                          .toStatus,
 
-                    eventHash:
-                      signedLifecycle.eventHash,
+                      reason:
+                        signedLifecycle
+                          .reason,
 
-                    createdAt:
-                      registeredAt,
-                  },
-                });
+                      previousEventHash:
+                        signedLifecycle
+                          .previousEventHash,
 
-            return {
-              document,
-              version,
-              attestation,
-              lifecycleEvent,
-            };
-          },
-        );
+                      payload:
+                        signedLifecycle
+                          .payload,
+
+                      signature:
+                        signedLifecycle
+                          .signature,
+
+                      algorithm:
+                        signedLifecycle
+                          .algorithm,
+
+                      keyId:
+                        signedLifecycle
+                          .keyId,
+
+                      eventHash:
+                        signedLifecycle
+                          .eventHash,
+
+                      createdAt:
+                        registeredAt,
+                    },
+                  });
+
+              return {
+                document,
+
+                version:
+                  versionWithQr,
+
+                attestation,
+
+                lifecycleEvent,
+
+                qrProof:
+                  signedQrProof,
+              };
+            },
+          );
 
       return {
         id:
@@ -429,7 +555,8 @@ export class DocumentsService {
         },
 
         originalFile: {
-          available: true,
+          available:
+            true,
 
           access:
             result.document
@@ -456,70 +583,92 @@ export class DocumentsService {
             result.version.createdAt,
         },
 
+        qr: {
+          available:
+            Boolean(
+              result.version
+                .qrProof,
+            ),
+
+          schema:
+            'vera.qr.v2',
+
+          algorithm:
+            result.qrProof
+              .algorithm,
+
+          keyId:
+            result.qrProof.keyId,
+        },
+
         attestation: {
           schema:
             'vera.attestation.v2',
 
           algorithm:
-            result.attestation.algorithm,
+            result.attestation
+              .algorithm,
 
           keyId:
-            result.attestation.keyId,
+            result.attestation
+              .keyId,
 
           signature:
-            result.attestation.signature,
+            result.attestation
+              .signature,
 
           createdAt:
-            result.attestation.createdAt,
+            result.attestation
+              .createdAt,
         },
 
         lifecycle: {
           sequence:
-            result.lifecycleEvent.sequence,
+            result.lifecycleEvent
+              .sequence,
 
           type:
-            result.lifecycleEvent.type,
+            result.lifecycleEvent
+              .type,
 
           fromStatus:
             result.lifecycleEvent
               .fromStatus,
 
           toStatus:
-            result.lifecycleEvent.toStatus,
+            result.lifecycleEvent
+              .toStatus,
 
           previousEventHash:
             result.lifecycleEvent
               .previousEventHash,
 
           eventHash:
-            result.lifecycleEvent.eventHash,
+            result.lifecycleEvent
+              .eventHash,
 
           algorithm:
-            result.lifecycleEvent.algorithm,
+            result.lifecycleEvent
+              .algorithm,
 
           keyId:
-            result.lifecycleEvent.keyId,
+            result.lifecycleEvent
+              .keyId,
 
           createdAt:
-            result.lifecycleEvent.createdAt,
+            result.lifecycleEvent
+              .createdAt,
         },
       };
     } catch (error) {
-      /*
-       * Compensating transaction.
-       *
-       * Object storage e PostgreSQL não
-       * participam da mesma transação ACID.
-       *
-       * Se qualquer etapa posterior falhar,
-       * removemos o objecto que já tínhamos
-       * criado.
-       */
       try {
-        await this.storageService.deleteFile(
-          storageKey,
-        );
-      } catch (cleanupError) {
+        await this.storageService
+          .deleteFile(
+            storageKey,
+          );
+      } catch (
+        cleanupError
+      ) {
         this.logger.error(
           `Falha ao remover objecto órfão: ${storageKey}`,
           cleanupError,
@@ -534,31 +683,37 @@ export class DocumentsService {
     publicId: string,
   ) {
     const document =
-      await this.prisma.document.findUnique({
-        where: {
-          publicId,
-        },
-
-        include: {
-          organization: true,
-
-          versions: {
-            orderBy: {
-              version: 'desc',
-            },
-
-            include: {
-              attestation: true,
-            },
+      await this.prisma
+        .document
+        .findUnique({
+          where: {
+            publicId,
           },
 
-          lifecycleEvents: {
-            orderBy: {
-              sequence: 'asc',
+          include: {
+            organization:
+              true,
+
+            versions: {
+              orderBy: {
+                version:
+                  'desc',
+              },
+
+              include: {
+                attestation:
+                  true,
+              },
+            },
+
+            lifecycleEvents: {
+              orderBy: {
+                sequence:
+                  'asc',
+              },
             },
           },
-        },
-      });
+        });
 
     if (!document) {
       throw new NotFoundException(
@@ -590,26 +745,31 @@ export class DocumentsService {
 
       originalFile: {
         available:
-          document.versions.some(
-            (version) =>
-              Boolean(
-                version.storageKey,
-              ),
-          ),
+          document.versions
+            .some(
+              (version) =>
+                Boolean(
+                  version.storageKey,
+                ),
+            ),
 
         access:
-          document.originalFileAccess,
+          document
+            .originalFileAccess,
       },
 
       organization: {
         name:
-          document.organization.name,
+          document.organization
+            .name,
 
         slug:
-          document.organization.slug,
+          document.organization
+            .slug,
 
         verified:
-          document.organization.verified,
+          document.organization
+            .verified,
       },
 
       versions:
@@ -633,6 +793,11 @@ export class DocumentsService {
             originalAvailable:
               Boolean(
                 version.storageKey,
+              ),
+
+            qrAvailable:
+              Boolean(
+                version.qrProof,
               ),
 
             attestation:
@@ -663,39 +828,42 @@ export class DocumentsService {
         ),
 
       lifecycle:
-        document.lifecycleEvents.map(
-          (event) => ({
-            sequence:
-              event.sequence,
+        document.lifecycleEvents
+          .map(
+            (event) => ({
+              sequence:
+                event.sequence,
 
-            type:
-              event.type,
+              type:
+                event.type,
 
-            fromStatus:
-              event.fromStatus,
+              fromStatus:
+                event
+                  .fromStatus,
 
-            toStatus:
-              event.toStatus,
+              toStatus:
+                event.toStatus,
 
-            reason:
-              event.reason,
+              reason:
+                event.reason,
 
-            previousEventHash:
-              event.previousEventHash,
+              previousEventHash:
+                event
+                  .previousEventHash,
 
-            eventHash:
-              event.eventHash,
+              eventHash:
+                event.eventHash,
 
-            algorithm:
-              event.algorithm,
+              algorithm:
+                event.algorithm,
 
-            keyId:
-              event.keyId,
+              keyId:
+                event.keyId,
 
-            createdAt:
-              event.createdAt,
-          }),
-        ),
+              createdAt:
+                event.createdAt,
+            }),
+          ),
     };
   }
 
@@ -703,23 +871,27 @@ export class DocumentsService {
     publicId: string,
   ) {
     const document =
-      await this.prisma.document.findUnique({
-        where: {
-          publicId,
-        },
+      await this.prisma
+        .document
+        .findUnique({
+          where: {
+            publicId,
+          },
 
-        include: {
-          versions: {
-            orderBy: {
-              version: 'desc',
-            },
+          include: {
+            versions: {
+              orderBy: {
+                version:
+                  'desc',
+              },
 
-            include: {
-              attestation: true,
+              include: {
+                attestation:
+                  true,
+              },
             },
           },
-        },
-      });
+        });
 
     if (!document) {
       throw new NotFoundException(
@@ -728,7 +900,8 @@ export class DocumentsService {
     }
 
     if (
-      document.originalFileAccess !==
+      document
+        .originalFileAccess !==
       'PUBLIC'
     ) {
       throw new ForbiddenException(
@@ -748,10 +921,6 @@ export class DocumentsService {
       );
     }
 
-    /*
-     * Antes de devolvermos qualquer byte,
-     * validamos a Attestation.
-     */
     if (!version.attestation) {
       throw new InternalServerErrorException(
         'A atestação do documento não está disponível.',
@@ -759,12 +928,20 @@ export class DocumentsService {
     }
 
     const signatureValid =
-      this.attestationService.verify(
-        version.attestation.payload,
-        version.attestation.signature,
-        version.attestation.algorithm,
-        version.attestation.keyId,
-      );
+      this.attestationService
+        .verify(
+          version.attestation
+            .payload,
+
+          version.attestation
+            .signature,
+
+          version.attestation
+            .algorithm,
+
+          version.attestation
+            .keyId,
+        );
 
     if (!signatureValid) {
       throw new InternalServerErrorException(
@@ -772,37 +949,47 @@ export class DocumentsService {
       );
     }
 
-    let attestedSha256: string;
+    let attestedSha256:
+      string;
 
     try {
       const payload =
         JSON.parse(
-          version.attestation.payload,
-        ) as AttestationV2Payload;
+          version.attestation
+            .payload,
+        ) as
+          AttestationV2Payload;
 
       const claimsMatch =
         payload.schema ===
           'vera.attestation.v2' &&
 
-        payload.document.publicId ===
+        payload.document
+          .publicId ===
           document.publicId &&
 
-        payload.version.number ===
+        payload.version
+          .number ===
           version.version &&
 
-        payload.version.filename ===
+        payload.version
+          .filename ===
           version.filename &&
 
-        payload.version.mimeType ===
+        payload.version
+          .mimeType ===
           version.mimeType &&
 
-        payload.version.size ===
+        payload.version
+          .size ===
           version.size &&
 
-        payload.version.sha256 ===
+        payload.version
+          .sha256 ===
           version.sha256 &&
 
-        payload.version.registeredAt ===
+        payload.version
+          .registeredAt ===
           version.createdAt
             .toISOString();
 
@@ -813,31 +1000,25 @@ export class DocumentsService {
       }
 
       attestedSha256 =
-        payload.version.sha256;
+        payload.version
+          .sha256;
     } catch {
       throw new InternalServerErrorException(
         'Os dados assinados do documento estão inconsistentes.',
       );
     }
 
-    /*
-     * Recupera o original do storage.
-     */
     const storedFile =
-      await this.storageService.getFile(
-        version.storageKey,
-      );
+      await this.storageService
+        .getFile(
+          version.storageKey,
+        );
 
-    /*
-     * E recalcula o SHA-256 no momento
-     * da leitura.
-     *
-     * Portanto nem adulterar o objecto
-     * diretamente no storage é suficiente.
-     */
     const storedSha256 =
       createHash('sha256')
-        .update(storedFile.body)
+        .update(
+          storedFile.body,
+        )
         .digest('hex');
 
     if (

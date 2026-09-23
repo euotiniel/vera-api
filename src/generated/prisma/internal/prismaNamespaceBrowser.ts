@@ -112,6 +112,7 @@ export const DocumentVersionScalarFieldEnum = {
   size: 'size',
   sha256: 'sha256',
   storageKey: 'storageKey',
+  qrProof: 'qrProof',
   documentId: 'documentId',
   createdAt: 'createdAt'
 } as const

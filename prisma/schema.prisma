@@ -71,6 +71,14 @@ model DocumentVersion {
 
   storageKey String? @unique
 
+  /**
+   * QR Proof canónico emitido pela Vera
+   * para esta versão.
+   * null permite manter documentos legacy
+   * criados antes deste mecanismo.
+   */
+  qrProof String? @unique
+
   documentId String
   document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
 

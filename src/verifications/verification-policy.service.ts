@@ -26,191 +26,288 @@ export type VerificationVerdictCode =
   | 'LIFECYCLE_FAILURE'
   | 'INCONSISTENT_RECORD'
   | 'ORIGINAL_FILE_UNAVAILABLE'
-  | 'ORIGINAL_FILE_INTEGRITY_FAILURE';
+  | 'ORIGINAL_FILE_INTEGRITY_FAILURE'
+  | 'INVALID_QR_PROOF'
+  | 'QR_PROOF_MISMATCH';
 
 export interface VerificationVerdict {
-  code: VerificationVerdictCode;
-  verified: boolean;
-  message: string;
+  code:
+    VerificationVerdictCode;
+
+  verified:
+    boolean;
+
+  message:
+    string;
 }
 
 interface VerificationPolicyInput {
-  method: VerificationMethod;
+  method:
+    VerificationMethod;
 
-  idChecksumValid?: boolean | null;
+  idChecksumValid?:
+    boolean | null;
 
-  recordFound: boolean;
+  qrProofValid?:
+    boolean | null;
 
-  exactMatch?: boolean | null;
+  qrStoredProofMatch?:
+    boolean | null;
 
-  issuerVerified?: boolean | null;
+  qrClaimsMatch?:
+    boolean | null;
 
-  attestationValid?: boolean | null;
+  qrAttestationBindingValid?:
+    boolean | null;
 
-  lifecycleValid?: boolean | null;
+  recordFound:
+    boolean;
 
-  databaseStatusMatches?: boolean | null;
+  exactMatch?:
+    boolean | null;
 
-  derivedStatus?: DocumentStatusValue | null;
+  issuerVerified?:
+    boolean | null;
 
-  originalFileRequired?: boolean;
+  attestationValid?:
+    boolean | null;
 
-  originalFileAvailable?: boolean | null;
+  lifecycleValid?:
+    boolean | null;
 
-  originalFileIntegrityValid?: boolean | null;
+  databaseStatusMatches?:
+    boolean | null;
+
+  derivedStatus?:
+    DocumentStatusValue |
+    null;
+
+  originalFileRequired?:
+    boolean;
+
+  originalFileAvailable?:
+    boolean | null;
+
+  originalFileIntegrityValid?:
+    boolean | null;
 }
 
 @Injectable()
 export class VerificationPolicyService {
   readonly policyId =
-    'vera.public-verification.v2';
+    'vera.public-verification.v4';
 
   evaluate(
-    input: VerificationPolicyInput,
+    input:
+      VerificationPolicyInput,
   ): VerificationVerdict {
-    /*
-     * 1. Identificador Vera.
-     */
     if (
-      input.method === 'PUBLIC_ID' &&
-      input.idChecksumValid !== true
+      input.method ===
+        'QR' &&
+      input.qrProofValid !==
+        true
     ) {
       return {
-        code: 'INVALID_IDENTIFIER',
-        verified: false,
+        code:
+          'INVALID_QR_PROOF',
+
+        verified:
+          false,
+
+        message:
+          'A prova criptográfica do QR é inválida.',
+      };
+    }
+
+    if (
+      input.method ===
+        'PUBLIC_ID' &&
+      input.idChecksumValid !==
+        true
+    ) {
+      return {
+        code:
+          'INVALID_IDENTIFIER',
+
+        verified:
+          false,
+
         message:
           'O identificador Vera é inválido.',
       };
     }
 
-    /*
-     * 2. Verificação por ficheiro.
-     *
-     * Se os bytes enviados não correspondem
-     * exatamente a uma versão registada,
-     * não avançamos.
-     */
     if (
-      input.method === 'FILE' &&
-      input.exactMatch !== true
+      input.method ===
+        'FILE' &&
+      input.exactMatch !==
+        true
     ) {
       return {
-        code: 'NO_EXACT_MATCH',
-        verified: false,
+        code:
+          'NO_EXACT_MATCH',
+
+        verified:
+          false,
+
         message:
           'O ficheiro não corresponde exatamente a uma versão registada na Vera.',
       };
     }
 
     /*
-     * 3. O registo precisa existir.
+     * Só avaliamos binding do QR
+     * depois de sabermos que o registo
+     * realmente existe.
      */
     if (!input.recordFound) {
       return {
-        code: 'NOT_FOUND',
-        verified: false,
+        code:
+          'NOT_FOUND',
+
+        verified:
+          false,
+
         message:
           'Não foi encontrado um registo Vera correspondente.',
       };
     }
 
-    /*
-     * 4. O emissor precisa estar reconhecido
-     * pela Vera.
-     */
     if (
-      input.issuerVerified !== true
+      input.method ===
+        'QR' &&
+      (
+        input.qrStoredProofMatch !==
+          true ||
+        input.qrClaimsMatch !==
+          true ||
+        input.qrAttestationBindingValid !==
+          true
+      )
     ) {
       return {
-        code: 'ISSUER_UNVERIFIED',
-        verified: false,
+        code:
+          'QR_PROOF_MISMATCH',
+
+        verified:
+          false,
+
+        message:
+          'O QR é criptograficamente assinado, mas não corresponde à prova canónica registada para esta versão.',
+      };
+    }
+
+    if (
+      input.issuerVerified !==
+        true
+    ) {
+      return {
+        code:
+          'ISSUER_UNVERIFIED',
+
+        verified:
+          false,
+
         message:
           'A identidade do emissor não pôde ser confirmada.',
       };
     }
 
-    /*
-     * 5. A Attestation precisa ser válida.
-     */
     if (
-      input.attestationValid !== true
+      input.attestationValid !==
+        true
     ) {
       return {
-        code: 'TRUST_FAILURE',
-        verified: false,
+        code:
+          'TRUST_FAILURE',
+
+        verified:
+          false,
+
         message:
           'A prova criptográfica do documento não pôde ser validada.',
       };
     }
 
-    /*
-     * 6. A cadeia de lifecycle precisa
-     * ser válida.
-     */
     if (
-      input.lifecycleValid !== true
+      input.lifecycleValid !==
+        true
     ) {
       return {
-        code: 'LIFECYCLE_FAILURE',
-        verified: false,
+        code:
+          'LIFECYCLE_FAILURE',
+
+        verified:
+          false,
+
         message:
           'A cadeia de estado do documento não pôde ser validada.',
       };
     }
 
-    /*
-     * 7. Estado derivado das provas assinadas
-     * e estado materializado na base precisam
-     * concordar.
-     */
     if (
-      input.databaseStatusMatches !== true
+      input.databaseStatusMatches !==
+        true
     ) {
       return {
-        code: 'INCONSISTENT_RECORD',
-        verified: false,
+        code:
+          'INCONSISTENT_RECORD',
+
+        verified:
+          false,
+
         message:
           'As provas assinadas e o estado atual do registo estão inconsistentes.',
       };
     }
 
-    /*
-     * 8. Estado atual.
-     *
-     * Um documento revogado continua podendo
-     * ter provas criptográficas válidas.
-     *
-     * Mas não é atualmente válido.
-     */
-    switch (input.derivedStatus) {
+    switch (
+      input.derivedStatus
+    ) {
       case 'PENDING':
         return {
-          code: 'PENDING',
-          verified: false,
+          code:
+            'PENDING',
+
+          verified:
+            false,
+
           message:
             'O documento está pendente de validação.',
         };
 
       case 'REVOKED':
         return {
-          code: 'REVOKED',
-          verified: false,
+          code:
+            'REVOKED',
+
+          verified:
+            false,
+
           message:
             'O documento foi revogado.',
         };
 
       case 'EXPIRED':
         return {
-          code: 'EXPIRED',
-          verified: false,
+          code:
+            'EXPIRED',
+
+          verified:
+            false,
+
           message:
             'O documento expirou.',
         };
 
       case 'REPLACED':
         return {
-          code: 'REPLACED',
-          verified: false,
+          code:
+            'REPLACED',
+
+          verified:
+            false,
+
           message:
             'O documento foi substituído por uma versão posterior.',
         };
@@ -220,34 +317,31 @@ export class VerificationPolicyService {
 
       default:
         return {
-          code: 'LIFECYCLE_FAILURE',
-          verified: false,
+          code:
+            'LIFECYCLE_FAILURE',
+
+          verified:
+            false,
+
           message:
             'Não foi possível determinar o estado atual do documento.',
         };
     }
 
-    /*
-     * 9. Integridade do original armazenado.
-     *
-     * Para PUBLIC_ID e futuramente QR,
-     * o original armazenado também faz
-     * parte da prova.
-     *
-     * O nível de acesso PUBLIC/PRIVATE
-     * não interfere nesta verificação.
-     */
     if (
-      input.originalFileRequired === true
+      input.originalFileRequired ===
+        true
     ) {
       if (
-        input.originalFileAvailable !== true
+        input.originalFileAvailable !==
+          true
       ) {
         return {
           code:
             'ORIGINAL_FILE_UNAVAILABLE',
 
-          verified: false,
+          verified:
+            false,
 
           message:
             'O documento original registado não está disponível para confirmação.',
@@ -256,13 +350,14 @@ export class VerificationPolicyService {
 
       if (
         input.originalFileIntegrityValid !==
-        true
+          true
       ) {
         return {
           code:
             'ORIGINAL_FILE_INTEGRITY_FAILURE',
 
-          verified: false,
+          verified:
+            false,
 
           message:
             'A integridade do documento original armazenado não pôde ser confirmada.',
@@ -270,13 +365,13 @@ export class VerificationPolicyService {
       }
     }
 
-    /*
-     * Só chegamos aqui se todas as provas
-     * exigidas pela política passaram.
-     */
     return {
-      code: 'VERIFIED',
-      verified: true,
+      code:
+        'VERIFIED',
+
+      verified:
+        true,
+
       message:
         'Documento verificado e atualmente válido.',
     };

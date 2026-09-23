@@ -6,6 +6,7 @@ import { TrustModule } from '../trust/trust.module.js';
 import { DocumentsController } from './documents.controller.js';
 import { DocumentsService } from './documents.service.js';
 import { DocumentStatusService } from './document-status.service.js';
+import { DocumentQrService } from './document-qr.service.js';
 
 @Module({
   imports: [
@@ -20,11 +21,13 @@ import { DocumentStatusService } from './document-status.service.js';
   providers: [
     DocumentsService,
     DocumentStatusService,
+    DocumentQrService,
   ],
 
   exports: [
     DocumentsService,
     DocumentStatusService,
+    DocumentQrService,
   ],
 })
 export class DocumentsModule {}

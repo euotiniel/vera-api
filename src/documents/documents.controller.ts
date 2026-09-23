@@ -13,38 +13,50 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 
 import { DocumentsService } from './documents.service.js';
+import { DocumentQrService } from './document-qr.service.js';
 
 @Controller('documents')
 export class DocumentsController {
   constructor(
     private readonly documentsService:
       DocumentsService,
+
+    private readonly documentQrService:
+      DocumentQrService,
   ) {}
 
   @Post()
   @UseInterceptors(
-    FileInterceptor('file', {
-      limits: {
-        fileSize:
-          10 * 1024 * 1024,
+    FileInterceptor(
+      'file',
+      {
+        limits: {
+          fileSize:
+            10 * 1024 * 1024,
+        },
       },
-    }),
+    ),
   )
   async create(
     @UploadedFile()
-    file: Express.Multer.File,
+    file:
+      Express.Multer.File,
 
     @Body('organizationSlug')
-    organizationSlug: string,
+    organizationSlug:
+      string,
 
     @Body('title')
-    title: string,
+    title:
+      string,
 
     @Body('type')
-    type?: string,
+    type?:
+      string,
 
     @Body('reference')
-    reference?: string,
+    reference?:
+      string,
   ) {
     if (!file) {
       throw new BadRequestException(
@@ -54,7 +66,7 @@ export class DocumentsController {
 
     if (
       file.mimetype !==
-      'application/pdf'
+        'application/pdf'
     ) {
       throw new BadRequestException(
         'Apenas ficheiros PDF são aceites.',
@@ -73,31 +85,67 @@ export class DocumentsController {
       );
     }
 
-    return this.documentsService.create({
-      file,
-      organizationSlug,
-      title,
-      type,
-      reference,
-    });
+    return this.documentsService
+      .create({
+        file,
+        organizationSlug,
+        title,
+        type,
+        reference,
+      });
+  }
+
+  @Get(':publicId/qr-proof')
+  async getQrProof(
+    @Param('publicId')
+    publicId:
+      string,
+  ) {
+    return this.documentQrService
+      .getProof(
+        publicId,
+      );
+  }
+
+  @Get(':publicId/qr')
+  async getQrImage(
+    @Param('publicId')
+    publicId:
+      string,
+  ) {
+    const qr =
+      await this.documentQrService
+        .getQrImage(
+          publicId,
+        );
+
+    return new StreamableFile(
+      qr.body,
+      {
+        type:
+          'image/png',
+
+        disposition:
+          `inline; filename="vera-${qr.publicId}.png"`,
+
+        length:
+          qr.body.length,
+      },
+    );
   }
 
   @Get(':publicId/file')
   async getOriginalFile(
     @Param('publicId')
-    publicId: string,
+    publicId:
+      string,
   ) {
     const file =
       await this.documentsService
-        .getOriginalFile(publicId);
+        .getOriginalFile(
+          publicId,
+        );
 
-    /*
-     * StreamableFile faz o Nest enviar
-     * bytes reais em vez de JSON.
-     *
-     * Usamos inline porque queremos poder
-     * mostrar o PDF dentro da UI da Vera.
-     */
     return new StreamableFile(
       file.body,
       {
@@ -116,9 +164,12 @@ export class DocumentsController {
   @Get(':publicId')
   async findByPublicId(
     @Param('publicId')
-    publicId: string,
+    publicId:
+      string,
   ) {
     return this.documentsService
-      .findByPublicId(publicId);
+      .findByPublicId(
+        publicId,
+      );
   }
 }

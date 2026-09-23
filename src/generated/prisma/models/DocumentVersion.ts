@@ -44,6 +44,7 @@ export type DocumentVersionMinAggregateOutputType = {
   size: number | null
   sha256: string | null
   storageKey: string | null
+  qrProof: string | null
   documentId: string | null
   createdAt: Date | null
 }
@@ -56,6 +57,7 @@ export type DocumentVersionMaxAggregateOutputType = {
   size: number | null
   sha256: string | null
   storageKey: string | null
+  qrProof: string | null
   documentId: string | null
   createdAt: Date | null
 }
@@ -68,6 +70,7 @@ export type DocumentVersionCountAggregateOutputType = {
   size: number
   sha256: number
   storageKey: number
+  qrProof: number
   documentId: number
   createdAt: number
   _all: number
@@ -92,6 +95,7 @@ export type DocumentVersionMinAggregateInputType = {
   size?: true
   sha256?: true
   storageKey?: true
+  qrProof?: true
   documentId?: true
   createdAt?: true
 }
@@ -104,6 +108,7 @@ export type DocumentVersionMaxAggregateInputType = {
   size?: true
   sha256?: true
   storageKey?: true
+  qrProof?: true
   documentId?: true
   createdAt?: true
 }
@@ -116,6 +121,7 @@ export type DocumentVersionCountAggregateInputType = {
   size?: true
   sha256?: true
   storageKey?: true
+  qrProof?: true
   documentId?: true
   createdAt?: true
   _all?: true
@@ -215,6 +221,7 @@ export type DocumentVersionGroupByOutputType = {
   size: number
   sha256: string
   storageKey: string | null
+  qrProof: string | null
   documentId: string
   createdAt: Date
   _count: DocumentVersionCountAggregateOutputType | null
@@ -250,6 +257,7 @@ export type DocumentVersionWhereInput = {
   size?: Prisma.IntFilter<"DocumentVersion"> | number
   sha256?: Prisma.StringFilter<"DocumentVersion"> | string
   storageKey?: Prisma.StringNullableFilter<"DocumentVersion"> | string | null
+  qrProof?: Prisma.StringNullableFilter<"DocumentVersion"> | string | null
   documentId?: Prisma.StringFilter<"DocumentVersion"> | string
   createdAt?: Prisma.DateTimeFilter<"DocumentVersion"> | Date | string
   document?: Prisma.XOR<Prisma.DocumentScalarRelationFilter, Prisma.DocumentWhereInput>
@@ -264,6 +272,7 @@ export type DocumentVersionOrderByWithRelationInput = {
   size?: Prisma.SortOrder
   sha256?: Prisma.SortOrder
   storageKey?: Prisma.SortOrderInput | Prisma.SortOrder
+  qrProof?: Prisma.SortOrderInput | Prisma.SortOrder
   documentId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   document?: Prisma.DocumentOrderByWithRelationInput
@@ -274,6 +283,7 @@ export type DocumentVersionWhereUniqueInput = Prisma.AtLeast<{
   id?: string
   sha256?: string
   storageKey?: string
+  qrProof?: string
   documentId_version?: Prisma.DocumentVersionDocumentIdVersionCompoundUniqueInput
   AND?: Prisma.DocumentVersionWhereInput | Prisma.DocumentVersionWhereInput[]
   OR?: Prisma.DocumentVersionWhereInput[]
@@ -286,7 +296,7 @@ export type DocumentVersionWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"DocumentVersion"> | Date | string
   document?: Prisma.XOR<Prisma.DocumentScalarRelationFilter, Prisma.DocumentWhereInput>
   attestation?: Prisma.XOR<Prisma.AttestationNullableScalarRelationFilter, Prisma.AttestationWhereInput> | null
-}, "id" | "sha256" | "storageKey" | "documentId_version">
+}, "id" | "sha256" | "storageKey" | "qrProof" | "documentId_version">
 
 export type DocumentVersionOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -296,6 +306,7 @@ export type DocumentVersionOrderByWithAggregationInput = {
   size?: Prisma.SortOrder
   sha256?: Prisma.SortOrder
   storageKey?: Prisma.SortOrderInput | Prisma.SortOrder
+  qrProof?: Prisma.SortOrderInput | Prisma.SortOrder
   documentId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   _count?: Prisma.DocumentVersionCountOrderByAggregateInput
@@ -316,6 +327,7 @@ export type DocumentVersionScalarWhereWithAggregatesInput = {
   size?: Prisma.IntWithAggregatesFilter<"DocumentVersion"> | number
   sha256?: Prisma.StringWithAggregatesFilter<"DocumentVersion"> | string
   storageKey?: Prisma.StringNullableWithAggregatesFilter<"DocumentVersion"> | string | null
+  qrProof?: Prisma.StringNullableWithAggregatesFilter<"DocumentVersion"> | string | null
   documentId?: Prisma.StringWithAggregatesFilter<"DocumentVersion"> | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"DocumentVersion"> | Date | string
 }
@@ -328,6 +340,7 @@ export type DocumentVersionCreateInput = {
   size: number
   sha256: string
   storageKey?: string | null
+  qrProof?: string | null
   createdAt?: Date | string
   document: Prisma.DocumentCreateNestedOneWithoutVersionsInput
   attestation?: Prisma.AttestationCreateNestedOneWithoutDocumentVersionInput
@@ -341,6 +354,7 @@ export type DocumentVersionUncheckedCreateInput = {
   size: number
   sha256: string
   storageKey?: string | null
+  qrProof?: string | null
   documentId: string
   createdAt?: Date | string
   attestation?: Prisma.AttestationUncheckedCreateNestedOneWithoutDocumentVersionInput
@@ -354,6 +368,7 @@ export type DocumentVersionUpdateInput = {
   size?: Prisma.IntFieldUpdateOperationsInput | number
   sha256?: Prisma.StringFieldUpdateOperationsInput | string
   storageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  qrProof?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   document?: Prisma.DocumentUpdateOneRequiredWithoutVersionsNestedInput
   attestation?: Prisma.AttestationUpdateOneWithoutDocumentVersionNestedInput
@@ -367,6 +382,7 @@ export type DocumentVersionUncheckedUpdateInput = {
   size?: Prisma.IntFieldUpdateOperationsInput | number
   sha256?: Prisma.StringFieldUpdateOperationsInput | string
   storageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  qrProof?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   documentId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   attestation?: Prisma.AttestationUncheckedUpdateOneWithoutDocumentVersionNestedInput
@@ -380,6 +396,7 @@ export type DocumentVersionCreateManyInput = {
   size: number
   sha256: string
   storageKey?: string | null
+  qrProof?: string | null
   documentId: string
   createdAt?: Date | string
 }
@@ -392,6 +409,7 @@ export type DocumentVersionUpdateManyMutationInput = {
   size?: Prisma.IntFieldUpdateOperationsInput | number
   sha256?: Prisma.StringFieldUpdateOperationsInput | string
   storageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  qrProof?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -403,6 +421,7 @@ export type DocumentVersionUncheckedUpdateManyInput = {
   size?: Prisma.IntFieldUpdateOperationsInput | number
   sha256?: Prisma.StringFieldUpdateOperationsInput | string
   storageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  qrProof?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   documentId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -430,6 +449,7 @@ export type DocumentVersionCountOrderByAggregateInput = {
   size?: Prisma.SortOrder
   sha256?: Prisma.SortOrder
   storageKey?: Prisma.SortOrder
+  qrProof?: Prisma.SortOrder
   documentId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
@@ -447,6 +467,7 @@ export type DocumentVersionMaxOrderByAggregateInput = {
   size?: Prisma.SortOrder
   sha256?: Prisma.SortOrder
   storageKey?: Prisma.SortOrder
+  qrProof?: Prisma.SortOrder
   documentId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
@@ -459,6 +480,7 @@ export type DocumentVersionMinOrderByAggregateInput = {
   size?: Prisma.SortOrder
   sha256?: Prisma.SortOrder
   storageKey?: Prisma.SortOrder
+  qrProof?: Prisma.SortOrder
   documentId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
@@ -545,6 +567,7 @@ export type DocumentVersionCreateWithoutDocumentInput = {
   size: number
   sha256: string
   storageKey?: string | null
+  qrProof?: string | null
   createdAt?: Date | string
   attestation?: Prisma.AttestationCreateNestedOneWithoutDocumentVersionInput
 }
@@ -557,6 +580,7 @@ export type DocumentVersionUncheckedCreateWithoutDocumentInput = {
   size: number
   sha256: string
   storageKey?: string | null
+  qrProof?: string | null
   createdAt?: Date | string
   attestation?: Prisma.AttestationUncheckedCreateNestedOneWithoutDocumentVersionInput
 }
@@ -598,6 +622,7 @@ export type DocumentVersionScalarWhereInput = {
   size?: Prisma.IntFilter<"DocumentVersion"> | number
   sha256?: Prisma.StringFilter<"DocumentVersion"> | string
   storageKey?: Prisma.StringNullableFilter<"DocumentVersion"> | string | null
+  qrProof?: Prisma.StringNullableFilter<"DocumentVersion"> | string | null
   documentId?: Prisma.StringFilter<"DocumentVersion"> | string
   createdAt?: Prisma.DateTimeFilter<"DocumentVersion"> | Date | string
 }
@@ -610,6 +635,7 @@ export type DocumentVersionCreateWithoutAttestationInput = {
   size: number
   sha256: string
   storageKey?: string | null
+  qrProof?: string | null
   createdAt?: Date | string
   document: Prisma.DocumentCreateNestedOneWithoutVersionsInput
 }
@@ -622,6 +648,7 @@ export type DocumentVersionUncheckedCreateWithoutAttestationInput = {
   size: number
   sha256: string
   storageKey?: string | null
+  qrProof?: string | null
   documentId: string
   createdAt?: Date | string
 }
@@ -650,6 +677,7 @@ export type DocumentVersionUpdateWithoutAttestationInput = {
   size?: Prisma.IntFieldUpdateOperationsInput | number
   sha256?: Prisma.StringFieldUpdateOperationsInput | string
   storageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  qrProof?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   document?: Prisma.DocumentUpdateOneRequiredWithoutVersionsNestedInput
 }
@@ -662,6 +690,7 @@ export type DocumentVersionUncheckedUpdateWithoutAttestationInput = {
   size?: Prisma.IntFieldUpdateOperationsInput | number
   sha256?: Prisma.StringFieldUpdateOperationsInput | string
   storageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  qrProof?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   documentId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -674,6 +703,7 @@ export type DocumentVersionCreateManyDocumentInput = {
   size: number
   sha256: string
   storageKey?: string | null
+  qrProof?: string | null
   createdAt?: Date | string
 }
 
@@ -685,6 +715,7 @@ export type DocumentVersionUpdateWithoutDocumentInput = {
   size?: Prisma.IntFieldUpdateOperationsInput | number
   sha256?: Prisma.StringFieldUpdateOperationsInput | string
   storageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  qrProof?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   attestation?: Prisma.AttestationUpdateOneWithoutDocumentVersionNestedInput
 }
@@ -697,6 +728,7 @@ export type DocumentVersionUncheckedUpdateWithoutDocumentInput = {
   size?: Prisma.IntFieldUpdateOperationsInput | number
   sha256?: Prisma.StringFieldUpdateOperationsInput | string
   storageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  qrProof?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   attestation?: Prisma.AttestationUncheckedUpdateOneWithoutDocumentVersionNestedInput
 }
@@ -709,6 +741,7 @@ export type DocumentVersionUncheckedUpdateManyWithoutDocumentInput = {
   size?: Prisma.IntFieldUpdateOperationsInput | number
   sha256?: Prisma.StringFieldUpdateOperationsInput | string
   storageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  qrProof?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -722,6 +755,7 @@ export type DocumentVersionSelect<ExtArgs extends runtime.Types.Extensions.Inter
   size?: boolean
   sha256?: boolean
   storageKey?: boolean
+  qrProof?: boolean
   documentId?: boolean
   createdAt?: boolean
   document?: boolean | Prisma.DocumentDefaultArgs<ExtArgs>
@@ -736,6 +770,7 @@ export type DocumentVersionSelectCreateManyAndReturn<ExtArgs extends runtime.Typ
   size?: boolean
   sha256?: boolean
   storageKey?: boolean
+  qrProof?: boolean
   documentId?: boolean
   createdAt?: boolean
   document?: boolean | Prisma.DocumentDefaultArgs<ExtArgs>
@@ -749,6 +784,7 @@ export type DocumentVersionSelectUpdateManyAndReturn<ExtArgs extends runtime.Typ
   size?: boolean
   sha256?: boolean
   storageKey?: boolean
+  qrProof?: boolean
   documentId?: boolean
   createdAt?: boolean
   document?: boolean | Prisma.DocumentDefaultArgs<ExtArgs>
@@ -762,11 +798,12 @@ export type DocumentVersionSelectScalar = {
   size?: boolean
   sha256?: boolean
   storageKey?: boolean
+  qrProof?: boolean
   documentId?: boolean
   createdAt?: boolean
 }
 
-export type DocumentVersionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "version" | "filename" | "mimeType" | "size" | "sha256" | "storageKey" | "documentId" | "createdAt", ExtArgs["result"]["documentVersion"]>
+export type DocumentVersionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "version" | "filename" | "mimeType" | "size" | "sha256" | "storageKey" | "qrProof" | "documentId" | "createdAt", ExtArgs["result"]["documentVersion"]>
 export type DocumentVersionInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   document?: boolean | Prisma.DocumentDefaultArgs<ExtArgs>
   attestation?: boolean | Prisma.DocumentVersion$attestationArgs<ExtArgs>
@@ -792,6 +829,14 @@ export type $DocumentVersionPayload<ExtArgs extends runtime.Types.Extensions.Int
     size: number
     sha256: string
     storageKey: string | null
+    /**
+     * *
+     *    * QR Proof canónico emitido pela Vera
+     *    * para esta versão.
+     *    * null permite manter documentos legacy
+     *    * criados antes deste mecanismo.
+     */
+    qrProof: string | null
     documentId: string
     createdAt: Date
   }, ExtArgs["result"]["documentVersion"]>
@@ -1226,6 +1271,7 @@ export interface DocumentVersionFieldRefs {
   readonly size: Prisma.FieldRef<"DocumentVersion", 'Int'>
   readonly sha256: Prisma.FieldRef<"DocumentVersion", 'String'>
   readonly storageKey: Prisma.FieldRef<"DocumentVersion", 'String'>
+  readonly qrProof: Prisma.FieldRef<"DocumentVersion", 'String'>
   readonly documentId: Prisma.FieldRef<"DocumentVersion", 'String'>
   readonly createdAt: Prisma.FieldRef<"DocumentVersion", 'DateTime'>
 }

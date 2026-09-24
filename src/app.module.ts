@@ -1,22 +1,50 @@
-import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import {
+  Module,
+} from '@nestjs/common';
 
-import { AppController } from './app.controller.js';
+import {
+  ConfigModule,
+} from '@nestjs/config';
 
-import { PrismaModule } from './prisma/prisma.module.js';
-import { StorageModule } from './storage/storage.module.js';
-import { DocumentsModule } from './documents/documents.module.js';
-import { VerificationsModule } from './verifications/verifications.module.js';
+import {
+  AppController,
+} from './app.controller.js';
+
+import {
+  AuthModule,
+} from './auth/auth.module.js';
+
+import {
+  DocumentsModule,
+} from './documents/documents.module.js';
+
+import {
+  PrismaModule,
+} from './prisma/prisma.module.js';
+
+import {
+  StorageModule,
+} from './storage/storage.module.js';
+
+import {
+  VerificationsModule,
+} from './verifications/verifications.module.js';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
-      isGlobal: true,
+      isGlobal:
+        true,
     }),
 
     PrismaModule,
+
     StorageModule,
+
+    AuthModule,
+
     DocumentsModule,
+
     VerificationsModule,
   ],
 

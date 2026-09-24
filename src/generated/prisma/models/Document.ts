@@ -518,10 +518,6 @@ export type EnumDocumentStatusFieldUpdateOperationsInput = {
   set?: $Enums.DocumentStatus
 }
 
-export type NullableDateTimeFieldUpdateOperationsInput = {
-  set?: Date | string | null
-}
-
 export type EnumOriginalFileAccessFieldUpdateOperationsInput = {
   set?: $Enums.OriginalFileAccess
 }

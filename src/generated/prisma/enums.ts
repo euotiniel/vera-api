@@ -9,6 +9,22 @@
 * 🟢 You can import this file directly.
 */
 
+export const UserStatus = {
+  ACTIVE: 'ACTIVE',
+  SUSPENDED: 'SUSPENDED'
+} as const
+
+export type UserStatus = (typeof UserStatus)[keyof typeof UserStatus]
+
+
+export const SystemRole = {
+  USER: 'USER',
+  PLATFORM_ADMIN: 'PLATFORM_ADMIN'
+} as const
+
+export type SystemRole = (typeof SystemRole)[keyof typeof SystemRole]
+
+
 export const DocumentStatus = {
   PENDING: 'PENDING',
   VALID: 'VALID',

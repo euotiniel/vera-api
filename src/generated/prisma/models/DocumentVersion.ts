@@ -833,8 +833,8 @@ export type $DocumentVersionPayload<ExtArgs extends runtime.Types.Extensions.Int
      * *
      *    * QR Proof canónico emitido pela Vera
      *    * para esta versão.
-     *    * null permite manter documentos legacy
-     *    * criados antes deste mecanismo.
+     *    * null mantém compatibilidade com
+     *    * documentos legacy.
      */
     qrProof: string | null
     documentId: string

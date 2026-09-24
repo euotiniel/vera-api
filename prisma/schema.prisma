@@ -7,6 +7,28 @@ datasource db {
   provider = "postgresql"
 }
 
+/**
+ * ============================================================
+ * AUTH
+ * ============================================================
+ */
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+enum SystemRole {
+  USER
+  PLATFORM_ADMIN
+}
+
+/**
+ * ============================================================
+ * DOCUMENTS
+ * ============================================================
+ */
+
 enum DocumentStatus {
   PENDING
   VALID
@@ -26,6 +48,60 @@ enum OriginalFileAccess {
   PRIVATE
 }
 
+/**
+ * ============================================================
+ * USERS
+ * ============================================================
+ */
+
+model User {
+  id String @id @default(cuid())
+
+  email String @unique
+  name  String
+
+  passwordHash String
+
+  status     UserStatus @default(ACTIVE)
+  systemRole SystemRole @default(USER)
+
+  emailVerifiedAt DateTime?
+
+  sessions Session[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([systemRole])
+}
+
+model Session {
+  id String @id
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  refreshTokenHash String @unique
+
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  lastUsedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@index([revokedAt])
+}
+
+/**
+ * ============================================================
+ * ORGANIZATIONS
+ * ============================================================
+ */
+
 model Organization {
   id       String  @id @default(cuid())
   name     String
@@ -37,6 +113,12 @@ model Organization {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+/**
+ * ============================================================
+ * DOCUMENTS
+ * ============================================================
+ */
 
 model Document {
   id        String         @id @default(cuid())
@@ -74,8 +156,8 @@ model DocumentVersion {
   /**
    * QR Proof canónico emitido pela Vera
    * para esta versão.
-   * null permite manter documentos legacy
-   * criados antes deste mecanismo.
+   * null mantém compatibilidade com
+   * documentos legacy.
    */
   qrProof String? @unique
 
@@ -136,6 +218,12 @@ model DocumentLifecycleEvent {
   @@index([documentId, createdAt])
   @@index([previousEventHash])
 }
+
+/**
+ * ============================================================
+ * VERIFICATION AUDIT
+ * ============================================================
+ */
 
 model VerificationEvent {
   id String @id @default(cuid())

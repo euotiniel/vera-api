@@ -11,11 +11,17 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 
-import { FileInterceptor } from '@nestjs/platform-express';
+import {
+  FileInterceptor,
+} from '@nestjs/platform-express';
 
-import { VerificationsService } from './verifications.service.js';
+import {
+  VerificationsService,
+} from './verifications.service.js';
 
-import { QrVerificationService } from './qr-verification.service.js';
+import {
+  QrVerificationService,
+} from './qr-verification.service.js';
 
 @Controller('verifications')
 export class VerificationsController {
@@ -48,7 +54,9 @@ export class VerificationsController {
       {
         limits: {
           fileSize:
-            10 * 1024 * 1024,
+            10 *
+            1024 *
+            1024,
         },
       },
     ),
@@ -64,15 +72,15 @@ export class VerificationsController {
       );
     }
 
-    if (
-      file.mimetype !==
-      'application/pdf'
-    ) {
-      throw new BadRequestException(
-        'Apenas ficheiros PDF são aceites.',
-      );
-    }
-
+    /*
+     * Não verificamos file.mimetype.
+     *
+     * O MIME enviado pelo cliente
+     * não é uma fonte de confiança.
+     *
+     * Os próprios bytes serão
+     * verificados pelo serviço.
+     */
     return this.verificationsService
       .verifyFile(
         file,

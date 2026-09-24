@@ -31,12 +31,12 @@ export class PdfValidationService {
    * Actions que a Vera não permite
    * dentro de documentos registados.
    *
-   * Isto verifica objetos reais da
+   * Aqui analisamos objetos reais da
    * estrutura PDF, não palavras
    * encontradas no conteúdo visual.
    */
   private readonly forbiddenActionTypes =
-    new Set([
+    new Set<string>([
       '/JavaScript',
       '/Launch',
       '/SubmitForm',
@@ -46,9 +46,23 @@ export class PdfValidationService {
       '/Sound',
     ]);
 
-  async validate(
+  /*
+   * ============================================================
+   * BASIC SIGNATURE
+   * ============================================================
+   *
+   * Esta verificação é intencionalmente
+   * barata.
+   *
+   * Serve para endpoints como Exact Match,
+   * onde não precisamos interpretar todo
+   * o PDF antes de calcular o SHA-256.
+   */
+  assertPdfSignature(
     buffer: Buffer,
-  ): Promise<PdfValidationResult> {
+  ): {
+    version: string;
+  } {
     if (
       !Buffer.isBuffer(buffer) ||
       buffer.length === 0
@@ -68,11 +82,13 @@ export class PdfValidationService {
     }
 
     /*
-     * 1. Assinatura real do ficheiro.
+     * Não confiamos em:
      *
-     * Não confiamos no nome,
-     * extensão ou MIME declarado
-     * pelo cliente.
+     * - extensão
+     * - filename
+     * - Content-Type multipart
+     *
+     * Verificamos os próprios bytes.
      */
     const header =
       buffer
@@ -96,11 +112,33 @@ export class PdfValidationService {
       );
     }
 
-    const pdfVersion =
-      headerMatch[1];
+    return {
+      version:
+        headerMatch[1],
+    };
+  }
+
+  /*
+   * ============================================================
+   * FULL VALIDATION
+   * ============================================================
+   *
+   * Usado na admissão/registo de novos
+   * documentos.
+   */
+  async validate(
+    buffer: Buffer,
+  ): Promise<PdfValidationResult> {
+    const {
+      version:
+        pdfVersion,
+    } =
+      this.assertPdfSignature(
+        buffer,
+      );
 
     /*
-     * 2. Último %%EOF.
+     * Último marcador %%EOF.
      */
     const eofMarker =
       Buffer.from(
@@ -120,8 +158,8 @@ export class PdfValidationService {
     }
 
     /*
-     * Depois do último %%EOF só
-     * permitimos whitespace.
+     * Depois do último %%EOF
+     * permitimos apenas whitespace.
      */
     const trailingBytes =
       buffer.subarray(
@@ -145,9 +183,10 @@ export class PdfValidationService {
     }
 
     /*
-     * 3. Parsing estrutural.
+     * Parsing estrutural.
      */
     let pdf: PDFDocument;
+
     let pageCount: number;
 
     try {
@@ -182,7 +221,9 @@ export class PdfValidationService {
         index += 1
       ) {
         const page =
-          pdf.getPage(index);
+          pdf.getPage(
+            index,
+          );
 
         const width =
           page.getWidth();
@@ -223,8 +264,7 @@ export class PdfValidationService {
     }
 
     /*
-     * 4. Política estrutural
-     * de segurança.
+     * Política estrutural de segurança.
      *
      * Não procuramos palavras
      * nos bytes do documento.
@@ -250,6 +290,12 @@ export class PdfValidationService {
     };
   }
 
+  /*
+   * ============================================================
+   * STRUCTURAL SECURITY
+   * ============================================================
+   */
+
   private inspectDocumentStructure(
     pdf: PDFDocument,
   ): void {
@@ -265,8 +311,8 @@ export class PdfValidationService {
 
     const visit = (
       rawObject:
-        PDFObject |
-        undefined,
+        | PDFObject
+        | undefined,
 
       depth:
         number,
@@ -275,27 +321,24 @@ export class PdfValidationService {
         return;
       }
 
+      /*
+       * Defesa contra estruturas
+       * patologicamente profundas.
+       */
       if (depth > 128) {
         throw new BadRequestException(
           'O PDF possui uma estrutura interna excessivamente complexa.',
         );
       }
 
-      /*
-       * IMPORTANTE:
-       *
-       * lookup() pode devolver undefined.
-       *
-       * Por isso a variável precisa
-       * explicitamente aceitar:
-       *
-       * PDFObject | undefined
-       */
       let object:
-        PDFObject |
-        undefined =
+        | PDFObject
+        | undefined =
         rawObject;
 
+      /*
+       * Resolve referências indiretas.
+       */
       if (
         object instanceof
         PDFRef
@@ -333,11 +376,6 @@ export class PdfValidationService {
         }
       }
 
-      /*
-       * A partir daqui object já foi
-       * reduzido novamente para
-       * PDFObject.
-       */
       if (!object) {
         return;
       }
@@ -354,6 +392,10 @@ export class PdfValidationService {
         object,
       );
 
+      /*
+       * Dictionaries podem conter
+       * actions, annotations, XFA etc.
+       */
       if (
         object instanceof
         PDFDict
@@ -376,6 +418,9 @@ export class PdfValidationService {
         return;
       }
 
+      /*
+       * Percorre arrays estruturais.
+       */
       if (
         object instanceof
         PDFArray
@@ -396,17 +441,18 @@ export class PdfValidationService {
       }
 
       /*
-       * Não analisamos texto visual
-       * como se fosse código.
+       * Não transformamos streams,
+       * strings ou texto visual em
+       * "código".
        *
-       * Portanto um livro pode conter:
+       * Portanto um livro pode conter
+       * literalmente:
        *
        * /JavaScript
        * /OpenAction
        * /Launch
        *
-       * no conteúdo da página sem
-       * ser automaticamente rejeitado.
+       * sem ser rejeitado por isso.
        */
     };
 
@@ -428,11 +474,9 @@ export class PdfValidationService {
      * - destination
      * - action dictionary
      *
-     * Destinations normais são
-     * permitidas.
+     * Destinations normais podem existir.
      *
-     * Actions automáticas são
-     * analisadas.
+     * Uma Action automática é rejeitada.
      */
     const openAction =
       this.resolveObject(
@@ -468,7 +512,9 @@ export class PdfValidationService {
      */
     if (
       catalog.has(
-        PDFName.of('AA'),
+        PDFName.of(
+          'AA',
+        ),
       )
     ) {
       throw new BadRequestException(
@@ -550,6 +596,7 @@ export class PdfValidationService {
 
   private inspectDictionary(
     pdf: PDFDocument,
+
     dictionary: PDFDict,
   ): void {
     /*
@@ -590,7 +637,9 @@ export class PdfValidationService {
      */
     if (
       dictionary.has(
-        PDFName.of('AA'),
+        PDFName.of(
+          'AA',
+        ),
       )
     ) {
       throw new BadRequestException(
@@ -603,7 +652,9 @@ export class PdfValidationService {
      */
     if (
       dictionary.has(
-        PDFName.of('XFA'),
+        PDFName.of(
+          'XFA',
+        ),
       )
     ) {
       throw new BadRequestException(
@@ -654,7 +705,9 @@ export class PdfValidationService {
 
   private getDictionaryName(
     pdf: PDFDocument,
+
     dictionary: PDFDict,
+
     key: string,
   ): string | null {
     const value =
@@ -662,7 +715,9 @@ export class PdfValidationService {
         pdf,
 
         dictionary.get(
-          PDFName.of(key),
+          PDFName.of(
+            key,
+          ),
         ),
       );
 
@@ -680,11 +735,11 @@ export class PdfValidationService {
     pdf: PDFDocument,
 
     object:
-      PDFObject |
-      undefined,
+      | PDFObject
+      | undefined,
   ):
-    PDFObject |
-    undefined {
+    | PDFObject
+    | undefined {
     if (!object) {
       return undefined;
     }

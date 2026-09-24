@@ -1,13 +1,34 @@
-import { Injectable } from '@nestjs/common';
-import { createHash } from 'node:crypto';
+import {
+  Injectable,
+} from '@nestjs/common';
 
-import { PrismaService } from '../prisma/prisma.service.js';
-import { StorageService } from '../storage/storage.service.js';
+import {
+  createHash,
+} from 'node:crypto';
 
-import { AttestationService } from '../trust/attestation.service.js';
-import { LifecycleService } from '../trust/lifecycle.service.js';
+import {
+  PdfValidationService,
+} from '../documents/pdf-validation.service.js';
 
-import { isValidPublicId } from '../trust/public-id.js';
+import {
+  PrismaService,
+} from '../prisma/prisma.service.js';
+
+import {
+  StorageService,
+} from '../storage/storage.service.js';
+
+import {
+  AttestationService,
+} from '../trust/attestation.service.js';
+
+import {
+  LifecycleService,
+} from '../trust/lifecycle.service.js';
+
+import {
+  isValidPublicId,
+} from '../trust/public-id.js';
 
 import {
   type DocumentStatusValue,
@@ -20,89 +41,59 @@ type OriginalFileAccessValue =
   | 'PRIVATE';
 
 interface AttestationV2Payload {
-  schema: 'vera.attestation.v2';
+  schema:
+    'vera.attestation.v2';
 
   document: {
     publicId: string;
+
     title: string;
-    type: string | null;
-    reference: string | null;
-    issuedAt: string | null;
+
+    type:
+      | string
+      | null;
+
+    reference:
+      | string
+      | null;
+
+    issuedAt:
+      | string
+      | null;
   };
 
   issuer: {
     id: string;
+
     slug: string;
+
     name: string;
   };
 
   version: {
     number: number;
+
     filename: string;
+
     mimeType: string;
+
     size: number;
+
     sha256: string;
+
     registeredAt: string;
   };
 }
 
 interface LifecyclePayload {
-  schema: 'vera.lifecycle.v1';
+  schema:
+    'vera.lifecycle.v1';
 
-  documentPublicId: string;
+  documentPublicId:
+    string;
 
-  sequence: number;
-
-  type:
-    | 'REGISTERED'
-    | 'STATUS_CHANGED';
-
-  fromStatus:
-    | DocumentStatusValue
-    | null;
-
-  toStatus:
-    DocumentStatusValue;
-
-  reason: string | null;
-
-  previousEventHash:
-    string | null;
-
-  occurredAt: string;
-}
-
-interface AttestationInput {
-  payload: string;
-  signature: string;
-  algorithm: string;
-  keyId: string;
-}
-
-interface VersionInput {
-  version: number;
-
-  filename: string;
-
-  mimeType: string;
-
-  size: number;
-
-  sha256: string;
-
-  storageKey:
-    | string
-    | null;
-
-  createdAt: Date;
-
-  attestation:
-    | AttestationInput
-    | null;
-}
-
-interface LifecycleEventInput {
-  sequence: number;
+  sequence:
+    number;
 
   type:
     | 'REGISTERED'
@@ -123,17 +114,92 @@ interface LifecycleEventInput {
     | string
     | null;
 
-  payload: string;
+  occurredAt:
+    string;
+}
 
-  signature: string;
+interface AttestationInput {
+  payload:
+    string;
 
-  algorithm: string;
+  signature:
+    string;
 
-  keyId: string;
+  algorithm:
+    string;
 
-  eventHash: string;
+  keyId:
+    string;
+}
 
-  createdAt: Date;
+interface VersionInput {
+  version:
+    number;
+
+  filename:
+    string;
+
+  mimeType:
+    string;
+
+  size:
+    number;
+
+  sha256:
+    string;
+
+  storageKey:
+    | string
+    | null;
+
+  createdAt:
+    Date;
+
+  attestation:
+    | AttestationInput
+    | null;
+}
+
+interface LifecycleEventInput {
+  sequence:
+    number;
+
+  type:
+    | 'REGISTERED'
+    | 'STATUS_CHANGED';
+
+  fromStatus:
+    | DocumentStatusValue
+    | null;
+
+  toStatus:
+    DocumentStatusValue;
+
+  reason:
+    | string
+    | null;
+
+  previousEventHash:
+    | string
+    | null;
+
+  payload:
+    string;
+
+  signature:
+    string;
+
+  algorithm:
+    string;
+
+  keyId:
+    string;
+
+  eventHash:
+    string;
+
+  createdAt:
+    Date;
 }
 
 @Injectable()
@@ -153,7 +219,16 @@ export class VerificationsService {
 
     private readonly storageService:
       StorageService,
+
+    private readonly pdfValidationService:
+      PdfValidationService,
   ) {}
+
+  /*
+   * ============================================================
+   * VERIFY BY PUBLIC ID
+   * ============================================================
+   */
 
   async verifyByPublicId(
     publicId: string,
@@ -164,8 +239,8 @@ export class VerificationsService {
         .toUpperCase();
 
     /*
-     * Checksum antes de qualquer consulta
-     * à base de dados.
+     * Checksum antes de qualquer
+     * consulta à base de dados.
      */
     const idChecksumValid =
       isValidPublicId(
@@ -326,9 +401,12 @@ export class VerificationsService {
             version.attestation,
           )
         : {
-            valid: false,
+            valid:
+              false,
+
             signatureValid:
               false,
+
             claimsMatch:
               false,
           };
@@ -555,16 +633,53 @@ export class VerificationsService {
     };
   }
 
+  /*
+   * ============================================================
+   * VERIFY BY FILE
+   * ============================================================
+   */
+
   async verifyFile(
-    file: Express.Multer.File,
+    file:
+      Express.Multer.File,
   ) {
     /*
-     * Hash dos bytes recebidos.
+     * Não confiamos no MIME declarado
+     * pelo cliente.
+     *
+     * Exact Match não precisa executar
+     * todo o parser estrutural.
+     *
+     * Apenas confirmamos que os bytes
+     * se apresentam como PDF antes de
+     * calcular o SHA-256.
+     */
+    this.pdfValidationService
+      .assertPdfSignature(
+        file.buffer,
+      );
+
+    /*
+     * Hash dos bytes EXATAMENTE como
+     * foram recebidos.
+     *
+     * Não:
+     *
+     * - regravamos
+     * - sanitizamos
+     * - normalizamos
+     * - alteramos o PDF
      */
     const sha256 =
-      createHash('sha256')
-        .update(file.buffer)
-        .digest('hex');
+      createHash(
+        'sha256',
+      )
+        .update(
+          file.buffer,
+        )
+        .digest(
+          'hex',
+        );
 
     /*
      * sha256 é unique em
@@ -599,8 +714,8 @@ export class VerificationsService {
         });
 
     /*
-     * Nenhum conjunto idêntico de bytes
-     * registado.
+     * Nenhum conjunto idêntico
+     * de bytes registado.
      */
     if (!version) {
       await this.prisma
@@ -897,26 +1012,54 @@ export class VerificationsService {
 
   private evaluateAttestation(
     document: {
-      publicId: string;
-      title: string;
-      type: string | null;
-      reference: string | null;
-      issuedAt: Date | null;
+      publicId:
+        string;
+
+      title:
+        string;
+
+      type:
+        | string
+        | null;
+
+      reference:
+        | string
+        | null;
+
+      issuedAt:
+        | Date
+        | null;
     },
 
     organization: {
-      id: string;
-      slug: string;
-      name: string;
+      id:
+        string;
+
+      slug:
+        string;
+
+      name:
+        string;
     },
 
     version: {
-      version: number;
-      filename: string;
-      mimeType: string;
-      size: number;
-      sha256: string;
-      createdAt: Date;
+      version:
+        number;
+
+      filename:
+        string;
+
+      mimeType:
+        string;
+
+      size:
+        number;
+
+      sha256:
+        string;
+
+      createdAt:
+        Date;
     },
 
     attestation:
@@ -963,7 +1106,8 @@ export class VerificationsService {
       const payload =
         JSON.parse(
           attestation.payload,
-        ) as AttestationV2Payload;
+        ) as
+          AttestationV2Payload;
 
       claimsMatch =
         payload.schema ===
@@ -1038,14 +1182,15 @@ export class VerificationsService {
    */
 
   private async evaluateOriginalFile(
-    versions: VersionInput[],
+    versions:
+      VersionInput[],
   ) {
     /*
-     * PUBLIC_ID sempre usa a versão
-     * mais recente.
+     * PUBLIC_ID sempre usa
+     * a versão mais recente.
      *
-     * As versões já chegam ordenadas
-     * desc pelo Prisma.
+     * As versões já chegam
+     * ordenadas desc pelo Prisma.
      */
     const version =
       versions[0];
@@ -1079,11 +1224,15 @@ export class VerificationsService {
        * da verificação.
        */
       const storedSha256 =
-        createHash('sha256')
+        createHash(
+          'sha256',
+        )
           .update(
             storedFile.body,
           )
-          .digest('hex');
+          .digest(
+            'hex',
+          );
 
       const integrityValid =
         storedSha256 ===
@@ -1100,7 +1249,8 @@ export class VerificationsService {
       };
     } catch {
       /*
-       * Storage fora do ar, objecto apagado,
+       * Storage fora do ar,
+       * objecto apagado,
        * key inexistente etc.
        */
       return {
@@ -1120,7 +1270,8 @@ export class VerificationsService {
    */
 
   private evaluateLifecycle(
-    documentPublicId: string,
+    documentPublicId:
+      string,
 
     databaseStatus:
       DocumentStatusValue,
@@ -1129,10 +1280,12 @@ export class VerificationsService {
       LifecycleEventInput[],
   ) {
     /*
-     * Documento sem lifecycle não satisfaz
-     * a política atual.
+     * Documento sem lifecycle
+     * não satisfaz a política atual.
      */
-    if (events.length === 0) {
+    if (
+      events.length === 0
+    ) {
       return {
         valid:
           false,
@@ -1154,8 +1307,8 @@ export class VerificationsService {
 
         derivedStatus:
           null as
-            DocumentStatusValue |
-            null,
+            | DocumentStatusValue
+            | null,
 
         databaseStatusMatches:
           false,
@@ -1192,6 +1345,7 @@ export class VerificationsService {
 
       /*
        * Sequência monotónica:
+       *
        * 1, 2, 3, ...
        */
       const expectedSequence =
@@ -1232,16 +1386,21 @@ export class VerificationsService {
           false;
       }
 
-      if (!signatureValid) {
+      if (
+        !signatureValid
+      ) {
         signaturesValid =
           false;
       }
 
       /*
-       * Hash do envelope do evento.
+       * Hash do envelope
+       * do evento.
        */
       let calculatedEventHash:
-        string | null = null;
+        | string
+        | null =
+        null;
 
       try {
         calculatedEventHash =
@@ -1274,14 +1433,15 @@ export class VerificationsService {
 
       /*
        * Claims assinadas precisam
-       * corresponder exatamente ao
-       * registo materializado.
+       * corresponder exatamente
+       * ao registo materializado.
        */
       try {
         const payload =
           JSON.parse(
             event.payload,
-          ) as LifecyclePayload;
+          ) as
+            LifecyclePayload;
 
         const currentClaimsMatch =
           payload.schema ===
@@ -1312,7 +1472,9 @@ export class VerificationsService {
             event.createdAt
               .toISOString();
 
-        if (!currentClaimsMatch) {
+        if (
+          !currentClaimsMatch
+        ) {
           claimsMatch =
             false;
         }
@@ -1324,7 +1486,9 @@ export class VerificationsService {
       /*
        * Primeiro evento.
        */
-      if (index === 0) {
+      if (
+        index === 0
+      ) {
         if (
           event.sequence !== 1 ||
           event.type !==
@@ -1343,7 +1507,8 @@ export class VerificationsService {
 
       /*
        * Eventos posteriores precisam
-       * encadear corretamente o anterior.
+       * encadear corretamente
+       * o anterior.
        */
       if (!previousEvent) {
         chainLinksValid =
@@ -1389,13 +1554,13 @@ export class VerificationsService {
      * TODA a cadeia é válida.
      */
     const derivedStatus:
-      DocumentStatusValue |
-      null =
-        valid
-          ? events[
-              events.length - 1
-            ].toStatus
-          : null;
+      | DocumentStatusValue
+      | null =
+      valid
+        ? events[
+            events.length - 1
+          ].toStatus
+        : null;
 
     const databaseStatusMatches =
       valid &&

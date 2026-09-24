@@ -10,10 +10,17 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 
-import { FileInterceptor } from '@nestjs/platform-express';
+import {
+  FileInterceptor,
+} from '@nestjs/platform-express';
 
-import { DocumentsService } from './documents.service.js';
-import { DocumentQrService } from './document-qr.service.js';
+import {
+  DocumentsService,
+} from './documents.service.js';
+
+import {
+  DocumentQrService,
+} from './document-qr.service.js';
 
 @Controller('documents')
 export class DocumentsController {
@@ -32,7 +39,9 @@ export class DocumentsController {
       {
         limits: {
           fileSize:
-            10 * 1024 * 1024,
+            10 *
+            1024 *
+            1024,
         },
       },
     ),
@@ -61,15 +70,6 @@ export class DocumentsController {
     if (!file) {
       throw new BadRequestException(
         'O ficheiro PDF é obrigatório.',
-      );
-    }
-
-    if (
-      file.mimetype !==
-        'application/pdf'
-    ) {
-      throw new BadRequestException(
-        'Apenas ficheiros PDF são aceites.',
       );
     }
 

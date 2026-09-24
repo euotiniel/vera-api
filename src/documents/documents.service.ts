@@ -16,6 +16,9 @@ import { AttestationService } from '../trust/attestation.service.js';
 import { LifecycleService } from '../trust/lifecycle.service.js';
 import { QrProofService } from '../trust/qr-proof.service.js';
 import { generatePublicId } from '../trust/public-id.js';
+import {
+  PdfValidationService,
+} from './pdf-validation.service.js';
 
 interface CreateDocumentInput {
   file:
@@ -109,6 +112,9 @@ export class DocumentsService {
 
     private readonly qrProofService:
       QrProofService,
+    
+    private readonly pdfValidationService:
+      PdfValidationService,
   ) {}
 
   async create(
@@ -122,6 +128,12 @@ export class DocumentsService {
       type,
       reference,
     } = input;
+
+    const validatedPdf =
+  await this.pdfValidationService
+    .validate(
+      file.buffer,
+    );
 
     const organization =
       await this.prisma
@@ -192,7 +204,7 @@ export class DocumentsService {
           file.buffer,
 
         contentType:
-          file.mimetype,
+            validatedPdf.mimeType,
       });
 
     try {
@@ -216,7 +228,7 @@ export class DocumentsService {
         storedSha256 !==
           sha256 ||
         storedFile.body.length !==
-          file.size
+  validatedPdf.size
       ) {
         throw new InternalServerErrorException(
           'A integridade do ficheiro armazenado não pôde ser confirmada.',
@@ -279,10 +291,10 @@ export class DocumentsService {
                         file.originalname,
 
                       mimeType:
-                        file.mimetype,
+  validatedPdf.mimeType,
 
-                      size:
-                        file.size,
+size:
+  validatedPdf.size,
 
                       sha256,
 

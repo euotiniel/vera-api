@@ -1,25 +1,11 @@
 import {
-  BadRequestException,
-  Body,
   Controller,
   Get,
   Param,
-  Post,
   StreamableFile,
-  UploadedFile,
-  UseInterceptors,
 } from '@nestjs/common';
 
 import {
-  FileInterceptor,
-} from '@nestjs/platform-express';
-
-import {
-  ApiBadRequestResponse,
-  ApiBody,
-  ApiConflictResponse,
-  ApiConsumes,
-  ApiCreatedResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
@@ -46,308 +32,6 @@ export class DocumentsController {
     private readonly documentQrService:
       DocumentQrService,
   ) {}
-
-  /*
-   * ============================================================
-   * REGISTER DOCUMENT
-   * ============================================================
-   */
-
-  @Post()
-  @ApiOperation({
-    summary:
-      'Registar documento',
-
-    description:
-      `
-Regista uma nova versão documental na Vera.
-
-O ficheiro é validado pelos seus próprios bytes. O MIME enviado pelo
-cliente não é utilizado como fonte de confiança.
-
-Durante o registo a Vera executa, entre outras verificações:
-
-- validação estrutural do PDF;
-- validação de conteúdo ativo;
-- SHA-256 dos bytes originais;
-- armazenamento do original;
-- verificação read-after-write;
-- criação da Attestation;
-- criação do QR Proof;
-- criação do primeiro evento Lifecycle.
-
-O ficheiro original não é regravado nem normalizado antes do hash.
-      `,
-  })
-  @ApiConsumes(
-    'multipart/form-data',
-  )
-  @ApiBody({
-    schema: {
-      type:
-        'object',
-
-      required: [
-        'file',
-        'organizationSlug',
-        'title',
-      ],
-
-      properties: {
-        file: {
-          type:
-            'string',
-
-          format:
-            'binary',
-
-          description:
-            'Documento PDF original. Máximo: 10 MB.',
-        },
-
-        organizationSlug: {
-          type:
-            'string',
-
-          example:
-            'aeucan',
-
-          description:
-            'Slug da organização emissora.',
-        },
-
-        title: {
-          type:
-            'string',
-
-          example:
-            'Pedido de parceria',
-
-          description:
-            'Título público do documento.',
-        },
-
-        type: {
-          type:
-            'string',
-
-          example:
-            'Ofício',
-
-          nullable:
-            true,
-        },
-
-        reference: {
-          type:
-            'string',
-
-          example:
-            '0054/2026',
-
-          nullable:
-            true,
-        },
-      },
-    },
-  })
-  @ApiCreatedResponse({
-    description:
-      'Documento registado com sucesso.',
-
-    schema: {
-      example: {
-        id:
-          'cmu_example',
-
-        publicId:
-          'VRA-M4WN-YTA4-T2YK-JT0V-RH',
-
-        title:
-          'Pedido de parceria',
-
-        type:
-          'Ofício',
-
-        reference:
-          '0054/2026',
-
-        status:
-          'VALID',
-
-        issuedAt:
-          '2026-09-24T09:09:07.428Z',
-
-        organization: {
-          name:
-            'Associação dos Estudantes da Universidade Católica de Angola',
-
-          slug:
-            'aeucan',
-
-          verified:
-            true,
-        },
-
-        originalFile: {
-          available:
-            true,
-
-          access:
-            'PUBLIC',
-        },
-
-        version: {
-          version:
-            1,
-
-          filename:
-            'pedido-parceria.pdf',
-
-          mimeType:
-            'application/pdf',
-
-          size:
-            921,
-
-          sha256:
-            '93d24c82578fc7c525b00ad5c32eb4d8ccc3517f1ce13ee794d031a5357c03d5',
-
-          registeredAt:
-            '2026-09-24T09:09:07.428Z',
-        },
-
-        qr: {
-          available:
-            true,
-
-          schema:
-            'vera.qr.v2',
-
-          algorithm:
-            'Ed25519',
-
-          keyId:
-            'vera-dev-2026-02',
-        },
-
-        attestation: {
-          schema:
-            'vera.attestation.v2',
-
-          algorithm:
-            'Ed25519',
-
-          keyId:
-            'vera-dev-2026-02',
-
-          signature:
-            'Base64URLSignature...',
-
-          createdAt:
-            '2026-09-24T09:09:07.428Z',
-        },
-
-        lifecycle: {
-          sequence:
-            1,
-
-          type:
-            'REGISTERED',
-
-          fromStatus:
-            null,
-
-          toStatus:
-            'VALID',
-
-          previousEventHash:
-            null,
-
-          eventHash:
-            '3bbb003883cd...',
-
-          algorithm:
-            'Ed25519',
-
-          keyId:
-            'vera-dev-2026-02',
-
-          createdAt:
-            '2026-09-24T09:09:07.428Z',
-        },
-      },
-    },
-  })
-  @ApiBadRequestResponse({
-    description:
-      'PDF inválido, campos obrigatórios ausentes ou documento não permitido pela política PDF.',
-  })
-  @ApiConflictResponse({
-    description:
-      'Os mesmos bytes já estão registados na Vera.',
-  })
-  @UseInterceptors(
-    FileInterceptor(
-      'file',
-      {
-        limits: {
-          fileSize:
-            10 *
-            1024 *
-            1024,
-        },
-      },
-    ),
-  )
-  async create(
-    @UploadedFile()
-    file:
-      Express.Multer.File,
-
-    @Body('organizationSlug')
-    organizationSlug:
-      string,
-
-    @Body('title')
-    title:
-      string,
-
-    @Body('type')
-    type?:
-      string,
-
-    @Body('reference')
-    reference?:
-      string,
-  ) {
-    if (!file) {
-      throw new BadRequestException(
-        'O ficheiro PDF é obrigatório.',
-      );
-    }
-
-    if (!organizationSlug) {
-      throw new BadRequestException(
-        'A organização é obrigatória.',
-      );
-    }
-
-    if (!title) {
-      throw new BadRequestException(
-        'O título do documento é obrigatório.',
-      );
-    }
-
-    return this.documentsService
-      .create({
-        file,
-        organizationSlug,
-        title,
-        type,
-        reference,
-      });
-  }
 
   /*
    * ============================================================
@@ -384,6 +68,9 @@ O ficheiro original não é regravado nem normalizado antes do hash.
         publicId:
           'VRA-M4WN-YTA4-T2YK-JT0V-RH',
 
+        version:
+          1,
+
         schema:
           'vera.qr.v2',
 
@@ -395,6 +82,9 @@ O ficheiro original não é regravado nem normalizado antes do hash.
 
         proof:
           'vqr2.eyJ0eXAiOiJWUVI...',
+
+        verificationUrl:
+          'http://localhost:3000/verify?proof=vqr2...',
       },
     },
   })
@@ -403,7 +93,9 @@ O ficheiro original não é regravado nem normalizado antes do hash.
       'Documento ou QR Proof não encontrado.',
   })
   async getQrProof(
-    @Param('publicId')
+    @Param(
+      'publicId',
+    )
     publicId:
       string,
   ) {
@@ -456,7 +148,9 @@ O ficheiro original não é regravado nem normalizado antes do hash.
       'Documento ou QR Proof não encontrado.',
   })
   async getQrImage(
-    @Param('publicId')
+    @Param(
+      'publicId',
+    )
     publicId:
       string,
   ) {
@@ -529,7 +223,9 @@ Antes de servir o ficheiro, a Vera verifica a integridade dos bytes armazenados.
       'Documento ou ficheiro original não encontrado.',
   })
   async getOriginalFile(
-    @Param('publicId')
+    @Param(
+      'publicId',
+    )
     publicId:
       string,
   ) {
@@ -636,7 +332,9 @@ Antes de servir o ficheiro, a Vera verifica a integridade dos bytes armazenados.
       'Documento não encontrado.',
   })
   async findByPublicId(
-    @Param('publicId')
+    @Param(
+      'publicId',
+    )
     publicId:
       string,
   ) {

@@ -9,10 +9,9 @@ import {
   PrismaService,
 } from '../prisma/prisma.service.js';
 
-export type OrganizationRoleValue =
-  | 'CREATOR'
-  | 'REVIEWER'
-  | 'APPROVER';
+import type {
+  OrganizationRoleValue,
+} from './organization-role.types.js';
 
 @Injectable()
 export class MembershipsService {
@@ -105,11 +104,13 @@ export class MembershipsService {
     }
 
     const existingMembership =
-      await this.prisma.organizationMember
+      await this.prisma
+        .organizationMember
         .findUnique({
           where: {
             organizationId_userId: {
               organizationId,
+
               userId:
                 input.userId,
             },
@@ -122,7 +123,8 @@ export class MembershipsService {
       );
     }
 
-    return this.prisma.organizationMember
+    return this.prisma
+      .organizationMember
       .create({
         data: {
           organizationId,
@@ -206,7 +208,8 @@ export class MembershipsService {
       );
     }
 
-    return this.prisma.organizationMember
+    return this.prisma
+      .organizationMember
       .findMany({
         where: {
           organizationId,
@@ -263,7 +266,8 @@ export class MembershipsService {
       OrganizationRoleValue,
   ) {
     const membership =
-      await this.prisma.organizationMember
+      await this.prisma
+        .organizationMember
         .findUnique({
           where: {
             organizationId_userId: {
@@ -284,7 +288,8 @@ export class MembershipsService {
       );
     }
 
-    return this.prisma.organizationMember
+    return this.prisma
+      .organizationMember
       .update({
         where: {
           organizationId_userId: {
@@ -353,7 +358,8 @@ export class MembershipsService {
       string,
   ) {
     const membership =
-      await this.prisma.organizationMember
+      await this.prisma
+        .organizationMember
         .findUnique({
           where: {
             organizationId_userId: {
@@ -374,7 +380,8 @@ export class MembershipsService {
       );
     }
 
-    await this.prisma.organizationMember
+    await this.prisma
+      .organizationMember
       .delete({
         where: {
           organizationId_userId: {
@@ -397,7 +404,8 @@ export class MembershipsService {
     userId:
       string,
   ) {
-    return this.prisma.organizationMember
+    return this.prisma
+      .organizationMember
       .findUnique({
         where: {
           organizationId_userId: {

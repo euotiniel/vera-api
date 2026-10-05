@@ -10,6 +10,10 @@ import {
   MembershipsService,
 } from './memberships.service.js';
 
+import {
+  OrganizationRoleGuard,
+} from './organization-role.guard.js';
+
 @Module({
   imports: [
     PrismaModule,
@@ -17,10 +21,14 @@ import {
 
   providers: [
     MembershipsService,
+
+    OrganizationRoleGuard,
   ],
 
   exports: [
     MembershipsService,
+
+    OrganizationRoleGuard,
   ],
 })
 export class MembershipsModule {}

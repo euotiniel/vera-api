@@ -3,41 +3,16 @@ import {
   ConflictException,
   Injectable,
   InternalServerErrorException,
-  Logger,
   NotFoundException,
 } from '@nestjs/common';
 
 import {
-  createHash,
-} from 'node:crypto';
-
-import {
-  PdfValidationService,
-} from '../documents/pdf-validation.service.js';
+  DocumentIssuanceService,
+} from '../documents/document-issuance.service.js';
 
 import {
   PrismaService,
 } from '../prisma/prisma.service.js';
-
-import {
-  StorageService,
-} from '../storage/storage.service.js';
-
-import {
-  AttestationService,
-} from '../trust/attestation.service.js';
-
-import {
-  LifecycleService,
-} from '../trust/lifecycle.service.js';
-
-import {
-  QrProofService,
-} from '../trust/qr-proof.service.js';
-
-import {
-  generatePublicId,
-} from '../trust/public-id.js';
 
 interface DecideApprovalInput {
   organizationId:
@@ -59,29 +34,12 @@ interface DecideApprovalInput {
 
 @Injectable()
 export class SubmissionApprovalService {
-  private readonly logger =
-    new Logger(
-      SubmissionApprovalService.name,
-    );
-
   constructor(
     private readonly prisma:
       PrismaService,
 
-    private readonly storageService:
-      StorageService,
-
-    private readonly pdfValidationService:
-      PdfValidationService,
-
-    private readonly attestationService:
-      AttestationService,
-
-    private readonly lifecycleService:
-      LifecycleService,
-
-    private readonly qrProofService:
-      QrProofService,
+    private readonly documentIssuanceService:
+      DocumentIssuanceService,
   ) {}
 
   async listPendingApproval(
@@ -293,149 +251,97 @@ export class SubmissionApprovalService {
       );
     }
 
-    const sourceFile =
-      await this.storageService
-        .getFile(
-          submission.storageKey,
-        );
-
-    const sourceSha256 =
-      createHash(
-        'sha256',
-      )
-        .update(
-          sourceFile.body,
-        )
-        .digest(
-          'hex',
-        );
-
-    if (
-      sourceSha256 !==
-        submission.sha256 ||
-      sourceFile.body.length !==
-        submission.size
-    ) {
-      throw new InternalServerErrorException(
-        'O ficheiro armazenado da submissão não corresponde ao original admitido.',
-      );
-    }
-
     /*
-     * Defesa adicional antes da emissão.
+     * O DocumentIssuanceService:
      *
-     * Mesmo tendo sido validado no upload,
-     * o PDF é novamente interpretado antes
-     * de se tornar um documento oficial.
+     * - relê o ficheiro submetido;
+     * - confirma SHA-256 e tamanho;
+     * - valida novamente o PDF;
+     * - verifica duplicação oficial;
+     * - cria e valida a cópia no namespace
+     *   oficial do storage.
      */
-    const validatedPdf =
-      await this.pdfValidationService
-        .validate(
-          sourceFile.body,
-        );
+    const prepared =
+      await this
+        .documentIssuanceService
+        .prepareInitialDocument({
+          sourceStorageKey:
+            submission.storageKey,
 
-    const existingVersion =
-      await this.prisma
-        .documentVersion
-        .findUnique({
-          where: {
-            sha256:
-              submission.sha256,
-          },
+          expectedSha256:
+            submission.sha256,
 
-          select: {
-            id:
-              true,
-
-            documentId:
-              true,
-          },
+          expectedSize:
+            submission.size,
         });
 
-    if (existingVersion) {
-      throw new ConflictException(
-        'Estes bytes já estão registados como documento oficial na Vera.',
-      );
-    }
-
-    const publicId =
-      generatePublicId();
-
-    const versionNumber =
-      1;
-
-    const registeredAt =
-      new Date();
-
-    const officialStorageKey =
-      this.storageService
-        .buildDocumentKey(
-          publicId,
-          versionNumber,
-        );
-
-    /*
-     * O ficheiro submetido permanece
-     * preservado no espaço de submissions.
-     *
-     * Criamos uma cópia separada no
-     * namespace oficial de documents.
-     */
-    await this.storageService
-      .putFile({
-        key:
-          officialStorageKey,
-
-        body:
-          sourceFile.body,
-
-        contentType:
-          validatedPdf.mimeType,
-      });
+    let issuanceResult:
+      Awaited<
+        ReturnType<
+          DocumentIssuanceService[
+            'createInitialDocument'
+          ]
+        >
+      >;
 
     try {
-      const officialStoredFile =
-        await this.storageService
-          .getFile(
-            officialStorageKey,
-          );
-
-      const officialSha256 =
-        createHash(
-          'sha256',
-        )
-          .update(
-            officialStoredFile.body,
-          )
-          .digest(
-            'hex',
-          );
-
-      if (
-        officialSha256 !==
-          submission.sha256 ||
-        officialStoredFile
-          .body.length !==
-          submission.size
-      ) {
-        throw new InternalServerErrorException(
-          'A integridade da cópia oficial do documento não pôde ser confirmada.',
-        );
-      }
-
-      const result =
+      issuanceResult =
         await this.prisma
           .$transaction(
             async (
               tx,
             ) => {
               /*
-               * Esta atualização funciona
-               * também como proteção contra
-               * duas aprovações concorrentes.
+               * Revalidamos o issuer dentro
+               * da própria transaction.
+               */
+              const organization =
+                await tx.organization
+                  .findUnique({
+                    where: {
+                      id:
+                        submission
+                          .organizationId,
+                    },
+
+                    select: {
+                      id:
+                        true,
+
+                      name:
+                        true,
+
+                      slug:
+                        true,
+
+                      verified:
+                        true,
+                    },
+                  });
+
+              if (
+                !organization
+              ) {
+                throw new NotFoundException(
+                  'Organização não encontrada.',
+                );
+              }
+
+              if (
+                !organization
+                  .verified
+              ) {
+                throw new ConflictException(
+                  'A organização deixou de estar verificada e não pode emitir documentos.',
+                );
+              }
+
+              /*
+               * Esta transição funciona como
+               * lock lógico otimista.
                *
-               * Se outra operação já tiver
-               * mudado o estado, count = 0.
+               * Apenas uma operação pode
+               * consumir PENDING_APPROVAL.
                */
               const transition =
                 await tx
@@ -467,15 +373,30 @@ export class SubmissionApprovalService {
                 );
               }
 
-              const issuedAt =
-                submission.issuedAt ??
-                registeredAt;
+              /*
+               * Document, Version,
+               * Attestation, QR e Lifecycle
+               * usam exatamente esta mesma
+               * transaction PostgreSQL.
+               */
+              const issuance =
+                await this
+                  .documentIssuanceService
+                  .createInitialDocument(
+                    tx,
+                    {
+                      prepared,
 
-              const document =
-                await tx.document
-                  .create({
-                    data: {
-                      publicId,
+                      organization: {
+                        id:
+                          organization.id,
+
+                        name:
+                          organization.name,
+
+                        slug:
+                          organization.slug,
+                      },
 
                       title:
                         submission.title,
@@ -486,292 +407,38 @@ export class SubmissionApprovalService {
                       reference:
                         submission.reference,
 
-                      status:
-                        'VALID',
-
-                      issuedAt,
+                      issuedAt:
+                        submission.issuedAt,
 
                       originalFileAccess:
                         submission
                           .originalFileAccess,
 
-                      organization: {
-                        connect: {
-                          id:
-                            submission
-                              .organizationId,
-                        },
-                      },
-
-                      createdAt:
-                        registeredAt,
-                    },
-                  });
-
-              const version =
-                await tx
-                  .documentVersion
-                  .create({
-                    data: {
-                      version:
-                        versionNumber,
-
                       filename:
-                        submission
-                          .filename,
-
-                      mimeType:
-                        validatedPdf
-                          .mimeType,
-
-                      size:
-                        validatedPdf
-                          .size,
-
-                      sha256:
-                        submission.sha256,
-
-                      storageKey:
-                        officialStorageKey,
-
-                      qrProof:
-                        null,
-
-                      createdAt:
-                        registeredAt,
-
-                      document: {
-                        connect: {
-                          id:
-                            document.id,
-                        },
-                      },
+                        submission.filename,
                     },
-                  });
+                  );
 
-              const signedAttestation =
-                this.attestationService
-                  .create({
-                    documentPublicId:
-                      document.publicId,
+              await tx
+                .documentSubmissionDecision
+                .create({
+                  data: {
+                    submissionId:
+                      submission.id,
 
-                    organizationId:
-                      submission
-                        .organization.id,
+                    actorId:
+                      input.approverId,
 
-                    organizationSlug:
-                      submission
-                        .organization.slug,
+                    stage:
+                      'APPROVAL',
 
-                    organizationName:
-                      submission
-                        .organization.name,
+                    decision:
+                      'APPROVED',
 
-                    title:
-                      document.title,
-
-                    type:
-                      document.type,
-
-                    reference:
-                      document.reference,
-
-                    issuedAt:
-                      document.issuedAt
-                        ?.toISOString() ??
-                      null,
-
-                    version:
-                      version.version,
-
-                    filename:
-                      version.filename,
-
-                    mimeType:
-                      version.mimeType,
-
-                    size:
-                      version.size,
-
-                    sha256:
-                      version.sha256,
-
-                    registeredAt:
-                      version.createdAt
-                        .toISOString(),
-                  });
-
-              const attestation =
-                await tx.attestation
-                  .create({
-                    data: {
-                      documentVersionId:
-                        version.id,
-
-                      payload:
-                        signedAttestation
-                          .payload,
-
-                      signature:
-                        signedAttestation
-                          .signature,
-
-                      algorithm:
-                        signedAttestation
-                          .algorithm,
-
-                      keyId:
-                        signedAttestation
-                          .keyId,
-
-                      createdAt:
-                        registeredAt,
-                    },
-                  });
-
-              const signedQrProof =
-                this.qrProofService
-                  .create({
-                    publicId:
-                      document.publicId,
-
-                    version:
-                      version.version,
-
-                    sha256:
-                      version.sha256,
-
-                    registeredAt:
-                      version.createdAt
-                        .toISOString(),
-
-                    attestation: {
-                      payload:
-                        attestation
-                          .payload,
-
-                      signature:
-                        attestation
-                          .signature,
-
-                      algorithm:
-                        attestation
-                          .algorithm,
-
-                      keyId:
-                        attestation
-                          .keyId,
-                    },
-                  });
-
-              const versionWithQr =
-                await tx
-                  .documentVersion
-                  .update({
-                    where: {
-                      id:
-                        version.id,
-                    },
-
-                    data: {
-                      qrProof:
-                        signedQrProof
-                          .token,
-                    },
-                  });
-
-              const signedLifecycle =
-                this.lifecycleService
-                  .createRegisteredEvent({
-                    documentPublicId:
-                      document.publicId,
-
-                    toStatus:
-                      document.status,
-
-                    occurredAt:
-                      registeredAt
-                        .toISOString(),
-                  });
-
-              const lifecycleEvent =
-                await tx
-                  .documentLifecycleEvent
-                  .create({
-                    data: {
-                      documentId:
-                        document.id,
-
-                      sequence:
-                        signedLifecycle
-                          .sequence,
-
-                      type:
-                        signedLifecycle
-                          .type,
-
-                      fromStatus:
-                        signedLifecycle
-                          .fromStatus,
-
-                      toStatus:
-                        signedLifecycle
-                          .toStatus,
-
-                      reason:
-                        signedLifecycle
-                          .reason,
-
-                      previousEventHash:
-                        signedLifecycle
-                          .previousEventHash,
-
-                      payload:
-                        signedLifecycle
-                          .payload,
-
-                      signature:
-                        signedLifecycle
-                          .signature,
-
-                      algorithm:
-                        signedLifecycle
-                          .algorithm,
-
-                      keyId:
-                        signedLifecycle
-                          .keyId,
-
-                      eventHash:
-                        signedLifecycle
-                          .eventHash,
-
-                      createdAt:
-                        registeredAt,
-                    },
-                  });
-
-              const approvalDecision =
-                await tx
-                  .documentSubmissionDecision
-                  .create({
-                    data: {
-                      submissionId:
-                        submission.id,
-
-                      actorId:
-                        input.approverId,
-
-                      stage:
-                        'APPROVAL',
-
-                      decision:
-                        'APPROVED',
-
-                      reason:
-                        normalizedReason,
-                    },
-                  });
+                    reason:
+                      normalizedReason,
+                  },
+                });
 
               await tx
                 .documentSubmission
@@ -783,190 +450,200 @@ export class SubmissionApprovalService {
 
                   data: {
                     documentId:
-                      document.id,
+                      issuance.document
+                        .id,
                   },
                 });
 
-              return {
-                document,
-
-                version:
-                  versionWithQr,
-
-                attestation,
-
-                lifecycleEvent,
-
-                qrProof:
-                  signedQrProof,
-
-                approvalDecision,
-              };
+              return issuance;
             },
           );
-
-      const updatedSubmission =
-        await this.getDetailedSubmission(
-          submission.id,
-        );
-
-      return {
-        submission:
-          updatedSubmission,
-
-        document: {
-          id:
-            result.document.id,
-
-          publicId:
-            result.document.publicId,
-
-          title:
-            result.document.title,
-
-          type:
-            result.document.type,
-
-          reference:
-            result.document.reference,
-
-          status:
-            result.document.status,
-
-          issuedAt:
-            result.document.issuedAt,
-
-          registeredAt,
-
-          originalFileAccess:
-            result.document
-              .originalFileAccess,
-
-          version: {
-            version:
-              result.version
-                .version,
-
-            filename:
-              result.version
-                .filename,
-
-            mimeType:
-              result.version
-                .mimeType,
-
-            size:
-              result.version
-                .size,
-
-            sha256:
-              result.version
-                .sha256,
-
-            registeredAt:
-              result.version
-                .createdAt,
-          },
-
-          qr: {
-            available:
-              Boolean(
-                result.version
-                  .qrProof,
-              ),
-
-            schema:
-              'vera.qr.v2',
-
-            algorithm:
-              result.qrProof
-                .algorithm,
-
-            keyId:
-              result.qrProof
-                .keyId,
-          },
-
-          attestation: {
-            schema:
-              'vera.attestation.v2',
-
-            algorithm:
-              result.attestation
-                .algorithm,
-
-            keyId:
-              result.attestation
-                .keyId,
-
-            createdAt:
-              result.attestation
-                .createdAt,
-          },
-
-          lifecycle: {
-            sequence:
-              result.lifecycleEvent
-                .sequence,
-
-            type:
-              result.lifecycleEvent
-                .type,
-
-            fromStatus:
-              result.lifecycleEvent
-                .fromStatus,
-
-            toStatus:
-              result.lifecycleEvent
-                .toStatus,
-
-            eventHash:
-              result.lifecycleEvent
-                .eventHash,
-
-            algorithm:
-              result.lifecycleEvent
-                .algorithm,
-
-            keyId:
-              result.lifecycleEvent
-                .keyId,
-
-            createdAt:
-              result.lifecycleEvent
-                .createdAt,
-          },
-        },
-      };
     } catch (
       error:
         unknown
     ) {
       /*
-       * O storage não participa da
-       * transaction PostgreSQL.
+       * PostgreSQL rollbacka automaticamente.
        *
-       * Se a emissão falhar depois da
-       * cópia oficial, removemos a cópia.
+       * O object storage não participa da
+       * transaction, portanto compensamos
+       * removendo a cópia oficial.
        */
-      try {
-        await this.storageService
-          .deleteFile(
-            officialStorageKey,
-          );
-      } catch (
-        cleanupError:
-          unknown
-      ) {
-        this.logger.error(
-          `Falha ao remover cópia oficial órfã: ${officialStorageKey}`,
-          cleanupError,
+      await this
+        .documentIssuanceService
+        .cleanupPreparedInitialDocument(
+          prepared.storageKey,
         );
-      }
 
       throw error;
     }
+
+    /*
+     * Esta leitura fica deliberadamente
+     * FORA do catch acima.
+     *
+     * Se a transaction já foi commitada e
+     * apenas esta leitura de resposta falhar,
+     * nunca devemos apagar o ficheiro oficial.
+     */
+    const updatedSubmission =
+      await this.getDetailedSubmission(
+        submission.id,
+      );
+
+    return {
+      submission:
+        updatedSubmission,
+
+      document: {
+        id:
+          issuanceResult
+            .document.id,
+
+        publicId:
+          issuanceResult
+            .document.publicId,
+
+        title:
+          issuanceResult
+            .document.title,
+
+        type:
+          issuanceResult
+            .document.type,
+
+        reference:
+          issuanceResult
+            .document.reference,
+
+        status:
+          issuanceResult
+            .document.status,
+
+        issuedAt:
+          issuanceResult
+            .document.issuedAt,
+
+        registeredAt:
+          issuanceResult
+            .registeredAt,
+
+        originalFileAccess:
+          issuanceResult
+            .document
+            .originalFileAccess,
+
+        version: {
+          version:
+            issuanceResult
+              .version.version,
+
+          filename:
+            issuanceResult
+              .version.filename,
+
+          mimeType:
+            issuanceResult
+              .version.mimeType,
+
+          size:
+            issuanceResult
+              .version.size,
+
+          sha256:
+            issuanceResult
+              .version.sha256,
+
+          registeredAt:
+            issuanceResult
+              .version.createdAt,
+        },
+
+        qr: {
+          available:
+            Boolean(
+              issuanceResult
+                .version
+                .qrProof,
+            ),
+
+          schema:
+            'vera.qr.v2',
+
+          algorithm:
+            issuanceResult
+              .qrProof
+              .algorithm,
+
+          keyId:
+            issuanceResult
+              .qrProof
+              .keyId,
+        },
+
+        attestation: {
+          schema:
+            'vera.attestation.v2',
+
+          algorithm:
+            issuanceResult
+              .attestation
+              .algorithm,
+
+          keyId:
+            issuanceResult
+              .attestation
+              .keyId,
+
+          createdAt:
+            issuanceResult
+              .attestation
+              .createdAt,
+        },
+
+        lifecycle: {
+          sequence:
+            issuanceResult
+              .lifecycleEvent
+              .sequence,
+
+          type:
+            issuanceResult
+              .lifecycleEvent
+              .type,
+
+          fromStatus:
+            issuanceResult
+              .lifecycleEvent
+              .fromStatus,
+
+          toStatus:
+            issuanceResult
+              .lifecycleEvent
+              .toStatus,
+
+          eventHash:
+            issuanceResult
+              .lifecycleEvent
+              .eventHash,
+
+          algorithm:
+            issuanceResult
+              .lifecycleEvent
+              .algorithm,
+
+          keyId:
+            issuanceResult
+              .lifecycleEvent
+              .keyId,
+
+          createdAt:
+            issuanceResult
+              .lifecycleEvent
+              .createdAt,
+        },
+      },
+    };
   }
 
   private async reject(

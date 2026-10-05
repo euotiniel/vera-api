@@ -27,6 +27,10 @@ import {
 } from './document-qr.service.js';
 
 import {
+  DocumentIssuanceService,
+} from './document-issuance.service.js';
+
+import {
   PdfValidationService,
 } from './pdf-validation.service.js';
 
@@ -44,6 +48,7 @@ import {
     DocumentsService,
     DocumentStatusService,
     DocumentQrService,
+    DocumentIssuanceService,
     PdfValidationService,
   ],
 
@@ -51,6 +56,7 @@ import {
     DocumentsService,
     DocumentStatusService,
     DocumentQrService,
+    DocumentIssuanceService,
     PdfValidationService,
   ],
 })

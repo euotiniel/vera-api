@@ -31,6 +31,10 @@ import {
 } from './storage/storage.module.js';
 
 import {
+  SubmissionsModule,
+} from './submissions/submissions.module.js';
+
+import {
   VerificationsModule,
 } from './verifications/verifications.module.js';
 
@@ -50,6 +54,8 @@ import {
     AdminUsersModule,
 
     DocumentsModule,
+
+    SubmissionsModule,
 
     VerificationsModule,
   ],

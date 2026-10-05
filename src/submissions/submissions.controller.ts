@@ -2,8 +2,12 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
   Param,
   Post,
+  StreamableFile,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -27,6 +31,7 @@ import {
   ApiOkResponse,
   ApiOperation,
   ApiParam,
+  ApiProduces,
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
@@ -54,6 +59,10 @@ import {
 import {
   CreateSubmissionDto,
 } from './dto/create-submission.dto.js';
+
+import {
+  ReviewSubmissionDto,
+} from './dto/review-submission.dto.js';
 
 import {
   SubmissionsService,
@@ -95,29 +104,10 @@ export class SubmissionsController {
   @ApiOperation({
     summary:
       'Criar draft documental',
-
-    description:
-      `
-Cria uma submissão documental em estado DRAFT.
-
-O ficheiro é validado e armazenado, mas ainda não é um documento oficial Vera.
-
-Nesta etapa não são emitidos:
-
-- Public ID;
-- Attestation;
-- QR Proof;
-- Lifecycle REGISTERED.
-
-Apenas membros CREATOR da organização podem executar esta operação.
-      `,
   })
   @ApiParam({
     name:
       'organizationId',
-
-    description:
-      'ID da organização.',
   })
   @ApiConsumes(
     'multipart/form-data',
@@ -139,17 +129,11 @@ Apenas membros CREATOR da organização podem executar esta operação.
 
           format:
             'binary',
-
-          description:
-            'PDF original. Máximo: 10 MB.',
         },
 
         title: {
           type:
             'string',
-
-          example:
-            'Pedido de parceria',
         },
 
         type: {
@@ -158,9 +142,6 @@ Apenas membros CREATOR da organização podem executar esta operação.
 
           nullable:
             true,
-
-          example:
-            'Ofício',
         },
 
         reference: {
@@ -169,9 +150,6 @@ Apenas membros CREATOR da organização podem executar esta operação.
 
           nullable:
             true,
-
-          example:
-            '0054/2026',
         },
 
         issuedAt: {
@@ -203,27 +181,15 @@ Apenas membros CREATOR da organização podem executar esta operação.
   })
   @ApiCreatedResponse({
     description:
-      'Draft criado com sucesso.',
+      'Draft criado.',
   })
   @ApiBadRequestResponse({
     description:
-      'Dados inválidos ou PDF não permitido.',
-  })
-  @ApiUnauthorizedResponse({
-    description:
-      'Autenticação necessária.',
+      'Dados ou PDF inválidos.',
   })
   @ApiForbiddenResponse({
     description:
-      'O utilizador não é CREATOR desta organização.',
-  })
-  @ApiConflictResponse({
-    description:
-      'Organização não verificada, ficheiro já registado ou submissão duplicada.',
-  })
-  @ApiNotFoundResponse({
-    description:
-      'Organização não encontrada.',
+      'CREATOR necessário.',
   })
   @UseInterceptors(
     FileInterceptor(
@@ -292,49 +258,23 @@ Apenas membros CREATOR da organização podem executar esta operação.
   @Post(
     ':submissionId/submit',
   )
+  @HttpCode(
+    HttpStatus.OK,
+  )
   @OrganizationRoles(
     'CREATOR',
   )
   @ApiOperation({
     summary:
       'Enviar draft para revisão',
-
-    description:
-      'Move uma submissão do próprio CREATOR de DRAFT para PENDING_REVIEW.',
-  })
-  @ApiParam({
-    name:
-      'organizationId',
-
-    description:
-      'ID da organização.',
-  })
-  @ApiParam({
-    name:
-      'submissionId',
-
-    description:
-      'ID da submissão.',
   })
   @ApiOkResponse({
     description:
-      'Submissão enviada para REVIEWER.',
-  })
-  @ApiUnauthorizedResponse({
-    description:
-      'Autenticação necessária.',
-  })
-  @ApiForbiddenResponse({
-    description:
-      'O utilizador não é CREATOR da organização ou não criou esta submissão.',
+      'Submissão enviada para revisão.',
   })
   @ApiConflictResponse({
     description:
-      'A submissão já não está em DRAFT.',
-  })
-  @ApiNotFoundResponse({
-    description:
-      'Submissão não encontrada.',
+      'Submissão fora de DRAFT.',
   })
   submit(
     @Param(
@@ -361,6 +301,181 @@ Apenas membros CREATOR da organização podem executar esta operação.
 
         creatorId:
           user.id,
+      });
+  }
+
+  @Get(
+    'pending-review',
+  )
+  @OrganizationRoles(
+    'REVIEWER',
+  )
+  @ApiOperation({
+    summary:
+      'Listar submissões aguardando revisão',
+  })
+  @ApiOkResponse({
+    description:
+      'Fila de revisão da organização.',
+  })
+  listPendingReview(
+    @Param(
+      'organizationId',
+    )
+    organizationId:
+      string,
+  ) {
+    return this.submissionsService
+      .listPendingReview(
+        organizationId,
+      );
+  }
+
+  @Get(
+    ':submissionId/file',
+  )
+  @OrganizationRoles(
+    'REVIEWER',
+    'APPROVER',
+  )
+  @ApiOperation({
+    summary:
+      'Consultar ficheiro interno da submissão',
+  })
+  @ApiProduces(
+    'application/pdf',
+  )
+  @ApiOkResponse({
+    description:
+      'PDF submetido.',
+  })
+  @ApiNotFoundResponse({
+    description:
+      'Submissão não encontrada.',
+  })
+  async getInternalFile(
+    @Param(
+      'organizationId',
+    )
+    organizationId:
+      string,
+
+    @Param(
+      'submissionId',
+    )
+    submissionId:
+      string,
+  ) {
+    const file =
+      await this.submissionsService
+        .getInternalFile(
+          organizationId,
+          submissionId,
+        );
+
+    const safeFilename =
+      file.filename
+        .replace(
+          /["\r\n]/g,
+          '_',
+        );
+
+    return new StreamableFile(
+      file.body,
+      {
+        type:
+          file.contentType,
+
+        disposition:
+          `inline; filename="${safeFilename}"`,
+
+        length:
+          file.body.length,
+      },
+    );
+  }
+
+  @Post(
+    ':submissionId/review',
+  )
+  @HttpCode(
+    HttpStatus.OK,
+  )
+  @OrganizationRoles(
+    'REVIEWER',
+  )
+  @ApiOperation({
+    summary:
+      'Decidir primeira revisão',
+
+    description:
+      `
+APPROVED move a submissão para PENDING_APPROVAL.
+
+REJECTED encerra a submissão em REJECTED e exige motivo.
+
+A decisão é persistida no histórico da submissão.
+      `,
+  })
+  @ApiOkResponse({
+    description:
+      'Decisão de revisão registada.',
+  })
+  @ApiBadRequestResponse({
+    description:
+      'REJECTED sem motivo.',
+  })
+  @ApiConflictResponse({
+    description:
+      'A submissão já não está em PENDING_REVIEW.',
+  })
+  @ApiUnauthorizedResponse({
+    description:
+      'Autenticação necessária.',
+  })
+  @ApiForbiddenResponse({
+    description:
+      'REVIEWER necessário.',
+  })
+  @ApiNotFoundResponse({
+    description:
+      'Submissão não encontrada.',
+  })
+  review(
+    @Param(
+      'organizationId',
+    )
+    organizationId:
+      string,
+
+    @Param(
+      'submissionId',
+    )
+    submissionId:
+      string,
+
+    @Body()
+    input:
+      ReviewSubmissionDto,
+
+    @CurrentUser()
+    user:
+      AuthenticatedUser,
+  ) {
+    return this.submissionsService
+      .review({
+        organizationId,
+
+        submissionId,
+
+        reviewerId:
+          user.id,
+
+        decision:
+          input.decision,
+
+        reason:
+          input.reason,
       });
   }
 }

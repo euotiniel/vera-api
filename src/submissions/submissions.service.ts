@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   ForbiddenException,
   Injectable,
@@ -50,6 +51,24 @@ interface CreateSubmissionInput {
     | 'PUBLIC'
     | 'RESTRICTED'
     | 'PRIVATE';
+}
+
+interface ReviewSubmissionInput {
+  organizationId:
+    string;
+
+  submissionId:
+    string;
+
+  reviewerId:
+    string;
+
+  decision:
+    | 'APPROVED'
+    | 'REJECTED';
+
+  reason?:
+    string;
 }
 
 @Injectable()
@@ -104,11 +123,6 @@ export class SubmissionsService {
       );
     }
 
-    /*
-     * Ainda usamos verified enquanto
-     * o mecanismo real de issuer trust
-     * não for implementado.
-     */
     if (!organization.verified) {
       throw new ConflictException(
         'Esta organização ainda não está verificada.',
@@ -132,11 +146,6 @@ export class SubmissionsService {
           'hex',
         );
 
-    /*
-     * Um documento já oficialmente
-     * registado não deve voltar a entrar
-     * no pipeline como nova submissão.
-     */
     const existingDocumentVersion =
       await this.prisma
         .documentVersion
@@ -160,14 +169,6 @@ export class SubmissionsService {
       );
     }
 
-    /*
-     * Evitamos duas submissões ativas
-     * dos mesmos bytes dentro da mesma
-     * organização.
-     *
-     * REJECTED e CANCELLED poderão ser
-     * reenviados posteriormente.
-     */
     const existingSubmission =
       await this.prisma
         .documentSubmission
@@ -224,14 +225,6 @@ export class SubmissionsService {
       });
 
     try {
-      /*
-       * Read-after-write.
-       *
-       * A submissão só entra na DB
-       * depois de confirmarmos que os
-       * bytes persistidos são exatamente
-       * os que recebemos.
-       */
       const storedFile =
         await this.storageService
           .getFile(
@@ -343,67 +336,13 @@ export class SubmissionsService {
             },
           });
 
-      return {
-        id:
-          submission.id,
-
-        status:
-          submission.status,
-
-        title:
-          submission.title,
-
-        type:
-          submission.type,
-
-        reference:
-          submission.reference,
-
-        issuedAt:
-          submission.issuedAt,
-
-        originalFileAccess:
-          submission
-            .originalFileAccess,
-
-        organization:
-          submission.organization,
-
-        creator:
-          submission.creator,
-
-        file: {
-          filename:
-            submission.filename,
-
-          mimeType:
-            submission.mimeType,
-
-          size:
-            submission.size,
-
-          sha256:
-            submission.sha256,
-        },
-
-        submittedAt:
-          submission.submittedAt,
-
-        createdAt:
-          submission.createdAt,
-
-        updatedAt:
-          submission.updatedAt,
-      };
+      return this.toSubmissionResponse(
+        submission,
+      );
     } catch (
       error:
         unknown
     ) {
-      /*
-       * Se qualquer passo após o upload
-       * falhar, tentamos remover o objeto
-       * para evitar storage órfão.
-       */
       try {
         await this.storageService
           .deleteFile(
@@ -446,29 +385,6 @@ export class SubmissionsService {
             organizationId:
               input.organizationId,
           },
-
-          select: {
-            id:
-              true,
-
-            creatorId:
-              true,
-
-            status:
-              true,
-
-            title:
-              true,
-
-            organizationId:
-              true,
-
-            storageKey:
-              true,
-
-            submittedAt:
-              true,
-          },
         });
 
     if (!submission) {
@@ -477,11 +393,6 @@ export class SubmissionsService {
       );
     }
 
-    /*
-     * Um CREATOR não pode enviar para
-     * revisão um draft criado por outro
-     * CREATOR.
-     */
     if (
       submission.creatorId !==
       input.creatorId
@@ -500,74 +411,22 @@ export class SubmissionsService {
       );
     }
 
-    /*
-     * Confirmamos novamente que o objeto
-     * ainda existe e corresponde ao hash
-     * registado antes de mudar o estado.
-     */
-    const completeSubmission =
-      await this.prisma
-        .documentSubmission
-        .findUnique({
-          where: {
-            id:
-              submission.id,
-          },
-        });
-
-    if (!completeSubmission) {
-      throw new NotFoundException(
-        'Submissão não encontrada.',
-      );
-    }
-
-    const storedFile =
-      await this.storageService
-        .getFile(
-          completeSubmission
-            .storageKey,
-        );
-
-    const storedSha256 =
-      createHash(
-        'sha256',
-      )
-        .update(
-          storedFile.body,
-        )
-        .digest(
-          'hex',
-        );
-
-    if (
-      storedSha256 !==
-        completeSubmission
-          .sha256 ||
-      storedFile.body.length !==
-        completeSubmission
-          .size
-    ) {
-      throw new InternalServerErrorException(
-        'O ficheiro armazenado da submissão não corresponde ao original admitido.',
-      );
-    }
+    await this.assertStoredFileIntegrity(
+      submission.storageKey,
+      submission.sha256,
+      submission.size,
+    );
 
     const submittedAt =
       new Date();
 
-    /*
-     * updateMany + status DRAFT evita
-     * duas submissões concorrentes do
-     * mesmo draft avançarem ao mesmo
-     * tempo.
-     */
     const transition =
       await this.prisma
         .documentSubmission
         .updateMany({
           where: {
             id:
-              completeSubmission.id,
+              submission.id,
 
             organizationId:
               input.organizationId,
@@ -597,12 +456,370 @@ export class SubmissionsService {
     }
 
     const updated =
+      await this.findSubmissionForResponse(
+        submission.id,
+      );
+
+    return this.toSubmissionResponse(
+      updated,
+    );
+  }
+
+  async listPendingReview(
+    organizationId:
+      string,
+  ) {
+    return this.prisma
+      .documentSubmission
+      .findMany({
+        where: {
+          organizationId,
+
+          status:
+            'PENDING_REVIEW',
+        },
+
+        select: {
+          id:
+            true,
+
+          title:
+            true,
+
+          type:
+            true,
+
+          reference:
+            true,
+
+          issuedAt:
+            true,
+
+          originalFileAccess:
+            true,
+
+          filename:
+            true,
+
+          mimeType:
+            true,
+
+          size:
+            true,
+
+          sha256:
+            true,
+
+          status:
+            true,
+
+          submittedAt:
+            true,
+
+          createdAt:
+            true,
+
+          updatedAt:
+            true,
+
+          creator: {
+            select: {
+              id:
+                true,
+
+              name:
+                true,
+
+              email:
+                true,
+            },
+          },
+        },
+
+        orderBy: {
+          submittedAt:
+            'asc',
+        },
+      });
+  }
+
+  async getInternalFile(
+    organizationId:
+      string,
+
+    submissionId:
+      string,
+  ) {
+    const submission =
+      await this.prisma
+        .documentSubmission
+        .findFirst({
+          where: {
+            id:
+              submissionId,
+
+            organizationId,
+          },
+
+          select: {
+            id:
+              true,
+
+            filename:
+              true,
+
+            mimeType:
+              true,
+
+            size:
+              true,
+
+            sha256:
+              true,
+
+            storageKey:
+              true,
+          },
+        });
+
+    if (!submission) {
+      throw new NotFoundException(
+        'Submissão não encontrada.',
+      );
+    }
+
+    const storedFile =
+      await this.storageService
+        .getFile(
+          submission.storageKey,
+        );
+
+    const storedSha256 =
+      createHash(
+        'sha256',
+      )
+        .update(
+          storedFile.body,
+        )
+        .digest(
+          'hex',
+        );
+
+    if (
+      storedSha256 !==
+        submission.sha256 ||
+      storedFile.body.length !==
+        submission.size
+    ) {
+      throw new InternalServerErrorException(
+        'O ficheiro armazenado da submissão não corresponde ao original admitido.',
+      );
+    }
+
+    return {
+      body:
+        storedFile.body,
+
+      contentType:
+        submission.mimeType,
+
+      filename:
+        submission.filename,
+
+      sha256:
+        storedSha256,
+    };
+  }
+
+  async review(
+    input:
+      ReviewSubmissionInput,
+  ) {
+    const normalizedReason =
+      input.reason
+        ?.trim() ||
+      null;
+
+    if (
+      input.decision ===
+        'REJECTED' &&
+      !normalizedReason
+    ) {
+      throw new BadRequestException(
+        'O motivo é obrigatório quando uma submissão é rejeitada.',
+      );
+    }
+
+    const submission =
+      await this.prisma
+        .documentSubmission
+        .findFirst({
+          where: {
+            id:
+              input.submissionId,
+
+            organizationId:
+              input.organizationId,
+          },
+
+          select: {
+            id:
+              true,
+
+            status:
+              true,
+
+            storageKey:
+              true,
+
+            sha256:
+              true,
+
+            size:
+              true,
+          },
+        });
+
+    if (!submission) {
+      throw new NotFoundException(
+        'Submissão não encontrada.',
+      );
+    }
+
+    if (
+      submission.status !==
+      'PENDING_REVIEW'
+    ) {
+      throw new ConflictException(
+        'Apenas submissões em PENDING_REVIEW podem ser revistas.',
+      );
+    }
+
+    await this.assertStoredFileIntegrity(
+      submission.storageKey,
+      submission.sha256,
+      submission.size,
+    );
+
+    const nextStatus =
+      input.decision ===
+        'APPROVED'
+        ? 'PENDING_APPROVAL'
+        : 'REJECTED';
+
+    await this.prisma
+      .$transaction(
+        async (
+          tx,
+        ) => {
+          const transition =
+            await tx
+              .documentSubmission
+              .updateMany({
+                where: {
+                  id:
+                    submission.id,
+
+                  organizationId:
+                    input.organizationId,
+
+                  status:
+                    'PENDING_REVIEW',
+                },
+
+                data: {
+                  status:
+                    nextStatus,
+                },
+              });
+
+          if (
+            transition.count !==
+            1
+          ) {
+            throw new ConflictException(
+              'A submissão já foi alterada por outra operação.',
+            );
+          }
+
+          await tx
+            .documentSubmissionDecision
+            .create({
+              data: {
+                submissionId:
+                  submission.id,
+
+                actorId:
+                  input.reviewerId,
+
+                stage:
+                  'REVIEW',
+
+                decision:
+                  input.decision,
+
+                reason:
+                  normalizedReason,
+              },
+            });
+        },
+      );
+
+    return this.findSubmissionWithDecisions(
+      submission.id,
+    );
+  }
+
+  private async assertStoredFileIntegrity(
+    storageKey:
+      string,
+
+    expectedSha256:
+      string,
+
+    expectedSize:
+      number,
+  ): Promise<void> {
+    const storedFile =
+      await this.storageService
+        .getFile(
+          storageKey,
+        );
+
+    const storedSha256 =
+      createHash(
+        'sha256',
+      )
+        .update(
+          storedFile.body,
+        )
+        .digest(
+          'hex',
+        );
+
+    if (
+      storedSha256 !==
+        expectedSha256 ||
+      storedFile.body.length !==
+        expectedSize
+    ) {
+      throw new InternalServerErrorException(
+        'O ficheiro armazenado da submissão não corresponde ao original admitido.',
+      );
+    }
+  }
+
+  private async findSubmissionForResponse(
+    submissionId:
+      string,
+  ) {
+    const submission =
       await this.prisma
         .documentSubmission
         .findUnique({
           where: {
             id:
-              completeSubmission.id,
+              submissionId,
           },
 
           include: {
@@ -634,63 +851,213 @@ export class SubmissionsService {
           },
         });
 
-    if (!updated) {
+    if (!submission) {
       throw new InternalServerErrorException(
-        'Não foi possível carregar a submissão atualizada.',
+        'Não foi possível carregar a submissão.',
+      );
+    }
+
+    return submission;
+  }
+
+  private async findSubmissionWithDecisions(
+    submissionId:
+      string,
+  ) {
+    const submission =
+      await this.prisma
+        .documentSubmission
+        .findUnique({
+          where: {
+            id:
+              submissionId,
+          },
+
+          include: {
+            organization: {
+              select: {
+                id:
+                  true,
+
+                name:
+                  true,
+
+                slug:
+                  true,
+              },
+            },
+
+            creator: {
+              select: {
+                id:
+                  true,
+
+                name:
+                  true,
+
+                email:
+                  true,
+              },
+            },
+
+            decisions: {
+              orderBy: {
+                createdAt:
+                  'asc',
+              },
+
+              include: {
+                actor: {
+                  select: {
+                    id:
+                      true,
+
+                    name:
+                      true,
+
+                    email:
+                      true,
+                  },
+                },
+              },
+            },
+          },
+        });
+
+    if (!submission) {
+      throw new InternalServerErrorException(
+        'Não foi possível carregar a submissão.',
       );
     }
 
     return {
+      ...this.toSubmissionResponse(
+        submission,
+      ),
+
+      decisions:
+        submission.decisions,
+    };
+  }
+
+  private toSubmissionResponse(
+    submission: {
       id:
-        updated.id,
+        string;
 
       status:
-        updated.status,
+        string;
 
       title:
-        updated.title,
+        string;
 
       type:
-        updated.type,
+        string | null;
 
       reference:
-        updated.reference,
+        string | null;
 
       issuedAt:
-        updated.issuedAt,
+        Date | null;
 
       originalFileAccess:
-        updated
+        string;
+
+      filename:
+        string;
+
+      mimeType:
+        string;
+
+      size:
+        number;
+
+      sha256:
+        string;
+
+      submittedAt:
+        Date | null;
+
+      createdAt:
+        Date;
+
+      updatedAt:
+        Date;
+
+      organization: {
+        id:
+          string;
+
+        name:
+          string;
+
+        slug:
+          string;
+      };
+
+      creator: {
+        id:
+          string;
+
+        name:
+          string;
+
+        email:
+          string;
+      };
+    },
+  ) {
+    return {
+      id:
+        submission.id,
+
+      status:
+        submission.status,
+
+      title:
+        submission.title,
+
+      type:
+        submission.type,
+
+      reference:
+        submission.reference,
+
+      issuedAt:
+        submission.issuedAt,
+
+      originalFileAccess:
+        submission
           .originalFileAccess,
 
       organization:
-        updated.organization,
+        submission.organization,
 
       creator:
-        updated.creator,
+        submission.creator,
 
       file: {
         filename:
-          updated.filename,
+          submission.filename,
 
         mimeType:
-          updated.mimeType,
+          submission.mimeType,
 
         size:
-          updated.size,
+          submission.size,
 
         sha256:
-          updated.sha256,
+          submission.sha256,
       },
 
       submittedAt:
-        updated.submittedAt,
+        submission.submittedAt,
 
       createdAt:
-        updated.createdAt,
+        submission.createdAt,
 
       updatedAt:
-        updated.updatedAt,
+        submission.updatedAt,
     };
   }
 }

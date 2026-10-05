@@ -216,6 +216,8 @@ export type UserWhereInput = {
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   sessions?: Prisma.SessionListRelationFilter
   memberships?: Prisma.OrganizationMemberListRelationFilter
+  createdSubmissions?: Prisma.DocumentSubmissionListRelationFilter
+  submissionDecisions?: Prisma.DocumentSubmissionDecisionListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
@@ -230,6 +232,8 @@ export type UserOrderByWithRelationInput = {
   updatedAt?: Prisma.SortOrder
   sessions?: Prisma.SessionOrderByRelationAggregateInput
   memberships?: Prisma.OrganizationMemberOrderByRelationAggregateInput
+  createdSubmissions?: Prisma.DocumentSubmissionOrderByRelationAggregateInput
+  submissionDecisions?: Prisma.DocumentSubmissionDecisionOrderByRelationAggregateInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -247,6 +251,8 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   sessions?: Prisma.SessionListRelationFilter
   memberships?: Prisma.OrganizationMemberListRelationFilter
+  createdSubmissions?: Prisma.DocumentSubmissionListRelationFilter
+  submissionDecisions?: Prisma.DocumentSubmissionDecisionListRelationFilter
 }, "id" | "email">
 
 export type UserOrderByWithAggregationInput = {
@@ -291,6 +297,8 @@ export type UserCreateInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   memberships?: Prisma.OrganizationMemberCreateNestedManyWithoutUserInput
+  createdSubmissions?: Prisma.DocumentSubmissionCreateNestedManyWithoutCreatorInput
+  submissionDecisions?: Prisma.DocumentSubmissionDecisionCreateNestedManyWithoutActorInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -305,6 +313,8 @@ export type UserUncheckedCreateInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   memberships?: Prisma.OrganizationMemberUncheckedCreateNestedManyWithoutUserInput
+  createdSubmissions?: Prisma.DocumentSubmissionUncheckedCreateNestedManyWithoutCreatorInput
+  submissionDecisions?: Prisma.DocumentSubmissionDecisionUncheckedCreateNestedManyWithoutActorInput
 }
 
 export type UserUpdateInput = {
@@ -319,6 +329,8 @@ export type UserUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   memberships?: Prisma.OrganizationMemberUpdateManyWithoutUserNestedInput
+  createdSubmissions?: Prisma.DocumentSubmissionUpdateManyWithoutCreatorNestedInput
+  submissionDecisions?: Prisma.DocumentSubmissionDecisionUpdateManyWithoutActorNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -333,6 +345,8 @@ export type UserUncheckedUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   memberships?: Prisma.OrganizationMemberUncheckedUpdateManyWithoutUserNestedInput
+  createdSubmissions?: Prisma.DocumentSubmissionUncheckedUpdateManyWithoutCreatorNestedInput
+  submissionDecisions?: Prisma.DocumentSubmissionDecisionUncheckedUpdateManyWithoutActorNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -460,6 +474,34 @@ export type UserUpdateOneRequiredWithoutMembershipsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutMembershipsInput, Prisma.UserUpdateWithoutMembershipsInput>, Prisma.UserUncheckedUpdateWithoutMembershipsInput>
 }
 
+export type UserCreateNestedOneWithoutCreatedSubmissionsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutCreatedSubmissionsInput, Prisma.UserUncheckedCreateWithoutCreatedSubmissionsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutCreatedSubmissionsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutCreatedSubmissionsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutCreatedSubmissionsInput, Prisma.UserUncheckedCreateWithoutCreatedSubmissionsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutCreatedSubmissionsInput
+  upsert?: Prisma.UserUpsertWithoutCreatedSubmissionsInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutCreatedSubmissionsInput, Prisma.UserUpdateWithoutCreatedSubmissionsInput>, Prisma.UserUncheckedUpdateWithoutCreatedSubmissionsInput>
+}
+
+export type UserCreateNestedOneWithoutSubmissionDecisionsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutSubmissionDecisionsInput, Prisma.UserUncheckedCreateWithoutSubmissionDecisionsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutSubmissionDecisionsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutSubmissionDecisionsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutSubmissionDecisionsInput, Prisma.UserUncheckedCreateWithoutSubmissionDecisionsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutSubmissionDecisionsInput
+  upsert?: Prisma.UserUpsertWithoutSubmissionDecisionsInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutSubmissionDecisionsInput, Prisma.UserUpdateWithoutSubmissionDecisionsInput>, Prisma.UserUncheckedUpdateWithoutSubmissionDecisionsInput>
+}
+
 export type UserCreateWithoutSessionsInput = {
   id?: string
   email: string
@@ -471,6 +513,8 @@ export type UserCreateWithoutSessionsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   memberships?: Prisma.OrganizationMemberCreateNestedManyWithoutUserInput
+  createdSubmissions?: Prisma.DocumentSubmissionCreateNestedManyWithoutCreatorInput
+  submissionDecisions?: Prisma.DocumentSubmissionDecisionCreateNestedManyWithoutActorInput
 }
 
 export type UserUncheckedCreateWithoutSessionsInput = {
@@ -484,6 +528,8 @@ export type UserUncheckedCreateWithoutSessionsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   memberships?: Prisma.OrganizationMemberUncheckedCreateNestedManyWithoutUserInput
+  createdSubmissions?: Prisma.DocumentSubmissionUncheckedCreateNestedManyWithoutCreatorInput
+  submissionDecisions?: Prisma.DocumentSubmissionDecisionUncheckedCreateNestedManyWithoutActorInput
 }
 
 export type UserCreateOrConnectWithoutSessionsInput = {
@@ -513,6 +559,8 @@ export type UserUpdateWithoutSessionsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   memberships?: Prisma.OrganizationMemberUpdateManyWithoutUserNestedInput
+  createdSubmissions?: Prisma.DocumentSubmissionUpdateManyWithoutCreatorNestedInput
+  submissionDecisions?: Prisma.DocumentSubmissionDecisionUpdateManyWithoutActorNestedInput
 }
 
 export type UserUncheckedUpdateWithoutSessionsInput = {
@@ -526,6 +574,8 @@ export type UserUncheckedUpdateWithoutSessionsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   memberships?: Prisma.OrganizationMemberUncheckedUpdateManyWithoutUserNestedInput
+  createdSubmissions?: Prisma.DocumentSubmissionUncheckedUpdateManyWithoutCreatorNestedInput
+  submissionDecisions?: Prisma.DocumentSubmissionDecisionUncheckedUpdateManyWithoutActorNestedInput
 }
 
 export type UserCreateWithoutMembershipsInput = {
@@ -539,6 +589,8 @@ export type UserCreateWithoutMembershipsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
+  createdSubmissions?: Prisma.DocumentSubmissionCreateNestedManyWithoutCreatorInput
+  submissionDecisions?: Prisma.DocumentSubmissionDecisionCreateNestedManyWithoutActorInput
 }
 
 export type UserUncheckedCreateWithoutMembershipsInput = {
@@ -552,6 +604,8 @@ export type UserUncheckedCreateWithoutMembershipsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
+  createdSubmissions?: Prisma.DocumentSubmissionUncheckedCreateNestedManyWithoutCreatorInput
+  submissionDecisions?: Prisma.DocumentSubmissionDecisionUncheckedCreateNestedManyWithoutActorInput
 }
 
 export type UserCreateOrConnectWithoutMembershipsInput = {
@@ -581,6 +635,8 @@ export type UserUpdateWithoutMembershipsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
+  createdSubmissions?: Prisma.DocumentSubmissionUpdateManyWithoutCreatorNestedInput
+  submissionDecisions?: Prisma.DocumentSubmissionDecisionUpdateManyWithoutActorNestedInput
 }
 
 export type UserUncheckedUpdateWithoutMembershipsInput = {
@@ -594,6 +650,160 @@ export type UserUncheckedUpdateWithoutMembershipsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
+  createdSubmissions?: Prisma.DocumentSubmissionUncheckedUpdateManyWithoutCreatorNestedInput
+  submissionDecisions?: Prisma.DocumentSubmissionDecisionUncheckedUpdateManyWithoutActorNestedInput
+}
+
+export type UserCreateWithoutCreatedSubmissionsInput = {
+  id?: string
+  email: string
+  name: string
+  passwordHash: string
+  status?: $Enums.UserStatus
+  systemRole?: $Enums.SystemRole
+  emailVerifiedAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
+  memberships?: Prisma.OrganizationMemberCreateNestedManyWithoutUserInput
+  submissionDecisions?: Prisma.DocumentSubmissionDecisionCreateNestedManyWithoutActorInput
+}
+
+export type UserUncheckedCreateWithoutCreatedSubmissionsInput = {
+  id?: string
+  email: string
+  name: string
+  passwordHash: string
+  status?: $Enums.UserStatus
+  systemRole?: $Enums.SystemRole
+  emailVerifiedAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
+  memberships?: Prisma.OrganizationMemberUncheckedCreateNestedManyWithoutUserInput
+  submissionDecisions?: Prisma.DocumentSubmissionDecisionUncheckedCreateNestedManyWithoutActorInput
+}
+
+export type UserCreateOrConnectWithoutCreatedSubmissionsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutCreatedSubmissionsInput, Prisma.UserUncheckedCreateWithoutCreatedSubmissionsInput>
+}
+
+export type UserUpsertWithoutCreatedSubmissionsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutCreatedSubmissionsInput, Prisma.UserUncheckedUpdateWithoutCreatedSubmissionsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutCreatedSubmissionsInput, Prisma.UserUncheckedCreateWithoutCreatedSubmissionsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutCreatedSubmissionsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutCreatedSubmissionsInput, Prisma.UserUncheckedUpdateWithoutCreatedSubmissionsInput>
+}
+
+export type UserUpdateWithoutCreatedSubmissionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+  systemRole?: Prisma.EnumSystemRoleFieldUpdateOperationsInput | $Enums.SystemRole
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
+  memberships?: Prisma.OrganizationMemberUpdateManyWithoutUserNestedInput
+  submissionDecisions?: Prisma.DocumentSubmissionDecisionUpdateManyWithoutActorNestedInput
+}
+
+export type UserUncheckedUpdateWithoutCreatedSubmissionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+  systemRole?: Prisma.EnumSystemRoleFieldUpdateOperationsInput | $Enums.SystemRole
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
+  memberships?: Prisma.OrganizationMemberUncheckedUpdateManyWithoutUserNestedInput
+  submissionDecisions?: Prisma.DocumentSubmissionDecisionUncheckedUpdateManyWithoutActorNestedInput
+}
+
+export type UserCreateWithoutSubmissionDecisionsInput = {
+  id?: string
+  email: string
+  name: string
+  passwordHash: string
+  status?: $Enums.UserStatus
+  systemRole?: $Enums.SystemRole
+  emailVerifiedAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
+  memberships?: Prisma.OrganizationMemberCreateNestedManyWithoutUserInput
+  createdSubmissions?: Prisma.DocumentSubmissionCreateNestedManyWithoutCreatorInput
+}
+
+export type UserUncheckedCreateWithoutSubmissionDecisionsInput = {
+  id?: string
+  email: string
+  name: string
+  passwordHash: string
+  status?: $Enums.UserStatus
+  systemRole?: $Enums.SystemRole
+  emailVerifiedAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
+  memberships?: Prisma.OrganizationMemberUncheckedCreateNestedManyWithoutUserInput
+  createdSubmissions?: Prisma.DocumentSubmissionUncheckedCreateNestedManyWithoutCreatorInput
+}
+
+export type UserCreateOrConnectWithoutSubmissionDecisionsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutSubmissionDecisionsInput, Prisma.UserUncheckedCreateWithoutSubmissionDecisionsInput>
+}
+
+export type UserUpsertWithoutSubmissionDecisionsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutSubmissionDecisionsInput, Prisma.UserUncheckedUpdateWithoutSubmissionDecisionsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutSubmissionDecisionsInput, Prisma.UserUncheckedCreateWithoutSubmissionDecisionsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutSubmissionDecisionsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutSubmissionDecisionsInput, Prisma.UserUncheckedUpdateWithoutSubmissionDecisionsInput>
+}
+
+export type UserUpdateWithoutSubmissionDecisionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+  systemRole?: Prisma.EnumSystemRoleFieldUpdateOperationsInput | $Enums.SystemRole
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
+  memberships?: Prisma.OrganizationMemberUpdateManyWithoutUserNestedInput
+  createdSubmissions?: Prisma.DocumentSubmissionUpdateManyWithoutCreatorNestedInput
+}
+
+export type UserUncheckedUpdateWithoutSubmissionDecisionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+  systemRole?: Prisma.EnumSystemRoleFieldUpdateOperationsInput | $Enums.SystemRole
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
+  memberships?: Prisma.OrganizationMemberUncheckedUpdateManyWithoutUserNestedInput
+  createdSubmissions?: Prisma.DocumentSubmissionUncheckedUpdateManyWithoutCreatorNestedInput
 }
 
 
@@ -604,11 +814,15 @@ export type UserUncheckedUpdateWithoutMembershipsInput = {
 export type UserCountOutputType = {
   sessions: number
   memberships: number
+  createdSubmissions: number
+  submissionDecisions: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   sessions?: boolean | UserCountOutputTypeCountSessionsArgs
   memberships?: boolean | UserCountOutputTypeCountMembershipsArgs
+  createdSubmissions?: boolean | UserCountOutputTypeCountCreatedSubmissionsArgs
+  submissionDecisions?: boolean | UserCountOutputTypeCountSubmissionDecisionsArgs
 }
 
 /**
@@ -635,6 +849,20 @@ export type UserCountOutputTypeCountMembershipsArgs<ExtArgs extends runtime.Type
   where?: Prisma.OrganizationMemberWhereInput
 }
 
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountCreatedSubmissionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.DocumentSubmissionWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountSubmissionDecisionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.DocumentSubmissionDecisionWhereInput
+}
+
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -648,6 +876,8 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   updatedAt?: boolean
   sessions?: boolean | Prisma.User$sessionsArgs<ExtArgs>
   memberships?: boolean | Prisma.User$membershipsArgs<ExtArgs>
+  createdSubmissions?: boolean | Prisma.User$createdSubmissionsArgs<ExtArgs>
+  submissionDecisions?: boolean | Prisma.User$submissionDecisionsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -691,6 +921,8 @@ export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = run
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   sessions?: boolean | Prisma.User$sessionsArgs<ExtArgs>
   memberships?: boolean | Prisma.User$membershipsArgs<ExtArgs>
+  createdSubmissions?: boolean | Prisma.User$createdSubmissionsArgs<ExtArgs>
+  submissionDecisions?: boolean | Prisma.User$submissionDecisionsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -701,6 +933,8 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   objects: {
     sessions: Prisma.$SessionPayload<ExtArgs>[]
     memberships: Prisma.$OrganizationMemberPayload<ExtArgs>[]
+    createdSubmissions: Prisma.$DocumentSubmissionPayload<ExtArgs>[]
+    submissionDecisions: Prisma.$DocumentSubmissionDecisionPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1108,6 +1342,8 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   readonly [Symbol.toStringTag]: "PrismaPromise"
   sessions<T extends Prisma.User$sessionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$sessionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SessionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   memberships<T extends Prisma.User$membershipsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$membershipsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OrganizationMemberPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  createdSubmissions<T extends Prisma.User$createdSubmissionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$createdSubmissionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$DocumentSubmissionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  submissionDecisions<T extends Prisma.User$submissionDecisionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$submissionDecisionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$DocumentSubmissionDecisionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1584,6 +1820,54 @@ export type User$membershipsArgs<ExtArgs extends runtime.Types.Extensions.Intern
   take?: number
   skip?: number
   distinct?: Prisma.OrganizationMemberScalarFieldEnum | Prisma.OrganizationMemberScalarFieldEnum[]
+}
+
+/**
+ * User.createdSubmissions
+ */
+export type User$createdSubmissionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the DocumentSubmission
+   */
+  select?: Prisma.DocumentSubmissionSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the DocumentSubmission
+   */
+  omit?: Prisma.DocumentSubmissionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.DocumentSubmissionInclude<ExtArgs> | null
+  where?: Prisma.DocumentSubmissionWhereInput
+  orderBy?: Prisma.DocumentSubmissionOrderByWithRelationInput | Prisma.DocumentSubmissionOrderByWithRelationInput[]
+  cursor?: Prisma.DocumentSubmissionWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.DocumentSubmissionScalarFieldEnum | Prisma.DocumentSubmissionScalarFieldEnum[]
+}
+
+/**
+ * User.submissionDecisions
+ */
+export type User$submissionDecisionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the DocumentSubmissionDecision
+   */
+  select?: Prisma.DocumentSubmissionDecisionSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the DocumentSubmissionDecision
+   */
+  omit?: Prisma.DocumentSubmissionDecisionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.DocumentSubmissionDecisionInclude<ExtArgs> | null
+  where?: Prisma.DocumentSubmissionDecisionWhereInput
+  orderBy?: Prisma.DocumentSubmissionDecisionOrderByWithRelationInput | Prisma.DocumentSubmissionDecisionOrderByWithRelationInput[]
+  cursor?: Prisma.DocumentSubmissionDecisionWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.DocumentSubmissionDecisionScalarFieldEnum | Prisma.DocumentSubmissionDecisionScalarFieldEnum[]
 }
 
 /**

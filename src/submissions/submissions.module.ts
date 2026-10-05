@@ -27,6 +27,14 @@ import {
 } from '../storage/storage.module.js';
 
 import {
+  TrustModule,
+} from '../trust/trust.module.js';
+
+import {
+  SubmissionApprovalService,
+} from './submission-approval.service.js';
+
+import {
   SubmissionsController,
 } from './submissions.controller.js';
 
@@ -42,6 +50,8 @@ import {
 
     StorageModule,
 
+    TrustModule,
+
     AuthModule,
 
     MembershipsModule,
@@ -55,10 +65,14 @@ import {
 
   providers: [
     SubmissionsService,
+
+    SubmissionApprovalService,
   ],
 
   exports: [
     SubmissionsService,
+
+    SubmissionApprovalService,
   ],
 })
 export class SubmissionsModule {}

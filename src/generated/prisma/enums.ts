@@ -34,6 +34,34 @@ export const OrganizationRole = {
 export type OrganizationRole = (typeof OrganizationRole)[keyof typeof OrganizationRole]
 
 
+export const DocumentSubmissionStatus = {
+  DRAFT: 'DRAFT',
+  PENDING_REVIEW: 'PENDING_REVIEW',
+  PENDING_APPROVAL: 'PENDING_APPROVAL',
+  APPROVED: 'APPROVED',
+  REJECTED: 'REJECTED',
+  CANCELLED: 'CANCELLED'
+} as const
+
+export type DocumentSubmissionStatus = (typeof DocumentSubmissionStatus)[keyof typeof DocumentSubmissionStatus]
+
+
+export const DocumentSubmissionStage = {
+  REVIEW: 'REVIEW',
+  APPROVAL: 'APPROVAL'
+} as const
+
+export type DocumentSubmissionStage = (typeof DocumentSubmissionStage)[keyof typeof DocumentSubmissionStage]
+
+
+export const DocumentSubmissionDecisionOutcome = {
+  APPROVED: 'APPROVED',
+  REJECTED: 'REJECTED'
+} as const
+
+export type DocumentSubmissionDecisionOutcome = (typeof DocumentSubmissionDecisionOutcome)[keyof typeof DocumentSubmissionDecisionOutcome]
+
+
 export const DocumentStatus = {
   PENDING: 'PENDING',
   VALID: 'VALID',

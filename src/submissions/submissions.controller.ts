@@ -61,8 +61,16 @@ import {
 } from './dto/create-submission.dto.js';
 
 import {
+  DecideApprovalDto,
+} from './dto/decide-approval.dto.js';
+
+import {
   ReviewSubmissionDto,
 } from './dto/review-submission.dto.js';
+
+import {
+  SubmissionApprovalService,
+} from './submission-approval.service.js';
 
 import {
   SubmissionsService,
@@ -95,6 +103,9 @@ export class SubmissionsController {
   constructor(
     private readonly submissionsService:
       SubmissionsService,
+
+    private readonly submissionApprovalService:
+      SubmissionApprovalService,
   ) {}
 
   @Post()
@@ -332,6 +343,33 @@ export class SubmissionsController {
   }
 
   @Get(
+    'pending-approval',
+  )
+  @OrganizationRoles(
+    'APPROVER',
+  )
+  @ApiOperation({
+    summary:
+      'Listar submissões aguardando aprovação final',
+  })
+  @ApiOkResponse({
+    description:
+      'Fila de aprovação final da organização.',
+  })
+  listPendingApproval(
+    @Param(
+      'organizationId',
+    )
+    organizationId:
+      string,
+  ) {
+    return this.submissionApprovalService
+      .listPendingApproval(
+        organizationId,
+      );
+  }
+
+  @Get(
     ':submissionId/file',
   )
   @OrganizationRoles(
@@ -407,15 +445,6 @@ export class SubmissionsController {
   @ApiOperation({
     summary:
       'Decidir primeira revisão',
-
-    description:
-      `
-APPROVED move a submissão para PENDING_APPROVAL.
-
-REJECTED encerra a submissão em REJECTED e exige motivo.
-
-A decisão é persistida no histórico da submissão.
-      `,
   })
   @ApiOkResponse({
     description:
@@ -469,6 +498,97 @@ A decisão é persistida no histórico da submissão.
         submissionId,
 
         reviewerId:
+          user.id,
+
+        decision:
+          input.decision,
+
+        reason:
+          input.reason,
+      });
+  }
+
+  @Post(
+    ':submissionId/approval',
+  )
+  @HttpCode(
+    HttpStatus.OK,
+  )
+  @OrganizationRoles(
+    'APPROVER',
+  )
+  @ApiOperation({
+    summary:
+      'Decidir aprovação final',
+
+    description:
+      `
+APPROVED emite o documento oficial Vera.
+
+A emissão cria:
+
+- Document;
+- DocumentVersion;
+- Attestation;
+- QR Proof;
+- evento REGISTERED;
+- ligação entre a submissão e o documento oficial.
+
+REJECTED encerra a submissão sem emitir qualquer documento.
+      `,
+  })
+  @ApiOkResponse({
+    description:
+      'Decisão final registada.',
+  })
+  @ApiBadRequestResponse({
+    description:
+      'REJECTED sem motivo.',
+  })
+  @ApiConflictResponse({
+    description:
+      'Submissão fora de PENDING_APPROVAL ou sem revisão aprovada.',
+  })
+  @ApiUnauthorizedResponse({
+    description:
+      'Autenticação necessária.',
+  })
+  @ApiForbiddenResponse({
+    description:
+      'APPROVER necessário.',
+  })
+  @ApiNotFoundResponse({
+    description:
+      'Submissão não encontrada.',
+  })
+  approve(
+    @Param(
+      'organizationId',
+    )
+    organizationId:
+      string,
+
+    @Param(
+      'submissionId',
+    )
+    submissionId:
+      string,
+
+    @Body()
+    input:
+      DecideApprovalDto,
+
+    @CurrentUser()
+    user:
+      AuthenticatedUser,
+  ) {
+    return this.submissionApprovalService
+      .decide({
+        organizationId,
+
+        submissionId,
+
+        approverId:
           user.id,
 
         decision:

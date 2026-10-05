@@ -181,18 +181,29 @@ export type StringNullableFilter<$PrismaModel = never> = {
   not?: Prisma.NestedStringNullableFilter<$PrismaModel> | string | null
 }
 
-export type EnumDocumentStatusFilter<$PrismaModel = never> = {
-  equals?: $Enums.DocumentStatus | Prisma.EnumDocumentStatusFieldRefInput<$PrismaModel>
-  in?: $Enums.DocumentStatus[] | Prisma.ListEnumDocumentStatusFieldRefInput<$PrismaModel>
-  notIn?: $Enums.DocumentStatus[] | Prisma.ListEnumDocumentStatusFieldRefInput<$PrismaModel>
-  not?: Prisma.NestedEnumDocumentStatusFilter<$PrismaModel> | $Enums.DocumentStatus
-}
-
 export type EnumOriginalFileAccessFilter<$PrismaModel = never> = {
   equals?: $Enums.OriginalFileAccess | Prisma.EnumOriginalFileAccessFieldRefInput<$PrismaModel>
   in?: $Enums.OriginalFileAccess[] | Prisma.ListEnumOriginalFileAccessFieldRefInput<$PrismaModel>
   notIn?: $Enums.OriginalFileAccess[] | Prisma.ListEnumOriginalFileAccessFieldRefInput<$PrismaModel>
   not?: Prisma.NestedEnumOriginalFileAccessFilter<$PrismaModel> | $Enums.OriginalFileAccess
+}
+
+export type IntFilter<$PrismaModel = never> = {
+  equals?: number | Prisma.IntFieldRefInput<$PrismaModel>
+  in?: number[] | Prisma.ListIntFieldRefInput<$PrismaModel>
+  notIn?: number[] | Prisma.ListIntFieldRefInput<$PrismaModel>
+  lt?: number | Prisma.IntFieldRefInput<$PrismaModel>
+  lte?: number | Prisma.IntFieldRefInput<$PrismaModel>
+  gt?: number | Prisma.IntFieldRefInput<$PrismaModel>
+  gte?: number | Prisma.IntFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedIntFilter<$PrismaModel> | number
+}
+
+export type EnumDocumentSubmissionStatusFilter<$PrismaModel = never> = {
+  equals?: $Enums.DocumentSubmissionStatus | Prisma.EnumDocumentSubmissionStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.DocumentSubmissionStatus[] | Prisma.ListEnumDocumentSubmissionStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.DocumentSubmissionStatus[] | Prisma.ListEnumDocumentSubmissionStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumDocumentSubmissionStatusFilter<$PrismaModel> | $Enums.DocumentSubmissionStatus
 }
 
 export type StringNullableWithAggregatesFilter<$PrismaModel = never> = {
@@ -213,16 +224,6 @@ export type StringNullableWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedStringNullableFilter<$PrismaModel>
 }
 
-export type EnumDocumentStatusWithAggregatesFilter<$PrismaModel = never> = {
-  equals?: $Enums.DocumentStatus | Prisma.EnumDocumentStatusFieldRefInput<$PrismaModel>
-  in?: $Enums.DocumentStatus[] | Prisma.ListEnumDocumentStatusFieldRefInput<$PrismaModel>
-  notIn?: $Enums.DocumentStatus[] | Prisma.ListEnumDocumentStatusFieldRefInput<$PrismaModel>
-  not?: Prisma.NestedEnumDocumentStatusWithAggregatesFilter<$PrismaModel> | $Enums.DocumentStatus
-  _count?: Prisma.NestedIntFilter<$PrismaModel>
-  _min?: Prisma.NestedEnumDocumentStatusFilter<$PrismaModel>
-  _max?: Prisma.NestedEnumDocumentStatusFilter<$PrismaModel>
-}
-
 export type EnumOriginalFileAccessWithAggregatesFilter<$PrismaModel = never> = {
   equals?: $Enums.OriginalFileAccess | Prisma.EnumOriginalFileAccessFieldRefInput<$PrismaModel>
   in?: $Enums.OriginalFileAccess[] | Prisma.ListEnumOriginalFileAccessFieldRefInput<$PrismaModel>
@@ -231,17 +232,6 @@ export type EnumOriginalFileAccessWithAggregatesFilter<$PrismaModel = never> = {
   _count?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedEnumOriginalFileAccessFilter<$PrismaModel>
   _max?: Prisma.NestedEnumOriginalFileAccessFilter<$PrismaModel>
-}
-
-export type IntFilter<$PrismaModel = never> = {
-  equals?: number | Prisma.IntFieldRefInput<$PrismaModel>
-  in?: number[] | Prisma.ListIntFieldRefInput<$PrismaModel>
-  notIn?: number[] | Prisma.ListIntFieldRefInput<$PrismaModel>
-  lt?: number | Prisma.IntFieldRefInput<$PrismaModel>
-  lte?: number | Prisma.IntFieldRefInput<$PrismaModel>
-  gt?: number | Prisma.IntFieldRefInput<$PrismaModel>
-  gte?: number | Prisma.IntFieldRefInput<$PrismaModel>
-  not?: Prisma.NestedIntFilter<$PrismaModel> | number
 }
 
 export type IntWithAggregatesFilter<$PrismaModel = never> = {
@@ -258,6 +248,67 @@ export type IntWithAggregatesFilter<$PrismaModel = never> = {
   _sum?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedIntFilter<$PrismaModel>
   _max?: Prisma.NestedIntFilter<$PrismaModel>
+}
+
+export type EnumDocumentSubmissionStatusWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.DocumentSubmissionStatus | Prisma.EnumDocumentSubmissionStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.DocumentSubmissionStatus[] | Prisma.ListEnumDocumentSubmissionStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.DocumentSubmissionStatus[] | Prisma.ListEnumDocumentSubmissionStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumDocumentSubmissionStatusWithAggregatesFilter<$PrismaModel> | $Enums.DocumentSubmissionStatus
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumDocumentSubmissionStatusFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumDocumentSubmissionStatusFilter<$PrismaModel>
+}
+
+export type EnumDocumentSubmissionStageFilter<$PrismaModel = never> = {
+  equals?: $Enums.DocumentSubmissionStage | Prisma.EnumDocumentSubmissionStageFieldRefInput<$PrismaModel>
+  in?: $Enums.DocumentSubmissionStage[] | Prisma.ListEnumDocumentSubmissionStageFieldRefInput<$PrismaModel>
+  notIn?: $Enums.DocumentSubmissionStage[] | Prisma.ListEnumDocumentSubmissionStageFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumDocumentSubmissionStageFilter<$PrismaModel> | $Enums.DocumentSubmissionStage
+}
+
+export type EnumDocumentSubmissionDecisionOutcomeFilter<$PrismaModel = never> = {
+  equals?: $Enums.DocumentSubmissionDecisionOutcome | Prisma.EnumDocumentSubmissionDecisionOutcomeFieldRefInput<$PrismaModel>
+  in?: $Enums.DocumentSubmissionDecisionOutcome[] | Prisma.ListEnumDocumentSubmissionDecisionOutcomeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.DocumentSubmissionDecisionOutcome[] | Prisma.ListEnumDocumentSubmissionDecisionOutcomeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumDocumentSubmissionDecisionOutcomeFilter<$PrismaModel> | $Enums.DocumentSubmissionDecisionOutcome
+}
+
+export type EnumDocumentSubmissionStageWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.DocumentSubmissionStage | Prisma.EnumDocumentSubmissionStageFieldRefInput<$PrismaModel>
+  in?: $Enums.DocumentSubmissionStage[] | Prisma.ListEnumDocumentSubmissionStageFieldRefInput<$PrismaModel>
+  notIn?: $Enums.DocumentSubmissionStage[] | Prisma.ListEnumDocumentSubmissionStageFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumDocumentSubmissionStageWithAggregatesFilter<$PrismaModel> | $Enums.DocumentSubmissionStage
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumDocumentSubmissionStageFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumDocumentSubmissionStageFilter<$PrismaModel>
+}
+
+export type EnumDocumentSubmissionDecisionOutcomeWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.DocumentSubmissionDecisionOutcome | Prisma.EnumDocumentSubmissionDecisionOutcomeFieldRefInput<$PrismaModel>
+  in?: $Enums.DocumentSubmissionDecisionOutcome[] | Prisma.ListEnumDocumentSubmissionDecisionOutcomeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.DocumentSubmissionDecisionOutcome[] | Prisma.ListEnumDocumentSubmissionDecisionOutcomeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumDocumentSubmissionDecisionOutcomeWithAggregatesFilter<$PrismaModel> | $Enums.DocumentSubmissionDecisionOutcome
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumDocumentSubmissionDecisionOutcomeFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumDocumentSubmissionDecisionOutcomeFilter<$PrismaModel>
+}
+
+export type EnumDocumentStatusFilter<$PrismaModel = never> = {
+  equals?: $Enums.DocumentStatus | Prisma.EnumDocumentStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.DocumentStatus[] | Prisma.ListEnumDocumentStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.DocumentStatus[] | Prisma.ListEnumDocumentStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumDocumentStatusFilter<$PrismaModel> | $Enums.DocumentStatus
+}
+
+export type EnumDocumentStatusWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.DocumentStatus | Prisma.EnumDocumentStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.DocumentStatus[] | Prisma.ListEnumDocumentStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.DocumentStatus[] | Prisma.ListEnumDocumentStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumDocumentStatusWithAggregatesFilter<$PrismaModel> | $Enums.DocumentStatus
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumDocumentStatusFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumDocumentStatusFilter<$PrismaModel>
 }
 
 export type EnumDocumentLifecycleEventTypeFilter<$PrismaModel = never> = {
@@ -475,18 +526,18 @@ export type NestedStringNullableFilter<$PrismaModel = never> = {
   not?: Prisma.NestedStringNullableFilter<$PrismaModel> | string | null
 }
 
-export type NestedEnumDocumentStatusFilter<$PrismaModel = never> = {
-  equals?: $Enums.DocumentStatus | Prisma.EnumDocumentStatusFieldRefInput<$PrismaModel>
-  in?: $Enums.DocumentStatus[] | Prisma.ListEnumDocumentStatusFieldRefInput<$PrismaModel>
-  notIn?: $Enums.DocumentStatus[] | Prisma.ListEnumDocumentStatusFieldRefInput<$PrismaModel>
-  not?: Prisma.NestedEnumDocumentStatusFilter<$PrismaModel> | $Enums.DocumentStatus
-}
-
 export type NestedEnumOriginalFileAccessFilter<$PrismaModel = never> = {
   equals?: $Enums.OriginalFileAccess | Prisma.EnumOriginalFileAccessFieldRefInput<$PrismaModel>
   in?: $Enums.OriginalFileAccess[] | Prisma.ListEnumOriginalFileAccessFieldRefInput<$PrismaModel>
   notIn?: $Enums.OriginalFileAccess[] | Prisma.ListEnumOriginalFileAccessFieldRefInput<$PrismaModel>
   not?: Prisma.NestedEnumOriginalFileAccessFilter<$PrismaModel> | $Enums.OriginalFileAccess
+}
+
+export type NestedEnumDocumentSubmissionStatusFilter<$PrismaModel = never> = {
+  equals?: $Enums.DocumentSubmissionStatus | Prisma.EnumDocumentSubmissionStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.DocumentSubmissionStatus[] | Prisma.ListEnumDocumentSubmissionStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.DocumentSubmissionStatus[] | Prisma.ListEnumDocumentSubmissionStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumDocumentSubmissionStatusFilter<$PrismaModel> | $Enums.DocumentSubmissionStatus
 }
 
 export type NestedStringNullableWithAggregatesFilter<$PrismaModel = never> = {
@@ -504,16 +555,6 @@ export type NestedStringNullableWithAggregatesFilter<$PrismaModel = never> = {
   _count?: Prisma.NestedIntNullableFilter<$PrismaModel>
   _min?: Prisma.NestedStringNullableFilter<$PrismaModel>
   _max?: Prisma.NestedStringNullableFilter<$PrismaModel>
-}
-
-export type NestedEnumDocumentStatusWithAggregatesFilter<$PrismaModel = never> = {
-  equals?: $Enums.DocumentStatus | Prisma.EnumDocumentStatusFieldRefInput<$PrismaModel>
-  in?: $Enums.DocumentStatus[] | Prisma.ListEnumDocumentStatusFieldRefInput<$PrismaModel>
-  notIn?: $Enums.DocumentStatus[] | Prisma.ListEnumDocumentStatusFieldRefInput<$PrismaModel>
-  not?: Prisma.NestedEnumDocumentStatusWithAggregatesFilter<$PrismaModel> | $Enums.DocumentStatus
-  _count?: Prisma.NestedIntFilter<$PrismaModel>
-  _min?: Prisma.NestedEnumDocumentStatusFilter<$PrismaModel>
-  _max?: Prisma.NestedEnumDocumentStatusFilter<$PrismaModel>
 }
 
 export type NestedEnumOriginalFileAccessWithAggregatesFilter<$PrismaModel = never> = {
@@ -551,6 +592,67 @@ export type NestedFloatFilter<$PrismaModel = never> = {
   gt?: number | Prisma.FloatFieldRefInput<$PrismaModel>
   gte?: number | Prisma.FloatFieldRefInput<$PrismaModel>
   not?: Prisma.NestedFloatFilter<$PrismaModel> | number
+}
+
+export type NestedEnumDocumentSubmissionStatusWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.DocumentSubmissionStatus | Prisma.EnumDocumentSubmissionStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.DocumentSubmissionStatus[] | Prisma.ListEnumDocumentSubmissionStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.DocumentSubmissionStatus[] | Prisma.ListEnumDocumentSubmissionStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumDocumentSubmissionStatusWithAggregatesFilter<$PrismaModel> | $Enums.DocumentSubmissionStatus
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumDocumentSubmissionStatusFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumDocumentSubmissionStatusFilter<$PrismaModel>
+}
+
+export type NestedEnumDocumentSubmissionStageFilter<$PrismaModel = never> = {
+  equals?: $Enums.DocumentSubmissionStage | Prisma.EnumDocumentSubmissionStageFieldRefInput<$PrismaModel>
+  in?: $Enums.DocumentSubmissionStage[] | Prisma.ListEnumDocumentSubmissionStageFieldRefInput<$PrismaModel>
+  notIn?: $Enums.DocumentSubmissionStage[] | Prisma.ListEnumDocumentSubmissionStageFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumDocumentSubmissionStageFilter<$PrismaModel> | $Enums.DocumentSubmissionStage
+}
+
+export type NestedEnumDocumentSubmissionDecisionOutcomeFilter<$PrismaModel = never> = {
+  equals?: $Enums.DocumentSubmissionDecisionOutcome | Prisma.EnumDocumentSubmissionDecisionOutcomeFieldRefInput<$PrismaModel>
+  in?: $Enums.DocumentSubmissionDecisionOutcome[] | Prisma.ListEnumDocumentSubmissionDecisionOutcomeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.DocumentSubmissionDecisionOutcome[] | Prisma.ListEnumDocumentSubmissionDecisionOutcomeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumDocumentSubmissionDecisionOutcomeFilter<$PrismaModel> | $Enums.DocumentSubmissionDecisionOutcome
+}
+
+export type NestedEnumDocumentSubmissionStageWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.DocumentSubmissionStage | Prisma.EnumDocumentSubmissionStageFieldRefInput<$PrismaModel>
+  in?: $Enums.DocumentSubmissionStage[] | Prisma.ListEnumDocumentSubmissionStageFieldRefInput<$PrismaModel>
+  notIn?: $Enums.DocumentSubmissionStage[] | Prisma.ListEnumDocumentSubmissionStageFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumDocumentSubmissionStageWithAggregatesFilter<$PrismaModel> | $Enums.DocumentSubmissionStage
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumDocumentSubmissionStageFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumDocumentSubmissionStageFilter<$PrismaModel>
+}
+
+export type NestedEnumDocumentSubmissionDecisionOutcomeWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.DocumentSubmissionDecisionOutcome | Prisma.EnumDocumentSubmissionDecisionOutcomeFieldRefInput<$PrismaModel>
+  in?: $Enums.DocumentSubmissionDecisionOutcome[] | Prisma.ListEnumDocumentSubmissionDecisionOutcomeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.DocumentSubmissionDecisionOutcome[] | Prisma.ListEnumDocumentSubmissionDecisionOutcomeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumDocumentSubmissionDecisionOutcomeWithAggregatesFilter<$PrismaModel> | $Enums.DocumentSubmissionDecisionOutcome
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumDocumentSubmissionDecisionOutcomeFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumDocumentSubmissionDecisionOutcomeFilter<$PrismaModel>
+}
+
+export type NestedEnumDocumentStatusFilter<$PrismaModel = never> = {
+  equals?: $Enums.DocumentStatus | Prisma.EnumDocumentStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.DocumentStatus[] | Prisma.ListEnumDocumentStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.DocumentStatus[] | Prisma.ListEnumDocumentStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumDocumentStatusFilter<$PrismaModel> | $Enums.DocumentStatus
+}
+
+export type NestedEnumDocumentStatusWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.DocumentStatus | Prisma.EnumDocumentStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.DocumentStatus[] | Prisma.ListEnumDocumentStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.DocumentStatus[] | Prisma.ListEnumDocumentStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumDocumentStatusWithAggregatesFilter<$PrismaModel> | $Enums.DocumentStatus
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumDocumentStatusFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumDocumentStatusFilter<$PrismaModel>
 }
 
 export type NestedEnumDocumentLifecycleEventTypeFilter<$PrismaModel = never> = {

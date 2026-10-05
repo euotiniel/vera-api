@@ -55,6 +55,8 @@ export const ModelName = {
   Session: 'Session',
   Organization: 'Organization',
   OrganizationMember: 'OrganizationMember',
+  DocumentSubmission: 'DocumentSubmission',
+  DocumentSubmissionDecision: 'DocumentSubmissionDecision',
   Document: 'Document',
   DocumentVersion: 'DocumentVersion',
   Attestation: 'Attestation',
@@ -129,6 +131,43 @@ export const OrganizationMemberScalarFieldEnum = {
 } as const
 
 export type OrganizationMemberScalarFieldEnum = (typeof OrganizationMemberScalarFieldEnum)[keyof typeof OrganizationMemberScalarFieldEnum]
+
+
+export const DocumentSubmissionScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  creatorId: 'creatorId',
+  title: 'title',
+  type: 'type',
+  reference: 'reference',
+  issuedAt: 'issuedAt',
+  originalFileAccess: 'originalFileAccess',
+  filename: 'filename',
+  mimeType: 'mimeType',
+  size: 'size',
+  sha256: 'sha256',
+  storageKey: 'storageKey',
+  status: 'status',
+  submittedAt: 'submittedAt',
+  documentId: 'documentId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type DocumentSubmissionScalarFieldEnum = (typeof DocumentSubmissionScalarFieldEnum)[keyof typeof DocumentSubmissionScalarFieldEnum]
+
+
+export const DocumentSubmissionDecisionScalarFieldEnum = {
+  id: 'id',
+  submissionId: 'submissionId',
+  actorId: 'actorId',
+  stage: 'stage',
+  decision: 'decision',
+  reason: 'reason',
+  createdAt: 'createdAt'
+} as const
+
+export type DocumentSubmissionDecisionScalarFieldEnum = (typeof DocumentSubmissionDecisionScalarFieldEnum)[keyof typeof DocumentSubmissionDecisionScalarFieldEnum]
 
 
 export const DocumentScalarFieldEnum = {

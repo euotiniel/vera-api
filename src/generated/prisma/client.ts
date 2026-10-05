@@ -62,6 +62,16 @@ export type Organization = Prisma.OrganizationModel
  */
 export type OrganizationMember = Prisma.OrganizationMemberModel
 /**
+ * Model DocumentSubmission
+ * 
+ */
+export type DocumentSubmission = Prisma.DocumentSubmissionModel
+/**
+ * Model DocumentSubmissionDecision
+ * 
+ */
+export type DocumentSubmissionDecision = Prisma.DocumentSubmissionDecisionModel
+/**
  * Model Document
  * 
  */

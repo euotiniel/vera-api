@@ -537,14 +537,6 @@ export type DocumentVersionUncheckedUpdateManyWithoutDocumentNestedInput = {
   deleteMany?: Prisma.DocumentVersionScalarWhereInput | Prisma.DocumentVersionScalarWhereInput[]
 }
 
-export type IntFieldUpdateOperationsInput = {
-  set?: number
-  increment?: number
-  decrement?: number
-  multiply?: number
-  divide?: number
-}
-
 export type DocumentVersionCreateNestedOneWithoutAttestationInput = {
   create?: Prisma.XOR<Prisma.DocumentVersionCreateWithoutAttestationInput, Prisma.DocumentVersionUncheckedCreateWithoutAttestationInput>
   connectOrCreate?: Prisma.DocumentVersionCreateOrConnectWithoutAttestationInput

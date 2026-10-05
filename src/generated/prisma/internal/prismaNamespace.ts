@@ -401,6 +401,8 @@ export const ModelName = {
   Session: 'Session',
   Organization: 'Organization',
   OrganizationMember: 'OrganizationMember',
+  DocumentSubmission: 'DocumentSubmission',
+  DocumentSubmissionDecision: 'DocumentSubmissionDecision',
   Document: 'Document',
   DocumentVersion: 'DocumentVersion',
   Attestation: 'Attestation',
@@ -421,7 +423,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "session" | "organization" | "organizationMember" | "document" | "documentVersion" | "attestation" | "documentLifecycleEvent" | "verificationEvent"
+    modelProps: "user" | "session" | "organization" | "organizationMember" | "documentSubmission" | "documentSubmissionDecision" | "document" | "documentVersion" | "attestation" | "documentLifecycleEvent" | "verificationEvent"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -718,6 +720,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.OrganizationMemberCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.OrganizationMemberCountAggregateOutputType> | number
+        }
+      }
+    }
+    DocumentSubmission: {
+      payload: Prisma.$DocumentSubmissionPayload<ExtArgs>
+      fields: Prisma.DocumentSubmissionFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.DocumentSubmissionFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DocumentSubmissionPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.DocumentSubmissionFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DocumentSubmissionPayload>
+        }
+        findFirst: {
+          args: Prisma.DocumentSubmissionFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DocumentSubmissionPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.DocumentSubmissionFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DocumentSubmissionPayload>
+        }
+        findMany: {
+          args: Prisma.DocumentSubmissionFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DocumentSubmissionPayload>[]
+        }
+        create: {
+          args: Prisma.DocumentSubmissionCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DocumentSubmissionPayload>
+        }
+        createMany: {
+          args: Prisma.DocumentSubmissionCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.DocumentSubmissionCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DocumentSubmissionPayload>[]
+        }
+        delete: {
+          args: Prisma.DocumentSubmissionDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DocumentSubmissionPayload>
+        }
+        update: {
+          args: Prisma.DocumentSubmissionUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DocumentSubmissionPayload>
+        }
+        deleteMany: {
+          args: Prisma.DocumentSubmissionDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.DocumentSubmissionUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.DocumentSubmissionUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DocumentSubmissionPayload>[]
+        }
+        upsert: {
+          args: Prisma.DocumentSubmissionUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DocumentSubmissionPayload>
+        }
+        aggregate: {
+          args: Prisma.DocumentSubmissionAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateDocumentSubmission>
+        }
+        groupBy: {
+          args: Prisma.DocumentSubmissionGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.DocumentSubmissionGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.DocumentSubmissionCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.DocumentSubmissionCountAggregateOutputType> | number
+        }
+      }
+    }
+    DocumentSubmissionDecision: {
+      payload: Prisma.$DocumentSubmissionDecisionPayload<ExtArgs>
+      fields: Prisma.DocumentSubmissionDecisionFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.DocumentSubmissionDecisionFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DocumentSubmissionDecisionPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.DocumentSubmissionDecisionFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DocumentSubmissionDecisionPayload>
+        }
+        findFirst: {
+          args: Prisma.DocumentSubmissionDecisionFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DocumentSubmissionDecisionPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.DocumentSubmissionDecisionFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DocumentSubmissionDecisionPayload>
+        }
+        findMany: {
+          args: Prisma.DocumentSubmissionDecisionFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DocumentSubmissionDecisionPayload>[]
+        }
+        create: {
+          args: Prisma.DocumentSubmissionDecisionCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DocumentSubmissionDecisionPayload>
+        }
+        createMany: {
+          args: Prisma.DocumentSubmissionDecisionCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.DocumentSubmissionDecisionCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DocumentSubmissionDecisionPayload>[]
+        }
+        delete: {
+          args: Prisma.DocumentSubmissionDecisionDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DocumentSubmissionDecisionPayload>
+        }
+        update: {
+          args: Prisma.DocumentSubmissionDecisionUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DocumentSubmissionDecisionPayload>
+        }
+        deleteMany: {
+          args: Prisma.DocumentSubmissionDecisionDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.DocumentSubmissionDecisionUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.DocumentSubmissionDecisionUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DocumentSubmissionDecisionPayload>[]
+        }
+        upsert: {
+          args: Prisma.DocumentSubmissionDecisionUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DocumentSubmissionDecisionPayload>
+        }
+        aggregate: {
+          args: Prisma.DocumentSubmissionDecisionAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateDocumentSubmissionDecision>
+        }
+        groupBy: {
+          args: Prisma.DocumentSubmissionDecisionGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.DocumentSubmissionDecisionGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.DocumentSubmissionDecisionCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.DocumentSubmissionDecisionCountAggregateOutputType> | number
         }
       }
     }
@@ -1183,6 +1333,43 @@ export const OrganizationMemberScalarFieldEnum = {
 export type OrganizationMemberScalarFieldEnum = (typeof OrganizationMemberScalarFieldEnum)[keyof typeof OrganizationMemberScalarFieldEnum]
 
 
+export const DocumentSubmissionScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  creatorId: 'creatorId',
+  title: 'title',
+  type: 'type',
+  reference: 'reference',
+  issuedAt: 'issuedAt',
+  originalFileAccess: 'originalFileAccess',
+  filename: 'filename',
+  mimeType: 'mimeType',
+  size: 'size',
+  sha256: 'sha256',
+  storageKey: 'storageKey',
+  status: 'status',
+  submittedAt: 'submittedAt',
+  documentId: 'documentId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type DocumentSubmissionScalarFieldEnum = (typeof DocumentSubmissionScalarFieldEnum)[keyof typeof DocumentSubmissionScalarFieldEnum]
+
+
+export const DocumentSubmissionDecisionScalarFieldEnum = {
+  id: 'id',
+  submissionId: 'submissionId',
+  actorId: 'actorId',
+  stage: 'stage',
+  decision: 'decision',
+  reason: 'reason',
+  createdAt: 'createdAt'
+} as const
+
+export type DocumentSubmissionDecisionScalarFieldEnum = (typeof DocumentSubmissionDecisionScalarFieldEnum)[keyof typeof DocumentSubmissionDecisionScalarFieldEnum]
+
+
 export const DocumentScalarFieldEnum = {
   id: 'id',
   publicId: 'publicId',
@@ -1368,20 +1555,6 @@ export type ListEnumOrganizationRoleFieldRefInput<$PrismaModel> = FieldRefInputT
 
 
 /**
- * Reference to a field of type 'DocumentStatus'
- */
-export type EnumDocumentStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DocumentStatus'>
-    
-
-
-/**
- * Reference to a field of type 'DocumentStatus[]'
- */
-export type ListEnumDocumentStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DocumentStatus[]'>
-    
-
-
-/**
  * Reference to a field of type 'OriginalFileAccess'
  */
 export type EnumOriginalFileAccessFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'OriginalFileAccess'>
@@ -1406,6 +1579,62 @@ export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'In
  * Reference to a field of type 'Int[]'
  */
 export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
+    
+
+
+/**
+ * Reference to a field of type 'DocumentSubmissionStatus'
+ */
+export type EnumDocumentSubmissionStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DocumentSubmissionStatus'>
+    
+
+
+/**
+ * Reference to a field of type 'DocumentSubmissionStatus[]'
+ */
+export type ListEnumDocumentSubmissionStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DocumentSubmissionStatus[]'>
+    
+
+
+/**
+ * Reference to a field of type 'DocumentSubmissionStage'
+ */
+export type EnumDocumentSubmissionStageFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DocumentSubmissionStage'>
+    
+
+
+/**
+ * Reference to a field of type 'DocumentSubmissionStage[]'
+ */
+export type ListEnumDocumentSubmissionStageFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DocumentSubmissionStage[]'>
+    
+
+
+/**
+ * Reference to a field of type 'DocumentSubmissionDecisionOutcome'
+ */
+export type EnumDocumentSubmissionDecisionOutcomeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DocumentSubmissionDecisionOutcome'>
+    
+
+
+/**
+ * Reference to a field of type 'DocumentSubmissionDecisionOutcome[]'
+ */
+export type ListEnumDocumentSubmissionDecisionOutcomeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DocumentSubmissionDecisionOutcome[]'>
+    
+
+
+/**
+ * Reference to a field of type 'DocumentStatus'
+ */
+export type EnumDocumentStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DocumentStatus'>
+    
+
+
+/**
+ * Reference to a field of type 'DocumentStatus[]'
+ */
+export type ListEnumDocumentStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DocumentStatus[]'>
     
 
 
@@ -1591,6 +1820,8 @@ export type GlobalOmitConfig = {
   session?: Prisma.SessionOmit
   organization?: Prisma.OrganizationOmit
   organizationMember?: Prisma.OrganizationMemberOmit
+  documentSubmission?: Prisma.DocumentSubmissionOmit
+  documentSubmissionDecision?: Prisma.DocumentSubmissionDecisionOmit
   document?: Prisma.DocumentOmit
   documentVersion?: Prisma.DocumentVersionOmit
   attestation?: Prisma.AttestationOmit

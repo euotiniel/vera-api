@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -231,6 +232,24 @@ export class SubmissionApprovalService {
     }
 
     if (
+      submission.creatorId ===
+      input.approverId
+    ) {
+      throw new ForbiddenException(
+        'O criador da submissão não pode tomar a decisão final sobre a própria submissão.',
+      );
+    }
+
+    if (
+      approvedReview.actorId ===
+      input.approverId
+    ) {
+      throw new ForbiddenException(
+        'O revisor da submissão não pode também tomar a decisão final.',
+      );
+    }
+
+    if (
       input.decision ===
       'REJECTED'
     ) {
@@ -239,6 +258,15 @@ export class SubmissionApprovalService {
         input.organizationId,
         input.approverId,
         normalizedReason!,
+      );
+    }
+
+    if (
+      approvedReview.actorId ===
+      submission.creatorId
+    ) {
+      throw new ConflictException(
+        'A revisão aprovada viola a separação de funções e a submissão não pode ser emitida.',
       );
     }
 

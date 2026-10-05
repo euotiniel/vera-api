@@ -658,6 +658,9 @@ export class SubmissionsService {
             id:
               true,
 
+            creatorId:
+              true,
+
             status:
               true,
 
@@ -684,6 +687,15 @@ export class SubmissionsService {
     ) {
       throw new ConflictException(
         'Apenas submissões em PENDING_REVIEW podem ser revistas.',
+      );
+    }
+
+    if (
+      submission.creatorId ===
+      input.reviewerId
+    ) {
+      throw new ForbiddenException(
+        'O criador da submissão não pode rever a própria submissão.',
       );
     }
 

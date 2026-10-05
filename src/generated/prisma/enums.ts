@@ -25,6 +25,15 @@ export const SystemRole = {
 export type SystemRole = (typeof SystemRole)[keyof typeof SystemRole]
 
 
+export const OrganizationRole = {
+  CREATOR: 'CREATOR',
+  REVIEWER: 'REVIEWER',
+  APPROVER: 'APPROVER'
+} as const
+
+export type OrganizationRole = (typeof OrganizationRole)[keyof typeof OrganizationRole]
+
+
 export const DocumentStatus = {
   PENDING: 'PENDING',
   VALID: 'VALID',

@@ -57,6 +57,11 @@ export type Session = Prisma.SessionModel
  */
 export type Organization = Prisma.OrganizationModel
 /**
+ * Model OrganizationMember
+ * 
+ */
+export type OrganizationMember = Prisma.OrganizationMemberModel
+/**
  * Model Document
  * 
  */

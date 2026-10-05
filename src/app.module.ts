@@ -7,6 +7,10 @@ import {
 } from '@nestjs/config';
 
 import {
+  AdminUsersModule,
+} from './admin/admin-users.module.js';
+
+import {
   AppController,
 } from './app.controller.js';
 
@@ -42,6 +46,8 @@ import {
     StorageModule,
 
     AuthModule,
+
+    AdminUsersModule,
 
     DocumentsModule,
 

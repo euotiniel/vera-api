@@ -25,6 +25,18 @@ enum SystemRole {
 
 /**
  * ============================================================
+ * ORGANIZATIONS
+ * ============================================================
+ */
+
+enum OrganizationRole {
+  CREATOR
+  REVIEWER
+  APPROVER
+}
+
+/**
+ * ============================================================
  * DOCUMENTS
  * ============================================================
  */
@@ -67,7 +79,8 @@ model User {
 
   emailVerifiedAt DateTime?
 
-  sessions Session[]
+  sessions    Session[]
+  memberships OrganizationMember[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -108,10 +121,31 @@ model Organization {
   slug     String  @unique
   verified Boolean @default(false)
 
-  documents Document[]
+  documents   Document[]
+  memberships OrganizationMember[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model OrganizationMember {
+  id String @id @default(cuid())
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  role OrganizationRole
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([organizationId, userId])
+  @@index([organizationId])
+  @@index([userId])
+  @@index([role])
 }
 
 /**

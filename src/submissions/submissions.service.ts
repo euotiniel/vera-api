@@ -112,20 +112,12 @@ export class SubmissionsService {
             slug:
               true,
 
-            verified:
-              true,
           },
         });
 
     if (!organization) {
       throw new NotFoundException(
         'Organização não encontrada.',
-      );
-    }
-
-    if (!organization.verified) {
-      throw new ConflictException(
-        'Esta organização ainda não está verificada.',
       );
     }
 

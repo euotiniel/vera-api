@@ -350,6 +350,16 @@ export class SubmissionsService {
         );
       }
 
+      if (
+        this.isUniqueConstraintViolation(
+          error,
+        )
+      ) {
+        throw new ConflictException(
+          'Este ficheiro já possui uma submissão ativa nesta organização.',
+        );
+      }
+
       throw error;
     }
   }
@@ -942,6 +952,26 @@ export class SubmissionsService {
       decisions:
         submission.decisions,
     };
+  }
+
+  private isUniqueConstraintViolation(
+    error:
+      unknown,
+  ): boolean {
+    return (
+      typeof error ===
+        'object' &&
+      error !==
+        null &&
+      'code' in error &&
+      (
+        error as {
+          code?:
+            unknown;
+        }
+      ).code ===
+        'P2002'
+    );
   }
 
   private toSubmissionResponse(

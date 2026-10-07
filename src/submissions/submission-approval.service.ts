@@ -503,6 +503,33 @@ export class SubmissionApprovalService {
           prepared.storageKey,
         );
 
+      if (
+        this.isUniqueConstraintViolation(
+          error,
+        )
+      ) {
+        const existingVersion =
+          await this.prisma
+            .documentVersion
+            .findUnique({
+              where: {
+                sha256:
+                  submission.sha256,
+              },
+
+              select: {
+                id:
+                  true,
+              },
+            });
+
+        if (existingVersion) {
+          throw new ConflictException(
+            'Este ficheiro já está registado como documento oficial na Vera.',
+          );
+        }
+      }
+
       throw error;
     }
 
@@ -752,6 +779,26 @@ export class SubmissionApprovalService {
       document:
         null,
     };
+  }
+
+  private isUniqueConstraintViolation(
+    error:
+      unknown,
+  ): boolean {
+    return (
+      typeof error ===
+        'object' &&
+      error !==
+        null &&
+      'code' in error &&
+      (
+        error as {
+          code?:
+            unknown;
+        }
+      ).code ===
+        'P2002'
+    );
   }
 
   private async getDetailedSubmission(

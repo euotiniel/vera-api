@@ -924,9 +924,8 @@ export type $DocumentVersionPayload<ExtArgs extends runtime.Types.Extensions.Int
     attestation: Prisma.$AttestationPayload<ExtArgs> | null
     /**
      * *
-     *    * Submissão que produziu esta versão.
-     *    * null mantém compatibilidade com
-     *    * versões emitidas antes deste modelo.
+     *    * Submissão que produziu exatamente
+     *    * esta versão.
      */
     issuedBySubmission: Prisma.$DocumentSubmissionPayload<ExtArgs> | null
   }
@@ -938,13 +937,6 @@ export type $DocumentVersionPayload<ExtArgs extends runtime.Types.Extensions.Int
     size: number
     sha256: string
     storageKey: string | null
-    /**
-     * *
-     *    * QR Proof canónico emitido pela Vera
-     *    * para esta versão.
-     *    * null mantém compatibilidade com
-     *    * documentos legacy.
-     */
     qrProof: string | null
     documentId: string
     createdAt: Date

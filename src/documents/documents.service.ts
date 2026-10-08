@@ -91,17 +91,48 @@ export class DocumentsService {
     publicId:
       string,
   ) {
+    const normalizedPublicId =
+      publicId
+        .trim()
+        .toUpperCase();
+
     const document =
       await this.prisma
         .document
         .findUnique({
           where: {
-            publicId,
+            publicId:
+              normalizedPublicId,
           },
 
           include: {
             organization:
               true,
+
+            replacedBy: {
+              select: {
+                publicId:
+                  true,
+
+                title:
+                  true,
+
+                type:
+                  true,
+
+                reference:
+                  true,
+
+                status:
+                  true,
+
+                issuedAt:
+                  true,
+
+                createdAt:
+                  true,
+              },
+            },
 
             versions: {
               orderBy: {
@@ -124,7 +155,9 @@ export class DocumentsService {
           },
         });
 
-    if (!document) {
+    if (
+      !document
+    ) {
       throw new NotFoundException(
         'Documento não encontrado.',
       );
@@ -151,6 +184,46 @@ export class DocumentsService {
 
       registeredAt:
         document.createdAt,
+
+      replacement:
+        document.replacedBy
+          ? {
+              publicId:
+                document
+                  .replacedBy
+                  .publicId,
+
+              title:
+                document
+                  .replacedBy
+                  .title,
+
+              type:
+                document
+                  .replacedBy
+                  .type,
+
+              reference:
+                document
+                  .replacedBy
+                  .reference,
+
+              status:
+                document
+                  .replacedBy
+                  .status,
+
+              issuedAt:
+                document
+                  .replacedBy
+                  .issuedAt,
+
+              registeredAt:
+                document
+                  .replacedBy
+                  .createdAt,
+            }
+          : null,
 
       originalFile: {
         available:
@@ -286,12 +359,18 @@ export class DocumentsService {
     publicId:
       string,
   ) {
+    const normalizedPublicId =
+      publicId
+        .trim()
+        .toUpperCase();
+
     const document =
       await this.prisma
         .document
         .findUnique({
           where: {
-            publicId,
+            publicId:
+              normalizedPublicId,
           },
 
           include: {
@@ -309,7 +388,9 @@ export class DocumentsService {
           },
         });
 
-    if (!document) {
+    if (
+      !document
+    ) {
       throw new NotFoundException(
         'Documento não encontrado.',
       );
@@ -337,7 +418,9 @@ export class DocumentsService {
       );
     }
 
-    if (!version.attestation) {
+    if (
+      !version.attestation
+    ) {
       throw new InternalServerErrorException(
         'A atestação do documento não está disponível.',
       );
@@ -359,7 +442,9 @@ export class DocumentsService {
             .keyId,
         );
 
-    if (!signatureValid) {
+    if (
+      !signatureValid
+    ) {
       throw new InternalServerErrorException(
         'A integridade criptográfica do documento não pôde ser confirmada.',
       );
@@ -409,7 +494,9 @@ export class DocumentsService {
           version.createdAt
             .toISOString();
 
-      if (!claimsMatch) {
+      if (
+        !claimsMatch
+      ) {
         throw new Error(
           'Attestation claims mismatch',
         );

@@ -185,6 +185,7 @@ export const DocumentScalarFieldEnum = {
   issuedAt: 'issuedAt',
   originalFileAccess: 'originalFileAccess',
   organizationId: 'organizationId',
+  replacedById: 'replacedById',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

@@ -1,7 +1,18 @@
-import { Injectable } from '@nestjs/common';
-import { createHash } from 'node:crypto';
+import {
+  Injectable,
+} from '@nestjs/common';
 
-import { SigningService } from './signing.service.js';
+import {
+  createHash,
+} from 'node:crypto';
+
+import {
+  isValidPublicId,
+} from './public-id.js';
+
+import {
+  SigningService,
+} from './signing.service.js';
 
 export type DocumentStatusValue =
   | 'PENDING'
@@ -14,114 +25,245 @@ export type DocumentLifecycleEventTypeValue =
   | 'REGISTERED'
   | 'STATUS_CHANGED';
 
-interface LifecyclePayload {
-  schema: 'vera.lifecycle.v1';
+interface LifecyclePayloadBase {
+  documentPublicId:
+    string;
 
-  documentPublicId: string;
+  sequence:
+    number;
 
-  sequence: number;
+  type:
+    DocumentLifecycleEventTypeValue;
 
-  type: DocumentLifecycleEventTypeValue;
+  fromStatus:
+    DocumentStatusValue | null;
 
-  fromStatus: DocumentStatusValue | null;
+  toStatus:
+    DocumentStatusValue;
 
-  toStatus: DocumentStatusValue;
+  reason:
+    string | null;
 
-  reason: string | null;
+  previousEventHash:
+    string | null;
 
-  previousEventHash: string | null;
+  occurredAt:
+    string;
+}
 
-  occurredAt: string;
+/**
+ * Lifecycle histórico.
+ *
+ * Mantemos v1 intacto para todos os
+ * eventos já emitidos.
+ */
+interface LifecyclePayloadV1
+  extends LifecyclePayloadBase {
+  schema:
+    'vera.lifecycle.v1';
+}
+
+/**
+ * v2 existe especificamente para eventos
+ * que precisam transportar informação
+ * adicional criptograficamente vinculada.
+ *
+ * Primeiro caso:
+ * Document A foi substituído por Document B.
+ */
+interface LifecyclePayloadV2
+  extends LifecyclePayloadBase {
+  schema:
+    'vera.lifecycle.v2';
+
+  replacementPublicId:
+    string;
+}
+
+type LifecyclePayload =
+  | LifecyclePayloadV1
+  | LifecyclePayloadV2;
+
+interface ParsedLifecyclePayload {
+  schema?:
+    unknown;
+
+  documentPublicId?:
+    unknown;
+
+  sequence?:
+    unknown;
+
+  type?:
+    unknown;
+
+  fromStatus?:
+    unknown;
+
+  toStatus?:
+    unknown;
+
+  reason?:
+    unknown;
+
+  previousEventHash?:
+    unknown;
+
+  occurredAt?:
+    unknown;
+
+  replacementPublicId?:
+    unknown;
 }
 
 export interface LifecycleEventInput {
-  sequence: number;
+  sequence:
+    number;
 
-  type: DocumentLifecycleEventTypeValue;
+  type:
+    DocumentLifecycleEventTypeValue;
 
-  fromStatus: DocumentStatusValue | null;
+  fromStatus:
+    DocumentStatusValue | null;
 
-  toStatus: DocumentStatusValue;
+  toStatus:
+    DocumentStatusValue;
 
-  reason: string | null;
+  reason:
+    string | null;
 
-  previousEventHash: string | null;
+  previousEventHash:
+    string | null;
 
-  payload: string;
+  payload:
+    string;
 
-  signature: string;
+  signature:
+    string;
 
-  algorithm: string;
+  algorithm:
+    string;
 
-  keyId: string;
+  keyId:
+    string;
 
-  eventHash: string;
+  eventHash:
+    string;
 
-  createdAt: Date;
+  createdAt:
+    Date;
 }
 
 interface SignedEnvelope {
-  payload: string;
-  signature: string;
-  algorithm: string;
-  keyId: string;
+  payload:
+    string;
+
+  signature:
+    string;
+
+  algorithm:
+    string;
+
+  keyId:
+    string;
 }
 
 @Injectable()
 export class LifecycleService {
   constructor(
-    private readonly signingService: SigningService,
+    private readonly signingService:
+      SigningService,
   ) {}
 
-  createRegisteredEvent(input: {
-    documentPublicId: string;
-    toStatus: DocumentStatusValue;
-    occurredAt: string;
-  }) {
-    const payloadObject: LifecyclePayload = {
-      schema: 'vera.lifecycle.v1',
+  /*
+   * ============================================================
+   * REGISTERED — v1
+   * ============================================================
+   */
 
+  createRegisteredEvent(
+    input: {
       documentPublicId:
-        input.documentPublicId,
-
-      sequence: 1,
-
-      type: 'REGISTERED',
-
-      fromStatus: null,
+        string;
 
       toStatus:
-        input.toStatus,
-
-      reason: null,
-
-      previousEventHash: null,
+        DocumentStatusValue;
 
       occurredAt:
-        input.occurredAt,
-    };
+        string;
+    },
+  ) {
+    const payloadObject:
+      LifecyclePayloadV1 = {
+        schema:
+          'vera.lifecycle.v1',
+
+        documentPublicId:
+          input.documentPublicId,
+
+        sequence:
+          1,
+
+        type:
+          'REGISTERED',
+
+        fromStatus:
+          null,
+
+        toStatus:
+          input.toStatus,
+
+        reason:
+          null,
+
+        previousEventHash:
+          null,
+
+        occurredAt:
+          input.occurredAt,
+      };
 
     return this.signEvent(
       payloadObject,
     );
   }
 
-  createStatusChangedEvent(input: {
-    documentPublicId: string;
+  /*
+   * ============================================================
+   * GENERIC STATUS CHANGE — v1
+   * ============================================================
+   *
+   * REPLACED não passa por este método.
+   */
 
-    sequence: number;
+  createStatusChangedEvent(
+    input: {
+      documentPublicId:
+        string;
 
-    fromStatus: DocumentStatusValue;
+      sequence:
+        number;
 
-    toStatus: DocumentStatusValue;
+      fromStatus:
+        DocumentStatusValue;
 
-    reason: string;
+      toStatus:
+        DocumentStatusValue;
 
-    previousEventHash: string;
+      reason:
+        string;
 
-    occurredAt: string;
-  }) {
-    if (input.sequence < 2) {
+      previousEventHash:
+        string;
+
+      occurredAt:
+        string;
+    },
+  ) {
+    if (
+      input.sequence <
+      2
+    ) {
       throw new Error(
         'STATUS_CHANGED requires sequence >= 2',
       );
@@ -136,6 +278,15 @@ export class LifecycleService {
       );
     }
 
+    if (
+      input.toStatus ===
+      'REPLACED'
+    ) {
+      throw new Error(
+        'REPLACED requires a cryptographically bound replacement document.',
+      );
+    }
+
     const reason =
       input.reason.trim();
 
@@ -145,41 +296,183 @@ export class LifecycleService {
       );
     }
 
-    const payloadObject: LifecyclePayload = {
-      schema:
-        'vera.lifecycle.v1',
+    const payloadObject:
+      LifecyclePayloadV1 = {
+        schema:
+          'vera.lifecycle.v1',
 
-      documentPublicId:
-        input.documentPublicId,
+        documentPublicId:
+          input.documentPublicId,
 
-      sequence:
-        input.sequence,
+        sequence:
+          input.sequence,
 
-      type:
-        'STATUS_CHANGED',
+        type:
+          'STATUS_CHANGED',
 
-      fromStatus:
-        input.fromStatus,
+        fromStatus:
+          input.fromStatus,
 
-      toStatus:
-        input.toStatus,
+        toStatus:
+          input.toStatus,
 
-      reason,
+        reason,
 
-      previousEventHash:
-        input.previousEventHash,
+        previousEventHash:
+          input.previousEventHash,
 
-      occurredAt:
-        input.occurredAt,
-    };
+        occurredAt:
+          input.occurredAt,
+      };
 
     return this.signEvent(
       payloadObject,
     );
   }
 
+  /*
+   * ============================================================
+   * REPLACEMENT — v2
+   * ============================================================
+   *
+   * O Public ID do sucessor passa a fazer
+   * parte do payload assinado.
+   *
+   * Assim a relação:
+   *
+   * A → B
+   *
+   * não depende apenas de uma coluna
+   * mutável da base de dados.
+   */
+
+  createReplacementEvent(
+    input: {
+      documentPublicId:
+        string;
+
+      replacementPublicId:
+        string;
+
+      sequence:
+        number;
+
+      fromStatus:
+        DocumentStatusValue;
+
+      reason:
+        string;
+
+      previousEventHash:
+        string;
+
+      occurredAt:
+        string;
+    },
+  ) {
+    const documentPublicId =
+      input.documentPublicId
+        .trim()
+        .toUpperCase();
+
+    const replacementPublicId =
+      input.replacementPublicId
+        .trim()
+        .toUpperCase();
+
+    if (
+      input.sequence <
+      2
+    ) {
+      throw new Error(
+        'REPLACED requires sequence >= 2',
+      );
+    }
+
+    if (
+      input.fromStatus !==
+      'VALID'
+    ) {
+      throw new Error(
+        'Only VALID documents can be replaced.',
+      );
+    }
+
+    if (
+      !isValidPublicId(
+        documentPublicId,
+      ) ||
+      !isValidPublicId(
+        replacementPublicId,
+      )
+    ) {
+      throw new Error(
+        'Invalid Vera public ID in replacement event.',
+      );
+    }
+
+    if (
+      documentPublicId ===
+      replacementPublicId
+    ) {
+      throw new Error(
+        'A document cannot replace itself.',
+      );
+    }
+
+    const reason =
+      input.reason.trim();
+
+    if (!reason) {
+      throw new Error(
+        'A replacement requires a reason',
+      );
+    }
+
+    const payloadObject:
+      LifecyclePayloadV2 = {
+        schema:
+          'vera.lifecycle.v2',
+
+        documentPublicId,
+
+        sequence:
+          input.sequence,
+
+        type:
+          'STATUS_CHANGED',
+
+        fromStatus:
+          input.fromStatus,
+
+        toStatus:
+          'REPLACED',
+
+        reason,
+
+        previousEventHash:
+          input.previousEventHash,
+
+        occurredAt:
+          input.occurredAt,
+
+        replacementPublicId,
+      };
+
+    return this.signEvent(
+      payloadObject,
+    );
+  }
+
+  /*
+   * ============================================================
+   * SIGNING
+   * ============================================================
+   */
+
   private signEvent(
-    payloadObject: LifecyclePayload,
+    payloadObject:
+      LifecyclePayload,
   ) {
     const payload =
       JSON.stringify(
@@ -222,7 +515,8 @@ export class LifecycleService {
         payloadObject.reason,
 
       previousEventHash:
-        payloadObject.previousEventHash,
+        payloadObject
+          .previousEventHash,
 
       payload,
 
@@ -239,10 +533,19 @@ export class LifecycleService {
     };
   }
 
+  /*
+   * ============================================================
+   * HASH / SIGNATURE
+   * ============================================================
+   */
+
   calculateEventHash(
-    input: SignedEnvelope,
+    input:
+      SignedEnvelope,
   ): string {
-    return createHash('sha256')
+    return createHash(
+      'sha256',
+    )
       .update(
         JSON.stringify({
           payload:
@@ -258,38 +561,66 @@ export class LifecycleService {
             input.keyId,
         }),
       )
-      .digest('hex');
+      .digest(
+        'hex',
+      );
   }
 
   verifySignature(
-    input: SignedEnvelope,
+    input:
+      SignedEnvelope,
   ): boolean {
-    return this.signingService.verify({
-      payload:
-        input.payload,
+    return this.signingService
+      .verify({
+        payload:
+          input.payload,
 
-      signature:
-        input.signature,
+        signature:
+          input.signature,
 
-      algorithm:
-        input.algorithm,
+        algorithm:
+          input.algorithm,
 
-      keyId:
-        input.keyId,
-    });
+        keyId:
+          input.keyId,
+      });
   }
 
+  /*
+   * ============================================================
+   * CHAIN EVALUATION
+   * ============================================================
+   *
+   * expectedReplacementPublicId liga:
+   *
+   * estado materializado do Document
+   *
+   *              +
+   *
+   * relação Document.replacedBy
+   *
+   *              +
+   *
+   * lifecycle criptograficamente assinado.
+   */
+
   evaluateChain(
-    documentPublicId: string,
+    documentPublicId:
+      string,
 
     databaseStatus:
       DocumentStatusValue,
 
     events:
       LifecycleEventInput[],
+
+    expectedReplacementPublicId:
+      string | null =
+      null,
   ) {
     if (
-      events.length === 0
+      events.length ===
+      0
     ) {
       return {
         valid:
@@ -310,10 +641,13 @@ export class LifecycleService {
         sequenceValid:
           false,
 
+        replacementBindingValid:
+          false,
+
         derivedStatus:
           null as
-            DocumentStatusValue |
-            null,
+            | DocumentStatusValue
+            | null,
 
         databaseStatusMatches:
           false,
@@ -321,11 +655,21 @@ export class LifecycleService {
     }
 
     const orderedEvents =
-      [...events].sort(
-        (a, b) =>
-          a.sequence -
-          b.sequence,
-      );
+      [...events]
+        .sort(
+          (
+            a,
+            b,
+          ) =>
+            a.sequence -
+            b.sequence,
+        );
+
+    const normalizedExpectedReplacement =
+      expectedReplacementPublicId
+        ?.trim()
+        .toUpperCase() ??
+      null;
 
     let signaturesValid =
       true;
@@ -342,24 +686,32 @@ export class LifecycleService {
     let sequenceValid =
       true;
 
+    let replacementBindingValid =
+      true;
+
     for (
-      let index = 0;
+      let index =
+        0;
       index <
       orderedEvents.length;
-      index += 1
+      index +=
+        1
     ) {
       const event =
         orderedEvents[index];
 
       const previousEvent =
-        index > 0
+        index >
+        0
           ? orderedEvents[
-              index - 1
+              index -
+              1
             ]
           : null;
 
       const expectedSequence =
-        index + 1;
+        index +
+        1;
 
       if (
         event.sequence !==
@@ -368,6 +720,10 @@ export class LifecycleService {
         sequenceValid =
           false;
       }
+
+      /*
+       * Signature.
+       */
 
       let signatureValid =
         false;
@@ -392,14 +748,20 @@ export class LifecycleService {
           false;
       }
 
-      if (!signatureValid) {
+      if (
+        !signatureValid
+      ) {
         signaturesValid =
           false;
       }
 
+      /*
+       * Event hash.
+       */
+
       let calculatedEventHash:
         string | null =
-          null;
+        null;
 
       try {
         calculatedEventHash =
@@ -429,44 +791,85 @@ export class LifecycleService {
           false;
       }
 
+      /*
+       * Signed claims.
+       */
+
       try {
         const payload =
           JSON.parse(
             event.payload,
-          ) as LifecyclePayload;
+          ) as
+            ParsedLifecyclePayload;
 
-        const currentClaimsMatch =
-          payload.schema ===
-            'vera.lifecycle.v1' &&
-
+        const commonClaimsMatch =
+          (
+            payload.schema ===
+              'vera.lifecycle.v1' ||
+            payload.schema ===
+              'vera.lifecycle.v2'
+          ) &&
           payload.documentPublicId ===
             documentPublicId &&
-
           payload.sequence ===
             event.sequence &&
-
           payload.type ===
             event.type &&
-
           payload.fromStatus ===
             event.fromStatus &&
-
           payload.toStatus ===
             event.toStatus &&
-
           payload.reason ===
             event.reason &&
-
           payload.previousEventHash ===
             event.previousEventHash &&
-
           payload.occurredAt ===
             event.createdAt
               .toISOString();
 
         if (
-          !currentClaimsMatch
+          !commonClaimsMatch
         ) {
+          claimsMatch =
+            false;
+        }
+
+        /*
+         * Um evento REPLACED tem de ser v2
+         * e apontar exatamente para o
+         * sucessor materializado.
+         */
+
+        if (
+          event.toStatus ===
+          'REPLACED'
+        ) {
+          const replacementClaimsMatch =
+            payload.schema ===
+              'vera.lifecycle.v2' &&
+            typeof payload
+              .replacementPublicId ===
+              'string' &&
+            normalizedExpectedReplacement !==
+              null &&
+            payload
+              .replacementPublicId ===
+              normalizedExpectedReplacement;
+
+          if (
+            !replacementClaimsMatch
+          ) {
+            replacementBindingValid =
+              false;
+          }
+        } else if (
+          payload.schema !==
+          'vera.lifecycle.v1'
+        ) {
+          /*
+           * Neste desenho, v2 só é válido
+           * para REPLACED.
+           */
           claimsMatch =
             false;
         }
@@ -475,16 +878,21 @@ export class LifecycleService {
           false;
       }
 
-      if (index === 0) {
-        if (
-          event.sequence !== 1 ||
+      /*
+       * Chain structure.
+       */
 
+      if (
+        index ===
+        0
+      ) {
+        if (
+          event.sequence !==
+            1 ||
           event.type !==
             'REGISTERED' ||
-
           event.fromStatus !==
             null ||
-
           event.previousEventHash !==
             null
         ) {
@@ -495,7 +903,9 @@ export class LifecycleService {
         continue;
       }
 
-      if (!previousEvent) {
+      if (
+        !previousEvent
+      ) {
         chainLinksValid =
           false;
 
@@ -512,7 +922,8 @@ export class LifecycleService {
 
       if (
         event.previousEventHash !==
-        previousEvent.eventHash
+        previousEvent
+          .eventHash
       ) {
         chainLinksValid =
           false;
@@ -520,7 +931,8 @@ export class LifecycleService {
 
       if (
         event.fromStatus !==
-        previousEvent.toStatus
+        previousEvent
+          .toStatus
       ) {
         chainLinksValid =
           false;
@@ -541,6 +953,53 @@ export class LifecycleService {
         claimsMatch =
           false;
       }
+
+      /*
+       * REPLACED é terminal.
+       */
+
+      if (
+        previousEvent
+          .toStatus ===
+        'REPLACED'
+      ) {
+        chainLinksValid =
+          false;
+      }
+    }
+
+    const candidateStatus =
+      orderedEvents[
+        orderedEvents.length -
+        1
+      ].toStatus;
+
+    /*
+     * Se a relação materializada existe,
+     * o estado também precisa ser REPLACED.
+     *
+     * E se o estado é REPLACED, a relação
+     * precisa existir.
+     */
+
+    if (
+      candidateStatus ===
+        'REPLACED' &&
+      normalizedExpectedReplacement ===
+        null
+    ) {
+      replacementBindingValid =
+        false;
+    }
+
+    if (
+      candidateStatus !==
+        'REPLACED' &&
+      normalizedExpectedReplacement !==
+        null
+    ) {
+      replacementBindingValid =
+        false;
     }
 
     const valid =
@@ -548,17 +1007,14 @@ export class LifecycleService {
       eventHashesValid &&
       claimsMatch &&
       chainLinksValid &&
-      sequenceValid;
+      sequenceValid &&
+      replacementBindingValid;
 
     const derivedStatus:
-      DocumentStatusValue |
-      null =
-        valid
-          ? orderedEvents[
-              orderedEvents.length -
-                1
-            ].toStatus
-          : null;
+      DocumentStatusValue | null =
+      valid
+        ? candidateStatus
+        : null;
 
     const databaseStatusMatches =
       valid &&
@@ -577,6 +1033,8 @@ export class LifecycleService {
       chainLinksValid,
 
       sequenceValid,
+
+      replacementBindingValid,
 
       derivedStatus,
 

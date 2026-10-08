@@ -197,30 +197,18 @@ model DocumentSubmission {
   creatorId String
   creator   User   @relation("SubmissionCreator", fields: [creatorId], references: [id])
 
-  /**
-   * NEW_DOCUMENT = emissão inicial de um novo
-   * documento Vera.
-   * NEW_VERSION = nova versão de um Document
-   * Vera já existente.
-   */
   kind DocumentSubmissionKind @default(NEW_DOCUMENT)
 
   /**
-   * Apenas NEW_VERSION.
-   * Documento lógico ao qual a nova versão
-   * será adicionada.
+   * Para NEW_VERSION:
+   * targetDocument = documento lógico que
+   * receberá a nova versão.
+   * baseVersion = versão corrente observada
+   * quando a submissão foi criada.
    */
   targetDocumentId String?
   targetDocument   Document? @relation("SubmissionTargetDocument", fields: [targetDocumentId], references: [id], onDelete: SetNull)
 
-  /**
-   * Apenas NEW_VERSION.
-   * Número da versão atual no momento em que
-   * a submissão foi criada.
-   * Funciona como controlo otimista para
-   * impedir emissão sobre uma base que já
-   * deixou de ser a versão atual.
-   */
   baseVersion Int?
 
   title     String
@@ -233,7 +221,7 @@ model DocumentSubmission {
   /**
    * Ficheiro submetido para revisão.
    * Este ficheiro ainda NÃO representa
-   * um DocumentVersion oficial da Vera.
+   * uma versão oficial da Vera.
    */
   filename   String
   mimeType   String
@@ -244,25 +232,26 @@ model DocumentSubmission {
   status DocumentSubmissionStatus @default(DRAFT)
 
   /**
-   * Momento em que o CREATOR efetivamente
-   * envia o draft para REVIEWER.
+   * Momento em que o CREATOR envia
+   * efetivamente o draft para REVIEWER.
    */
   submittedAt DateTime?
 
   /**
-   * Apenas a submissão NEW_DOCUMENT que
-   * originou o Document.
-   * Mantido para compatibilidade e para
-   * preservar a proveniência da emissão
-   * inicial.
+   * Para NEW_DOCUMENT:
+   * aponta para o Document criado por
+   * esta submissão.
+   * Continua @unique porque apenas uma
+   * submissão origina a identidade lógica
+   * inicial de cada Document.
    */
   documentId String?   @unique
   document   Document? @relation("SubmissionDocument", fields: [documentId], references: [id], onDelete: SetNull)
 
   /**
-   * Versão oficial efetivamente produzida
-   * por esta submissão.
-   * Pode apontar para v1, v2, v3...
+   * Versão exata produzida pela submissão.
+   * Aplica-se tanto a NEW_DOCUMENT/v1
+   * como a NEW_VERSION/v2+.
    */
   issuedVersionId String?          @unique
   issuedVersion   DocumentVersion? @relation("SubmissionIssuedVersion", fields: [issuedVersionId], references: [id], onDelete: SetNull)
@@ -290,10 +279,6 @@ model DocumentSubmissionDecision {
   actorId String
   actor   User   @relation("SubmissionDecisionActor", fields: [actorId], references: [id])
 
-  /**
-   * REVIEW   = decisão do REVIEWER
-   * APPROVAL = decisão do APPROVER
-   */
   stage DocumentSubmissionStage
 
   decision DocumentSubmissionDecisionOutcome
@@ -302,10 +287,6 @@ model DocumentSubmissionDecision {
 
   createdAt DateTime @default(now())
 
-  /**
-   * Cada etapa só pode produzir
-   * uma decisão final.
-   */
   @@unique([submissionId, stage])
   @@index([submissionId])
   @@index([actorId])
@@ -337,17 +318,26 @@ model Document {
   lifecycleEvents DocumentLifecycleEvent[]
 
   /**
+   * Documento sucessor.
+   * A → B significa:
+   * A.replacedById = B.id
+   * A e B continuam a ser Documents
+   * distintos, com Public IDs distintos.
+   * Isto NÃO representa v1 → v2.
+   */
+  replacedById String?
+  replacedBy   Document?  @relation("DocumentReplacement", fields: [replacedById], references: [id], onDelete: Restrict)
+  replaces     Document[] @relation("DocumentReplacement")
+
+  /**
    * Submissão interna que originou
    * este documento.
-   * null mantém compatibilidade com
-   * documentos legacy já existentes.
    */
   sourceSubmission DocumentSubmission? @relation("SubmissionDocument")
 
   /**
-   * Submissões criadas posteriormente
-   * para produzir novas versões deste
-   * mesmo documento lógico.
+   * Submissões posteriores que produziram
+   * novas versões deste mesmo documento.
    */
   versionSubmissions DocumentSubmission[] @relation("SubmissionTargetDocument")
 
@@ -355,6 +345,7 @@ model Document {
   updatedAt DateTime @updatedAt
 
   @@index([organizationId])
+  @@index([replacedById])
 }
 
 model DocumentVersion {
@@ -367,12 +358,6 @@ model DocumentVersion {
 
   storageKey String? @unique
 
-  /**
-   * QR Proof canónico emitido pela Vera
-   * para esta versão.
-   * null mantém compatibilidade com
-   * documentos legacy.
-   */
   qrProof String? @unique
 
   documentId String
@@ -381,9 +366,8 @@ model DocumentVersion {
   attestation Attestation?
 
   /**
-   * Submissão que produziu esta versão.
-   * null mantém compatibilidade com
-   * versões emitidas antes deste modelo.
+   * Submissão que produziu exatamente
+   * esta versão.
    */
   issuedBySubmission DocumentSubmission? @relation("SubmissionIssuedVersion")
 
@@ -475,21 +459,15 @@ model VerificationAuditEvent {
 
   /**
    * Política que produziu o verdict.
-   * Ex.: vera.public-verification.v4
    */
   policy String
 
   /**
    * Resultado materializado naquele momento.
-   * Ex.: VERIFIED, REVOKED, NOT_FOUND.
    */
   verdictCode String
   verified    Boolean
 
-  /**
-   * Identificadores conhecidos no momento
-   * da verificação.
-   */
   publicId   String?
   documentId String?
 

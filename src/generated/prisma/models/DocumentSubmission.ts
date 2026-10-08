@@ -2087,30 +2087,16 @@ export type $DocumentSubmissionPayload<ExtArgs extends runtime.Types.Extensions.
     id: string
     organizationId: string
     creatorId: string
-    /**
-     * *
-     *    * NEW_DOCUMENT = emissão inicial de um novo
-     *    * documento Vera.
-     *    * NEW_VERSION = nova versão de um Document
-     *    * Vera já existente.
-     */
     kind: $Enums.DocumentSubmissionKind
     /**
      * *
-     *    * Apenas NEW_VERSION.
-     *    * Documento lógico ao qual a nova versão
-     *    * será adicionada.
+     *    * Para NEW_VERSION:
+     *    * targetDocument = documento lógico que
+     *    * receberá a nova versão.
+     *    * baseVersion = versão corrente observada
+     *    * quando a submissão foi criada.
      */
     targetDocumentId: string | null
-    /**
-     * *
-     *    * Apenas NEW_VERSION.
-     *    * Número da versão atual no momento em que
-     *    * a submissão foi criada.
-     *    * Funciona como controlo otimista para
-     *    * impedir emissão sobre uma base que já
-     *    * deixou de ser a versão atual.
-     */
     baseVersion: number | null
     title: string
     type: string | null
@@ -2121,7 +2107,7 @@ export type $DocumentSubmissionPayload<ExtArgs extends runtime.Types.Extensions.
      * *
      *    * Ficheiro submetido para revisão.
      *    * Este ficheiro ainda NÃO representa
-     *    * um DocumentVersion oficial da Vera.
+     *    * uma versão oficial da Vera.
      */
     filename: string
     mimeType: string
@@ -2131,24 +2117,25 @@ export type $DocumentSubmissionPayload<ExtArgs extends runtime.Types.Extensions.
     status: $Enums.DocumentSubmissionStatus
     /**
      * *
-     *    * Momento em que o CREATOR efetivamente
-     *    * envia o draft para REVIEWER.
+     *    * Momento em que o CREATOR envia
+     *    * efetivamente o draft para REVIEWER.
      */
     submittedAt: Date | null
     /**
      * *
-     *    * Apenas a submissão NEW_DOCUMENT que
-     *    * originou o Document.
-     *    * Mantido para compatibilidade e para
-     *    * preservar a proveniência da emissão
-     *    * inicial.
+     *    * Para NEW_DOCUMENT:
+     *    * aponta para o Document criado por
+     *    * esta submissão.
+     *    * Continua @unique porque apenas uma
+     *    * submissão origina a identidade lógica
+     *    * inicial de cada Document.
      */
     documentId: string | null
     /**
      * *
-     *    * Versão oficial efetivamente produzida
-     *    * por esta submissão.
-     *    * Pode apontar para v1, v2, v3...
+     *    * Versão exata produzida pela submissão.
+     *    * Aplica-se tanto a NEW_DOCUMENT/v1
+     *    * como a NEW_VERSION/v2+.
      */
     issuedVersionId: string | null
     createdAt: Date

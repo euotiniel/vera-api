@@ -706,11 +706,6 @@ export type $DocumentSubmissionDecisionPayload<ExtArgs extends runtime.Types.Ext
     id: string
     submissionId: string
     actorId: string
-    /**
-     * *
-     *    * REVIEW   = decisão do REVIEWER
-     *    * APPROVAL = decisão do APPROVER
-     */
     stage: $Enums.DocumentSubmissionStage
     decision: $Enums.DocumentSubmissionDecisionOutcome
     reason: string | null

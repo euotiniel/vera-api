@@ -1,4 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+} from '@nestjs/common';
 
 export type VerificationMethod =
   | 'PUBLIC_ID'
@@ -79,8 +81,7 @@ interface VerificationPolicyInput {
     boolean | null;
 
   derivedStatus?:
-    DocumentStatusValue |
-    null;
+    DocumentStatusValue | null;
 
   originalFileRequired?:
     boolean;
@@ -155,12 +156,9 @@ export class VerificationPolicyService {
       };
     }
 
-    /*
-     * Só avaliamos binding do QR
-     * depois de sabermos que o registo
-     * realmente existe.
-     */
-    if (!input.recordFound) {
+    if (
+      !input.recordFound
+    ) {
       return {
         code:
           'NOT_FOUND',
@@ -309,7 +307,7 @@ export class VerificationPolicyService {
             false,
 
           message:
-            'O documento foi substituído por uma versão posterior.',
+            'O documento foi substituído por outro documento oficial.',
         };
 
       case 'VALID':

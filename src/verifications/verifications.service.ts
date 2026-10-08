@@ -23,6 +23,8 @@ import {
 } from '../trust/attestation.service.js';
 
 import {
+  type DocumentStatusValue,
+  type LifecycleEventInput,
   LifecycleService,
 } from '../trust/lifecycle.service.js';
 
@@ -31,7 +33,6 @@ import {
 } from '../trust/public-id.js';
 
 import {
-  type DocumentStatusValue,
   VerificationPolicyService,
 } from './verification-policy.service.js';
 
@@ -88,37 +89,6 @@ interface AttestationV2Payload {
   };
 }
 
-interface LifecyclePayload {
-  schema:
-    'vera.lifecycle.v1';
-
-  documentPublicId:
-    string;
-
-  sequence:
-    number;
-
-  type:
-    | 'REGISTERED'
-    | 'STATUS_CHANGED';
-
-  fromStatus:
-    | DocumentStatusValue
-    | null;
-
-  toStatus:
-    DocumentStatusValue;
-
-  reason:
-    string | null;
-
-  previousEventHash:
-    string | null;
-
-  occurredAt:
-    string;
-}
-
 interface AttestationInput {
   payload:
     string;
@@ -159,46 +129,6 @@ interface VersionInput {
     AttestationInput | null;
 }
 
-interface LifecycleEventInput {
-  sequence:
-    number;
-
-  type:
-    | 'REGISTERED'
-    | 'STATUS_CHANGED';
-
-  fromStatus:
-    | DocumentStatusValue
-    | null;
-
-  toStatus:
-    DocumentStatusValue;
-
-  reason:
-    string | null;
-
-  previousEventHash:
-    string | null;
-
-  payload:
-    string;
-
-  signature:
-    string;
-
-  algorithm:
-    string;
-
-  keyId:
-    string;
-
-  eventHash:
-    string;
-
-  createdAt:
-    Date;
-}
-
 @Injectable()
 export class VerificationsService {
   constructor(
@@ -221,20 +151,6 @@ export class VerificationsService {
       PdfValidationService,
   ) {}
 
-  /*
-   * ============================================================
-   * VERIFY BY PUBLIC ID
-   * ============================================================
-   *
-   * Sem requestedVersion:
-   * verifica a versão corrente.
-   *
-   * Com requestedVersion:
-   * verifica exatamente essa versão.
-   * Este modo é utilizado internamente,
-   * principalmente pela verificação QR.
-   */
-
   async verifyByPublicId(
     publicId:
       string,
@@ -252,7 +168,9 @@ export class VerificationsService {
         normalizedPublicId,
       );
 
-    if (!idChecksumValid) {
+    if (
+      !idChecksumValid
+    ) {
       const verdict =
         this.verificationPolicyService
           .evaluate({
@@ -302,6 +220,31 @@ export class VerificationsService {
             organization:
               true,
 
+            replacedBy: {
+              select: {
+                publicId:
+                  true,
+
+                title:
+                  true,
+
+                type:
+                  true,
+
+                reference:
+                  true,
+
+                status:
+                  true,
+
+                issuedAt:
+                  true,
+
+                createdAt:
+                  true,
+              },
+            },
+
             versions: {
               orderBy: {
                 version:
@@ -323,7 +266,9 @@ export class VerificationsService {
           },
         });
 
-    if (!document) {
+    if (
+      !document
+    ) {
       const verdict =
         this.verificationPolicyService
           .evaluate({
@@ -378,14 +323,6 @@ export class VerificationsService {
             ) ??
           null;
 
-    /*
-     * O documento existe, mas a versão
-     * solicitada não existe.
-     *
-     * Isto é especialmente relevante para
-     * QR Proofs que referenciem um número
-     * de versão inexistente.
-     */
     if (
       requestedVersion !==
         undefined &&
@@ -487,23 +424,21 @@ export class VerificationsService {
           };
 
     const lifecycle =
-      this.evaluateLifecycle(
-        document.publicId,
+      this.lifecycleService
+        .evaluateChain(
+          document.publicId,
 
-        document.status as
-          DocumentStatusValue,
+          document.status as
+            DocumentStatusValue,
 
-        document.lifecycleEvents as
-          LifecycleEventInput[],
-      );
+          document.lifecycleEvents as
+            LifecycleEventInput[],
 
-    /*
-     * Quando verificamos uma versão específica,
-     * validamos os bytes dessa versão.
-     *
-     * PUBLIC_ID normal continua selecionando
-     * a versão mais recente.
-     */
+          document.replacedBy
+            ?.publicId ??
+            null,
+        );
+
     const originalFile =
       await this.evaluateOriginalFile(
         version,
@@ -592,6 +527,10 @@ export class VerificationsService {
           lifecycle
             .databaseStatusMatches,
 
+        replacementBindingValid:
+          lifecycle
+            .replacementBindingValid,
+
         originalFileAvailable:
           originalFile.available,
 
@@ -626,6 +565,10 @@ export class VerificationsService {
           sequenceValid:
             lifecycle
               .sequenceValid,
+
+          replacementBindingValid:
+            lifecycle
+              .replacementBindingValid,
         },
       },
 
@@ -659,6 +602,46 @@ export class VerificationsService {
         database:
           document.status,
       },
+
+      replacement:
+        document.replacedBy
+          ? {
+              publicId:
+                document
+                  .replacedBy
+                  .publicId,
+
+              title:
+                document
+                  .replacedBy
+                  .title,
+
+              type:
+                document
+                  .replacedBy
+                  .type,
+
+              reference:
+                document
+                  .replacedBy
+                  .reference,
+
+              status:
+                document
+                  .replacedBy
+                  .status,
+
+              issuedAt:
+                document
+                  .replacedBy
+                  .issuedAt,
+
+              registeredAt:
+                document
+                  .replacedBy
+                  .createdAt,
+            }
+          : null,
 
       versioning: {
         checkedVersion:
@@ -727,23 +710,10 @@ export class VerificationsService {
     };
   }
 
-  /*
-   * ============================================================
-   * VERIFY BY FILE
-   * ============================================================
-   */
-
   async verifyFile(
     file:
       Express.Multer.File,
   ) {
-    /*
-     * Exact Match não normaliza nem regrava
-     * os bytes enviados.
-     *
-     * Apenas confirmamos que aparentam ser
-     * um PDF antes do SHA-256.
-     */
     this.pdfValidationService
       .assertPdfSignature(
         file.buffer,
@@ -777,6 +747,31 @@ export class VerificationsService {
                 organization:
                   true,
 
+                replacedBy: {
+                  select: {
+                    publicId:
+                      true,
+
+                    title:
+                      true,
+
+                    type:
+                      true,
+
+                    reference:
+                      true,
+
+                    status:
+                      true,
+
+                    issuedAt:
+                      true,
+
+                    createdAt:
+                      true,
+                  },
+                },
+
                 lifecycleEvents: {
                   orderBy: {
                     sequence:
@@ -803,7 +798,9 @@ export class VerificationsService {
           },
         });
 
-    if (!version) {
+    if (
+      !version
+    ) {
       await this.prisma
         .verificationEvent
         .create({
@@ -909,15 +906,20 @@ export class VerificationsService {
       );
 
     const lifecycle =
-      this.evaluateLifecycle(
-        document.publicId,
+      this.lifecycleService
+        .evaluateChain(
+          document.publicId,
 
-        document.status as
-          DocumentStatusValue,
+          document.status as
+            DocumentStatusValue,
 
-        document.lifecycleEvents as
-          LifecycleEventInput[],
-      );
+          document.lifecycleEvents as
+            LifecycleEventInput[],
+
+          document.replacedBy
+            ?.publicId ??
+            null,
+        );
 
     const latestVersionNumber =
       document.versions[0]
@@ -998,6 +1000,10 @@ export class VerificationsService {
         databaseStatusMatches:
           lifecycle
             .databaseStatusMatches,
+
+        replacementBindingValid:
+          lifecycle
+            .replacementBindingValid,
       },
 
       trust: {
@@ -1026,6 +1032,10 @@ export class VerificationsService {
           sequenceValid:
             lifecycle
               .sequenceValid,
+
+          replacementBindingValid:
+            lifecycle
+              .replacementBindingValid,
         },
       },
 
@@ -1038,11 +1048,46 @@ export class VerificationsService {
           document.status,
       },
 
-      /*
-       * Exact Match responde explicitamente
-       * se os bytes pertencem à versão atual
-       * ou a uma versão anterior legítima.
-       */
+      replacement:
+        document.replacedBy
+          ? {
+              publicId:
+                document
+                  .replacedBy
+                  .publicId,
+
+              title:
+                document
+                  .replacedBy
+                  .title,
+
+              type:
+                document
+                  .replacedBy
+                  .type,
+
+              reference:
+                document
+                  .replacedBy
+                  .reference,
+
+              status:
+                document
+                  .replacedBy
+                  .status,
+
+              issuedAt:
+                document
+                  .replacedBy
+                  .issuedAt,
+
+              registeredAt:
+                document
+                  .replacedBy
+                  .createdAt,
+            }
+          : null,
+
       versioning: {
         checkedVersion:
           version.version,
@@ -1103,12 +1148,6 @@ export class VerificationsService {
     };
   }
 
-  /*
-   * ============================================================
-   * ATTESTATION
-   * ============================================================
-   */
-
   private evaluateAttestation(
     document: {
       publicId:
@@ -1161,7 +1200,9 @@ export class VerificationsService {
     attestation:
       AttestationInput | null,
   ) {
-    if (!attestation) {
+    if (
+      !attestation
+    ) {
       return {
         valid:
           false,
@@ -1267,12 +1308,6 @@ export class VerificationsService {
     };
   }
 
-  /*
-   * ============================================================
-   * ORIGINAL FILE
-   * ============================================================
-   */
-
   private async evaluateOriginalFile(
     version:
       VersionInput | null,
@@ -1311,7 +1346,6 @@ export class VerificationsService {
       const integrityValid =
         storedSha256 ===
           version.sha256 &&
-
         storedFile.body.length ===
           version.size;
 
@@ -1330,294 +1364,5 @@ export class VerificationsService {
           false,
       };
     }
-  }
-
-  /*
-   * ============================================================
-   * LIFECYCLE
-   * ============================================================
-   */
-
-  private evaluateLifecycle(
-    documentPublicId:
-      string,
-
-    databaseStatus:
-      DocumentStatusValue,
-
-    events:
-      LifecycleEventInput[],
-  ) {
-    if (
-      events.length ===
-      0
-    ) {
-      return {
-        valid:
-          false,
-
-        signaturesValid:
-          false,
-
-        eventHashesValid:
-          false,
-
-        claimsMatch:
-          false,
-
-        chainLinksValid:
-          false,
-
-        sequenceValid:
-          false,
-
-        derivedStatus:
-          null as
-            | DocumentStatusValue
-            | null,
-
-        databaseStatusMatches:
-          false,
-      };
-    }
-
-    let signaturesValid =
-      true;
-
-    let eventHashesValid =
-      true;
-
-    let claimsMatch =
-      true;
-
-    let chainLinksValid =
-      true;
-
-    let sequenceValid =
-      true;
-
-    for (
-      let index = 0;
-      index < events.length;
-      index += 1
-    ) {
-      const event =
-        events[index];
-
-      const previousEvent =
-        index > 0
-          ? events[index - 1]
-          : null;
-
-      const expectedSequence =
-        index + 1;
-
-      if (
-        event.sequence !==
-        expectedSequence
-      ) {
-        sequenceValid =
-          false;
-      }
-
-      let signatureValid =
-        false;
-
-      try {
-        signatureValid =
-          this.lifecycleService
-            .verifySignature({
-              payload:
-                event.payload,
-
-              signature:
-                event.signature,
-
-              algorithm:
-                event.algorithm,
-
-              keyId:
-                event.keyId,
-            });
-      } catch {
-        signatureValid =
-          false;
-      }
-
-      if (!signatureValid) {
-        signaturesValid =
-          false;
-      }
-
-      let calculatedEventHash:
-        string | null =
-        null;
-
-      try {
-        calculatedEventHash =
-          this.lifecycleService
-            .calculateEventHash({
-              payload:
-                event.payload,
-
-              signature:
-                event.signature,
-
-              algorithm:
-                event.algorithm,
-
-              keyId:
-                event.keyId,
-            });
-      } catch {
-        calculatedEventHash =
-          null;
-      }
-
-      if (
-        calculatedEventHash !==
-        event.eventHash
-      ) {
-        eventHashesValid =
-          false;
-      }
-
-      try {
-        const payload =
-          JSON.parse(
-            event.payload,
-          ) as
-            LifecyclePayload;
-
-        const currentClaimsMatch =
-          payload.schema ===
-            'vera.lifecycle.v1' &&
-
-          payload.documentPublicId ===
-            documentPublicId &&
-
-          payload.sequence ===
-            event.sequence &&
-
-          payload.type ===
-            event.type &&
-
-          payload.fromStatus ===
-            event.fromStatus &&
-
-          payload.toStatus ===
-            event.toStatus &&
-
-          payload.reason ===
-            event.reason &&
-
-          payload.previousEventHash ===
-            event.previousEventHash &&
-
-          payload.occurredAt ===
-            event.createdAt
-              .toISOString();
-
-        if (
-          !currentClaimsMatch
-        ) {
-          claimsMatch =
-            false;
-        }
-      } catch {
-        claimsMatch =
-          false;
-      }
-
-      if (
-        index ===
-        0
-      ) {
-        if (
-          event.sequence !==
-            1 ||
-          event.type !==
-            'REGISTERED' ||
-          event.fromStatus !==
-            null ||
-          event.previousEventHash !==
-            null
-        ) {
-          chainLinksValid =
-            false;
-        }
-
-        continue;
-      }
-
-      if (!previousEvent) {
-        chainLinksValid =
-          false;
-
-        continue;
-      }
-
-      if (
-        event.type !==
-        'STATUS_CHANGED'
-      ) {
-        chainLinksValid =
-          false;
-      }
-
-      if (
-        event.previousEventHash !==
-        previousEvent.eventHash
-      ) {
-        chainLinksValid =
-          false;
-      }
-
-      if (
-        event.fromStatus !==
-        previousEvent.toStatus
-      ) {
-        chainLinksValid =
-          false;
-      }
-    }
-
-    const valid =
-      signaturesValid &&
-      eventHashesValid &&
-      claimsMatch &&
-      chainLinksValid &&
-      sequenceValid;
-
-    const derivedStatus:
-      DocumentStatusValue | null =
-      valid
-        ? events[
-            events.length - 1
-          ].toStatus
-        : null;
-
-    const databaseStatusMatches =
-      valid &&
-      derivedStatus ===
-        databaseStatus;
-
-    return {
-      valid,
-
-      signaturesValid,
-
-      eventHashesValid,
-
-      claimsMatch,
-
-      chainLinksValid,
-
-      sequenceValid,
-
-      derivedStatus,
-
-      databaseStatusMatches,
-    };
   }
 }

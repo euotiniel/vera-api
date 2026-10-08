@@ -488,21 +488,14 @@ export type $VerificationAuditEventPayload<ExtArgs extends runtime.Types.Extensi
     /**
      * *
      *    * Política que produziu o verdict.
-     *    * Ex.: vera.public-verification.v4
      */
     policy: string
     /**
      * *
      *    * Resultado materializado naquele momento.
-     *    * Ex.: VERIFIED, REVOKED, NOT_FOUND.
      */
     verdictCode: string
     verified: boolean
-    /**
-     * *
-     *    * Identificadores conhecidos no momento
-     *    * da verificação.
-     */
     publicId: string | null
     documentId: string | null
     /**

@@ -166,6 +166,13 @@ export type EnumOrganizationRoleWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedEnumOrganizationRoleFilter<$PrismaModel>
 }
 
+export type EnumDocumentSubmissionKindFilter<$PrismaModel = never> = {
+  equals?: $Enums.DocumentSubmissionKind | Prisma.EnumDocumentSubmissionKindFieldRefInput<$PrismaModel>
+  in?: $Enums.DocumentSubmissionKind[] | Prisma.ListEnumDocumentSubmissionKindFieldRefInput<$PrismaModel>
+  notIn?: $Enums.DocumentSubmissionKind[] | Prisma.ListEnumDocumentSubmissionKindFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumDocumentSubmissionKindFilter<$PrismaModel> | $Enums.DocumentSubmissionKind
+}
+
 export type StringNullableFilter<$PrismaModel = never> = {
   equals?: string | Prisma.StringFieldRefInput<$PrismaModel> | null
   in?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel> | null
@@ -179,6 +186,17 @@ export type StringNullableFilter<$PrismaModel = never> = {
   endsWith?: string | Prisma.StringFieldRefInput<$PrismaModel>
   mode?: Prisma.QueryMode
   not?: Prisma.NestedStringNullableFilter<$PrismaModel> | string | null
+}
+
+export type IntNullableFilter<$PrismaModel = never> = {
+  equals?: number | Prisma.IntFieldRefInput<$PrismaModel> | null
+  in?: number[] | Prisma.ListIntFieldRefInput<$PrismaModel> | null
+  notIn?: number[] | Prisma.ListIntFieldRefInput<$PrismaModel> | null
+  lt?: number | Prisma.IntFieldRefInput<$PrismaModel>
+  lte?: number | Prisma.IntFieldRefInput<$PrismaModel>
+  gt?: number | Prisma.IntFieldRefInput<$PrismaModel>
+  gte?: number | Prisma.IntFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedIntNullableFilter<$PrismaModel> | number | null
 }
 
 export type EnumOriginalFileAccessFilter<$PrismaModel = never> = {
@@ -206,6 +224,16 @@ export type EnumDocumentSubmissionStatusFilter<$PrismaModel = never> = {
   not?: Prisma.NestedEnumDocumentSubmissionStatusFilter<$PrismaModel> | $Enums.DocumentSubmissionStatus
 }
 
+export type EnumDocumentSubmissionKindWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.DocumentSubmissionKind | Prisma.EnumDocumentSubmissionKindFieldRefInput<$PrismaModel>
+  in?: $Enums.DocumentSubmissionKind[] | Prisma.ListEnumDocumentSubmissionKindFieldRefInput<$PrismaModel>
+  notIn?: $Enums.DocumentSubmissionKind[] | Prisma.ListEnumDocumentSubmissionKindFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumDocumentSubmissionKindWithAggregatesFilter<$PrismaModel> | $Enums.DocumentSubmissionKind
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumDocumentSubmissionKindFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumDocumentSubmissionKindFilter<$PrismaModel>
+}
+
 export type StringNullableWithAggregatesFilter<$PrismaModel = never> = {
   equals?: string | Prisma.StringFieldRefInput<$PrismaModel> | null
   in?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel> | null
@@ -222,6 +250,22 @@ export type StringNullableWithAggregatesFilter<$PrismaModel = never> = {
   _count?: Prisma.NestedIntNullableFilter<$PrismaModel>
   _min?: Prisma.NestedStringNullableFilter<$PrismaModel>
   _max?: Prisma.NestedStringNullableFilter<$PrismaModel>
+}
+
+export type IntNullableWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: number | Prisma.IntFieldRefInput<$PrismaModel> | null
+  in?: number[] | Prisma.ListIntFieldRefInput<$PrismaModel> | null
+  notIn?: number[] | Prisma.ListIntFieldRefInput<$PrismaModel> | null
+  lt?: number | Prisma.IntFieldRefInput<$PrismaModel>
+  lte?: number | Prisma.IntFieldRefInput<$PrismaModel>
+  gt?: number | Prisma.IntFieldRefInput<$PrismaModel>
+  gte?: number | Prisma.IntFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedIntNullableWithAggregatesFilter<$PrismaModel> | number | null
+  _count?: Prisma.NestedIntNullableFilter<$PrismaModel>
+  _avg?: Prisma.NestedFloatNullableFilter<$PrismaModel>
+  _sum?: Prisma.NestedIntNullableFilter<$PrismaModel>
+  _min?: Prisma.NestedIntNullableFilter<$PrismaModel>
+  _max?: Prisma.NestedIntNullableFilter<$PrismaModel>
 }
 
 export type EnumOriginalFileAccessWithAggregatesFilter<$PrismaModel = never> = {
@@ -525,6 +569,13 @@ export type NestedEnumOrganizationRoleWithAggregatesFilter<$PrismaModel = never>
   _max?: Prisma.NestedEnumOrganizationRoleFilter<$PrismaModel>
 }
 
+export type NestedEnumDocumentSubmissionKindFilter<$PrismaModel = never> = {
+  equals?: $Enums.DocumentSubmissionKind | Prisma.EnumDocumentSubmissionKindFieldRefInput<$PrismaModel>
+  in?: $Enums.DocumentSubmissionKind[] | Prisma.ListEnumDocumentSubmissionKindFieldRefInput<$PrismaModel>
+  notIn?: $Enums.DocumentSubmissionKind[] | Prisma.ListEnumDocumentSubmissionKindFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumDocumentSubmissionKindFilter<$PrismaModel> | $Enums.DocumentSubmissionKind
+}
+
 export type NestedStringNullableFilter<$PrismaModel = never> = {
   equals?: string | Prisma.StringFieldRefInput<$PrismaModel> | null
   in?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel> | null
@@ -553,6 +604,16 @@ export type NestedEnumDocumentSubmissionStatusFilter<$PrismaModel = never> = {
   not?: Prisma.NestedEnumDocumentSubmissionStatusFilter<$PrismaModel> | $Enums.DocumentSubmissionStatus
 }
 
+export type NestedEnumDocumentSubmissionKindWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.DocumentSubmissionKind | Prisma.EnumDocumentSubmissionKindFieldRefInput<$PrismaModel>
+  in?: $Enums.DocumentSubmissionKind[] | Prisma.ListEnumDocumentSubmissionKindFieldRefInput<$PrismaModel>
+  notIn?: $Enums.DocumentSubmissionKind[] | Prisma.ListEnumDocumentSubmissionKindFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumDocumentSubmissionKindWithAggregatesFilter<$PrismaModel> | $Enums.DocumentSubmissionKind
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumDocumentSubmissionKindFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumDocumentSubmissionKindFilter<$PrismaModel>
+}
+
 export type NestedStringNullableWithAggregatesFilter<$PrismaModel = never> = {
   equals?: string | Prisma.StringFieldRefInput<$PrismaModel> | null
   in?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel> | null
@@ -568,6 +629,33 @@ export type NestedStringNullableWithAggregatesFilter<$PrismaModel = never> = {
   _count?: Prisma.NestedIntNullableFilter<$PrismaModel>
   _min?: Prisma.NestedStringNullableFilter<$PrismaModel>
   _max?: Prisma.NestedStringNullableFilter<$PrismaModel>
+}
+
+export type NestedIntNullableWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: number | Prisma.IntFieldRefInput<$PrismaModel> | null
+  in?: number[] | Prisma.ListIntFieldRefInput<$PrismaModel> | null
+  notIn?: number[] | Prisma.ListIntFieldRefInput<$PrismaModel> | null
+  lt?: number | Prisma.IntFieldRefInput<$PrismaModel>
+  lte?: number | Prisma.IntFieldRefInput<$PrismaModel>
+  gt?: number | Prisma.IntFieldRefInput<$PrismaModel>
+  gte?: number | Prisma.IntFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedIntNullableWithAggregatesFilter<$PrismaModel> | number | null
+  _count?: Prisma.NestedIntNullableFilter<$PrismaModel>
+  _avg?: Prisma.NestedFloatNullableFilter<$PrismaModel>
+  _sum?: Prisma.NestedIntNullableFilter<$PrismaModel>
+  _min?: Prisma.NestedIntNullableFilter<$PrismaModel>
+  _max?: Prisma.NestedIntNullableFilter<$PrismaModel>
+}
+
+export type NestedFloatNullableFilter<$PrismaModel = never> = {
+  equals?: number | Prisma.FloatFieldRefInput<$PrismaModel> | null
+  in?: number[] | Prisma.ListFloatFieldRefInput<$PrismaModel> | null
+  notIn?: number[] | Prisma.ListFloatFieldRefInput<$PrismaModel> | null
+  lt?: number | Prisma.FloatFieldRefInput<$PrismaModel>
+  lte?: number | Prisma.FloatFieldRefInput<$PrismaModel>
+  gt?: number | Prisma.FloatFieldRefInput<$PrismaModel>
+  gte?: number | Prisma.FloatFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedFloatNullableFilter<$PrismaModel> | number | null
 }
 
 export type NestedEnumOriginalFileAccessWithAggregatesFilter<$PrismaModel = never> = {

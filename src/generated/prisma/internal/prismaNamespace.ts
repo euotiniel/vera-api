@@ -1412,6 +1412,9 @@ export const DocumentSubmissionScalarFieldEnum = {
   id: 'id',
   organizationId: 'organizationId',
   creatorId: 'creatorId',
+  kind: 'kind',
+  targetDocumentId: 'targetDocumentId',
+  baseVersion: 'baseVersion',
   title: 'title',
   type: 'type',
   reference: 'reference',
@@ -1425,6 +1428,7 @@ export const DocumentSubmissionScalarFieldEnum = {
   status: 'status',
   submittedAt: 'submittedAt',
   documentId: 'documentId',
+  issuedVersionId: 'issuedVersionId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -1646,16 +1650,16 @@ export type ListEnumOrganizationRoleFieldRefInput<$PrismaModel> = FieldRefInputT
 
 
 /**
- * Reference to a field of type 'OriginalFileAccess'
+ * Reference to a field of type 'DocumentSubmissionKind'
  */
-export type EnumOriginalFileAccessFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'OriginalFileAccess'>
+export type EnumDocumentSubmissionKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DocumentSubmissionKind'>
     
 
 
 /**
- * Reference to a field of type 'OriginalFileAccess[]'
+ * Reference to a field of type 'DocumentSubmissionKind[]'
  */
-export type ListEnumOriginalFileAccessFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'OriginalFileAccess[]'>
+export type ListEnumDocumentSubmissionKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DocumentSubmissionKind[]'>
     
 
 
@@ -1670,6 +1674,20 @@ export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'In
  * Reference to a field of type 'Int[]'
  */
 export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
+    
+
+
+/**
+ * Reference to a field of type 'OriginalFileAccess'
+ */
+export type EnumOriginalFileAccessFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'OriginalFileAccess'>
+    
+
+
+/**
+ * Reference to a field of type 'OriginalFileAccess[]'
+ */
+export type ListEnumOriginalFileAccessFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'OriginalFileAccess[]'>
     
 
 

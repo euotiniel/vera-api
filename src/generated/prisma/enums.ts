@@ -62,6 +62,14 @@ export const DocumentSubmissionDecisionOutcome = {
 export type DocumentSubmissionDecisionOutcome = (typeof DocumentSubmissionDecisionOutcome)[keyof typeof DocumentSubmissionDecisionOutcome]
 
 
+export const DocumentSubmissionKind = {
+  NEW_DOCUMENT: 'NEW_DOCUMENT',
+  NEW_VERSION: 'NEW_VERSION'
+} as const
+
+export type DocumentSubmissionKind = (typeof DocumentSubmissionKind)[keyof typeof DocumentSubmissionKind]
+
+
 export const DocumentStatus = {
   PENDING: 'PENDING',
   VALID: 'VALID',

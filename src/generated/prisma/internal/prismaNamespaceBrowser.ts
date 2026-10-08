@@ -138,6 +138,9 @@ export const DocumentSubmissionScalarFieldEnum = {
   id: 'id',
   organizationId: 'organizationId',
   creatorId: 'creatorId',
+  kind: 'kind',
+  targetDocumentId: 'targetDocumentId',
+  baseVersion: 'baseVersion',
   title: 'title',
   type: 'type',
   reference: 'reference',
@@ -151,6 +154,7 @@ export const DocumentSubmissionScalarFieldEnum = {
   status: 'status',
   submittedAt: 'submittedAt',
   documentId: 'documentId',
+  issuedVersionId: 'issuedVersionId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

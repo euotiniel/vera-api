@@ -60,6 +60,11 @@ enum DocumentSubmissionDecisionOutcome {
   REJECTED
 }
 
+enum DocumentSubmissionKind {
+  NEW_DOCUMENT
+  NEW_VERSION
+}
+
 /**
  * ============================================================
  * DOCUMENTS
@@ -192,6 +197,32 @@ model DocumentSubmission {
   creatorId String
   creator   User   @relation("SubmissionCreator", fields: [creatorId], references: [id])
 
+  /**
+   * NEW_DOCUMENT = emissão inicial de um novo
+   * documento Vera.
+   * NEW_VERSION = nova versão de um Document
+   * Vera já existente.
+   */
+  kind DocumentSubmissionKind @default(NEW_DOCUMENT)
+
+  /**
+   * Apenas NEW_VERSION.
+   * Documento lógico ao qual a nova versão
+   * será adicionada.
+   */
+  targetDocumentId String?
+  targetDocument   Document? @relation("SubmissionTargetDocument", fields: [targetDocumentId], references: [id], onDelete: SetNull)
+
+  /**
+   * Apenas NEW_VERSION.
+   * Número da versão atual no momento em que
+   * a submissão foi criada.
+   * Funciona como controlo otimista para
+   * impedir emissão sobre uma base que já
+   * deixou de ser a versão atual.
+   */
+  baseVersion Int?
+
   title     String
   type      String?
   reference String?
@@ -202,7 +233,7 @@ model DocumentSubmission {
   /**
    * Ficheiro submetido para revisão.
    * Este ficheiro ainda NÃO representa
-   * um Document oficial da Vera.
+   * um DocumentVersion oficial da Vera.
    */
   filename   String
   mimeType   String
@@ -219,11 +250,22 @@ model DocumentSubmission {
   submittedAt DateTime?
 
   /**
-   * Só é preenchido depois da aprovação
-   * final e criação do Document oficial.
+   * Apenas a submissão NEW_DOCUMENT que
+   * originou o Document.
+   * Mantido para compatibilidade e para
+   * preservar a proveniência da emissão
+   * inicial.
    */
   documentId String?   @unique
   document   Document? @relation("SubmissionDocument", fields: [documentId], references: [id], onDelete: SetNull)
+
+  /**
+   * Versão oficial efetivamente produzida
+   * por esta submissão.
+   * Pode apontar para v1, v2, v3...
+   */
+  issuedVersionId String?          @unique
+  issuedVersion   DocumentVersion? @relation("SubmissionIssuedVersion", fields: [issuedVersionId], references: [id], onDelete: SetNull)
 
   decisions DocumentSubmissionDecision[]
 
@@ -235,6 +277,8 @@ model DocumentSubmission {
   @@index([status])
   @@index([sha256])
   @@index([organizationId, status])
+  @@index([targetDocumentId])
+  @@index([kind, status])
 }
 
 model DocumentSubmissionDecision {
@@ -300,6 +344,13 @@ model Document {
    */
   sourceSubmission DocumentSubmission? @relation("SubmissionDocument")
 
+  /**
+   * Submissões criadas posteriormente
+   * para produzir novas versões deste
+   * mesmo documento lógico.
+   */
+  versionSubmissions DocumentSubmission[] @relation("SubmissionTargetDocument")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -328,6 +379,13 @@ model DocumentVersion {
   document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
 
   attestation Attestation?
+
+  /**
+   * Submissão que produziu esta versão.
+   * null mantém compatibilidade com
+   * versões emitidas antes deste modelo.
+   */
+  issuedBySubmission DocumentSubmission? @relation("SubmissionIssuedVersion")
 
   createdAt DateTime @default(now())
 

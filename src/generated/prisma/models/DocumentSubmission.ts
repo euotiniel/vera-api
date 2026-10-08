@@ -27,10 +27,12 @@ export type AggregateDocumentSubmission = {
 }
 
 export type DocumentSubmissionAvgAggregateOutputType = {
+  baseVersion: number | null
   size: number | null
 }
 
 export type DocumentSubmissionSumAggregateOutputType = {
+  baseVersion: number | null
   size: number | null
 }
 
@@ -38,6 +40,9 @@ export type DocumentSubmissionMinAggregateOutputType = {
   id: string | null
   organizationId: string | null
   creatorId: string | null
+  kind: $Enums.DocumentSubmissionKind | null
+  targetDocumentId: string | null
+  baseVersion: number | null
   title: string | null
   type: string | null
   reference: string | null
@@ -51,6 +56,7 @@ export type DocumentSubmissionMinAggregateOutputType = {
   status: $Enums.DocumentSubmissionStatus | null
   submittedAt: Date | null
   documentId: string | null
+  issuedVersionId: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -59,6 +65,9 @@ export type DocumentSubmissionMaxAggregateOutputType = {
   id: string | null
   organizationId: string | null
   creatorId: string | null
+  kind: $Enums.DocumentSubmissionKind | null
+  targetDocumentId: string | null
+  baseVersion: number | null
   title: string | null
   type: string | null
   reference: string | null
@@ -72,6 +81,7 @@ export type DocumentSubmissionMaxAggregateOutputType = {
   status: $Enums.DocumentSubmissionStatus | null
   submittedAt: Date | null
   documentId: string | null
+  issuedVersionId: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -80,6 +90,9 @@ export type DocumentSubmissionCountAggregateOutputType = {
   id: number
   organizationId: number
   creatorId: number
+  kind: number
+  targetDocumentId: number
+  baseVersion: number
   title: number
   type: number
   reference: number
@@ -93,6 +106,7 @@ export type DocumentSubmissionCountAggregateOutputType = {
   status: number
   submittedAt: number
   documentId: number
+  issuedVersionId: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -100,10 +114,12 @@ export type DocumentSubmissionCountAggregateOutputType = {
 
 
 export type DocumentSubmissionAvgAggregateInputType = {
+  baseVersion?: true
   size?: true
 }
 
 export type DocumentSubmissionSumAggregateInputType = {
+  baseVersion?: true
   size?: true
 }
 
@@ -111,6 +127,9 @@ export type DocumentSubmissionMinAggregateInputType = {
   id?: true
   organizationId?: true
   creatorId?: true
+  kind?: true
+  targetDocumentId?: true
+  baseVersion?: true
   title?: true
   type?: true
   reference?: true
@@ -124,6 +143,7 @@ export type DocumentSubmissionMinAggregateInputType = {
   status?: true
   submittedAt?: true
   documentId?: true
+  issuedVersionId?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -132,6 +152,9 @@ export type DocumentSubmissionMaxAggregateInputType = {
   id?: true
   organizationId?: true
   creatorId?: true
+  kind?: true
+  targetDocumentId?: true
+  baseVersion?: true
   title?: true
   type?: true
   reference?: true
@@ -145,6 +168,7 @@ export type DocumentSubmissionMaxAggregateInputType = {
   status?: true
   submittedAt?: true
   documentId?: true
+  issuedVersionId?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -153,6 +177,9 @@ export type DocumentSubmissionCountAggregateInputType = {
   id?: true
   organizationId?: true
   creatorId?: true
+  kind?: true
+  targetDocumentId?: true
+  baseVersion?: true
   title?: true
   type?: true
   reference?: true
@@ -166,6 +193,7 @@ export type DocumentSubmissionCountAggregateInputType = {
   status?: true
   submittedAt?: true
   documentId?: true
+  issuedVersionId?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -261,6 +289,9 @@ export type DocumentSubmissionGroupByOutputType = {
   id: string
   organizationId: string
   creatorId: string
+  kind: $Enums.DocumentSubmissionKind
+  targetDocumentId: string | null
+  baseVersion: number | null
   title: string
   type: string | null
   reference: string | null
@@ -274,6 +305,7 @@ export type DocumentSubmissionGroupByOutputType = {
   status: $Enums.DocumentSubmissionStatus
   submittedAt: Date | null
   documentId: string | null
+  issuedVersionId: string | null
   createdAt: Date
   updatedAt: Date
   _count: DocumentSubmissionCountAggregateOutputType | null
@@ -305,6 +337,9 @@ export type DocumentSubmissionWhereInput = {
   id?: Prisma.StringFilter<"DocumentSubmission"> | string
   organizationId?: Prisma.StringFilter<"DocumentSubmission"> | string
   creatorId?: Prisma.StringFilter<"DocumentSubmission"> | string
+  kind?: Prisma.EnumDocumentSubmissionKindFilter<"DocumentSubmission"> | $Enums.DocumentSubmissionKind
+  targetDocumentId?: Prisma.StringNullableFilter<"DocumentSubmission"> | string | null
+  baseVersion?: Prisma.IntNullableFilter<"DocumentSubmission"> | number | null
   title?: Prisma.StringFilter<"DocumentSubmission"> | string
   type?: Prisma.StringNullableFilter<"DocumentSubmission"> | string | null
   reference?: Prisma.StringNullableFilter<"DocumentSubmission"> | string | null
@@ -318,11 +353,14 @@ export type DocumentSubmissionWhereInput = {
   status?: Prisma.EnumDocumentSubmissionStatusFilter<"DocumentSubmission"> | $Enums.DocumentSubmissionStatus
   submittedAt?: Prisma.DateTimeNullableFilter<"DocumentSubmission"> | Date | string | null
   documentId?: Prisma.StringNullableFilter<"DocumentSubmission"> | string | null
+  issuedVersionId?: Prisma.StringNullableFilter<"DocumentSubmission"> | string | null
   createdAt?: Prisma.DateTimeFilter<"DocumentSubmission"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"DocumentSubmission"> | Date | string
   organization?: Prisma.XOR<Prisma.OrganizationScalarRelationFilter, Prisma.OrganizationWhereInput>
   creator?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
+  targetDocument?: Prisma.XOR<Prisma.DocumentNullableScalarRelationFilter, Prisma.DocumentWhereInput> | null
   document?: Prisma.XOR<Prisma.DocumentNullableScalarRelationFilter, Prisma.DocumentWhereInput> | null
+  issuedVersion?: Prisma.XOR<Prisma.DocumentVersionNullableScalarRelationFilter, Prisma.DocumentVersionWhereInput> | null
   decisions?: Prisma.DocumentSubmissionDecisionListRelationFilter
 }
 
@@ -330,6 +368,9 @@ export type DocumentSubmissionOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   organizationId?: Prisma.SortOrder
   creatorId?: Prisma.SortOrder
+  kind?: Prisma.SortOrder
+  targetDocumentId?: Prisma.SortOrderInput | Prisma.SortOrder
+  baseVersion?: Prisma.SortOrderInput | Prisma.SortOrder
   title?: Prisma.SortOrder
   type?: Prisma.SortOrderInput | Prisma.SortOrder
   reference?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -343,11 +384,14 @@ export type DocumentSubmissionOrderByWithRelationInput = {
   status?: Prisma.SortOrder
   submittedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   documentId?: Prisma.SortOrderInput | Prisma.SortOrder
+  issuedVersionId?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   organization?: Prisma.OrganizationOrderByWithRelationInput
   creator?: Prisma.UserOrderByWithRelationInput
+  targetDocument?: Prisma.DocumentOrderByWithRelationInput
   document?: Prisma.DocumentOrderByWithRelationInput
+  issuedVersion?: Prisma.DocumentVersionOrderByWithRelationInput
   decisions?: Prisma.DocumentSubmissionDecisionOrderByRelationAggregateInput
 }
 
@@ -355,11 +399,15 @@ export type DocumentSubmissionWhereUniqueInput = Prisma.AtLeast<{
   id?: string
   storageKey?: string
   documentId?: string
+  issuedVersionId?: string
   AND?: Prisma.DocumentSubmissionWhereInput | Prisma.DocumentSubmissionWhereInput[]
   OR?: Prisma.DocumentSubmissionWhereInput[]
   NOT?: Prisma.DocumentSubmissionWhereInput | Prisma.DocumentSubmissionWhereInput[]
   organizationId?: Prisma.StringFilter<"DocumentSubmission"> | string
   creatorId?: Prisma.StringFilter<"DocumentSubmission"> | string
+  kind?: Prisma.EnumDocumentSubmissionKindFilter<"DocumentSubmission"> | $Enums.DocumentSubmissionKind
+  targetDocumentId?: Prisma.StringNullableFilter<"DocumentSubmission"> | string | null
+  baseVersion?: Prisma.IntNullableFilter<"DocumentSubmission"> | number | null
   title?: Prisma.StringFilter<"DocumentSubmission"> | string
   type?: Prisma.StringNullableFilter<"DocumentSubmission"> | string | null
   reference?: Prisma.StringNullableFilter<"DocumentSubmission"> | string | null
@@ -375,14 +423,19 @@ export type DocumentSubmissionWhereUniqueInput = Prisma.AtLeast<{
   updatedAt?: Prisma.DateTimeFilter<"DocumentSubmission"> | Date | string
   organization?: Prisma.XOR<Prisma.OrganizationScalarRelationFilter, Prisma.OrganizationWhereInput>
   creator?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
+  targetDocument?: Prisma.XOR<Prisma.DocumentNullableScalarRelationFilter, Prisma.DocumentWhereInput> | null
   document?: Prisma.XOR<Prisma.DocumentNullableScalarRelationFilter, Prisma.DocumentWhereInput> | null
+  issuedVersion?: Prisma.XOR<Prisma.DocumentVersionNullableScalarRelationFilter, Prisma.DocumentVersionWhereInput> | null
   decisions?: Prisma.DocumentSubmissionDecisionListRelationFilter
-}, "id" | "storageKey" | "documentId">
+}, "id" | "storageKey" | "documentId" | "issuedVersionId">
 
 export type DocumentSubmissionOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   organizationId?: Prisma.SortOrder
   creatorId?: Prisma.SortOrder
+  kind?: Prisma.SortOrder
+  targetDocumentId?: Prisma.SortOrderInput | Prisma.SortOrder
+  baseVersion?: Prisma.SortOrderInput | Prisma.SortOrder
   title?: Prisma.SortOrder
   type?: Prisma.SortOrderInput | Prisma.SortOrder
   reference?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -396,6 +449,7 @@ export type DocumentSubmissionOrderByWithAggregationInput = {
   status?: Prisma.SortOrder
   submittedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   documentId?: Prisma.SortOrderInput | Prisma.SortOrder
+  issuedVersionId?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.DocumentSubmissionCountOrderByAggregateInput
@@ -412,6 +466,9 @@ export type DocumentSubmissionScalarWhereWithAggregatesInput = {
   id?: Prisma.StringWithAggregatesFilter<"DocumentSubmission"> | string
   organizationId?: Prisma.StringWithAggregatesFilter<"DocumentSubmission"> | string
   creatorId?: Prisma.StringWithAggregatesFilter<"DocumentSubmission"> | string
+  kind?: Prisma.EnumDocumentSubmissionKindWithAggregatesFilter<"DocumentSubmission"> | $Enums.DocumentSubmissionKind
+  targetDocumentId?: Prisma.StringNullableWithAggregatesFilter<"DocumentSubmission"> | string | null
+  baseVersion?: Prisma.IntNullableWithAggregatesFilter<"DocumentSubmission"> | number | null
   title?: Prisma.StringWithAggregatesFilter<"DocumentSubmission"> | string
   type?: Prisma.StringNullableWithAggregatesFilter<"DocumentSubmission"> | string | null
   reference?: Prisma.StringNullableWithAggregatesFilter<"DocumentSubmission"> | string | null
@@ -425,12 +482,15 @@ export type DocumentSubmissionScalarWhereWithAggregatesInput = {
   status?: Prisma.EnumDocumentSubmissionStatusWithAggregatesFilter<"DocumentSubmission"> | $Enums.DocumentSubmissionStatus
   submittedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"DocumentSubmission"> | Date | string | null
   documentId?: Prisma.StringNullableWithAggregatesFilter<"DocumentSubmission"> | string | null
+  issuedVersionId?: Prisma.StringNullableWithAggregatesFilter<"DocumentSubmission"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"DocumentSubmission"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"DocumentSubmission"> | Date | string
 }
 
 export type DocumentSubmissionCreateInput = {
   id?: string
+  kind?: $Enums.DocumentSubmissionKind
+  baseVersion?: number | null
   title: string
   type?: string | null
   reference?: string | null
@@ -447,7 +507,9 @@ export type DocumentSubmissionCreateInput = {
   updatedAt?: Date | string
   organization: Prisma.OrganizationCreateNestedOneWithoutSubmissionsInput
   creator: Prisma.UserCreateNestedOneWithoutCreatedSubmissionsInput
+  targetDocument?: Prisma.DocumentCreateNestedOneWithoutVersionSubmissionsInput
   document?: Prisma.DocumentCreateNestedOneWithoutSourceSubmissionInput
+  issuedVersion?: Prisma.DocumentVersionCreateNestedOneWithoutIssuedBySubmissionInput
   decisions?: Prisma.DocumentSubmissionDecisionCreateNestedManyWithoutSubmissionInput
 }
 
@@ -455,6 +517,9 @@ export type DocumentSubmissionUncheckedCreateInput = {
   id?: string
   organizationId: string
   creatorId: string
+  kind?: $Enums.DocumentSubmissionKind
+  targetDocumentId?: string | null
+  baseVersion?: number | null
   title: string
   type?: string | null
   reference?: string | null
@@ -468,6 +533,7 @@ export type DocumentSubmissionUncheckedCreateInput = {
   status?: $Enums.DocumentSubmissionStatus
   submittedAt?: Date | string | null
   documentId?: string | null
+  issuedVersionId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   decisions?: Prisma.DocumentSubmissionDecisionUncheckedCreateNestedManyWithoutSubmissionInput
@@ -475,6 +541,8 @@ export type DocumentSubmissionUncheckedCreateInput = {
 
 export type DocumentSubmissionUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  kind?: Prisma.EnumDocumentSubmissionKindFieldUpdateOperationsInput | $Enums.DocumentSubmissionKind
+  baseVersion?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -491,7 +559,9 @@ export type DocumentSubmissionUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   organization?: Prisma.OrganizationUpdateOneRequiredWithoutSubmissionsNestedInput
   creator?: Prisma.UserUpdateOneRequiredWithoutCreatedSubmissionsNestedInput
+  targetDocument?: Prisma.DocumentUpdateOneWithoutVersionSubmissionsNestedInput
   document?: Prisma.DocumentUpdateOneWithoutSourceSubmissionNestedInput
+  issuedVersion?: Prisma.DocumentVersionUpdateOneWithoutIssuedBySubmissionNestedInput
   decisions?: Prisma.DocumentSubmissionDecisionUpdateManyWithoutSubmissionNestedInput
 }
 
@@ -499,6 +569,9 @@ export type DocumentSubmissionUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   organizationId?: Prisma.StringFieldUpdateOperationsInput | string
   creatorId?: Prisma.StringFieldUpdateOperationsInput | string
+  kind?: Prisma.EnumDocumentSubmissionKindFieldUpdateOperationsInput | $Enums.DocumentSubmissionKind
+  targetDocumentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  baseVersion?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -512,6 +585,7 @@ export type DocumentSubmissionUncheckedUpdateInput = {
   status?: Prisma.EnumDocumentSubmissionStatusFieldUpdateOperationsInput | $Enums.DocumentSubmissionStatus
   submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   documentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  issuedVersionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   decisions?: Prisma.DocumentSubmissionDecisionUncheckedUpdateManyWithoutSubmissionNestedInput
@@ -521,6 +595,9 @@ export type DocumentSubmissionCreateManyInput = {
   id?: string
   organizationId: string
   creatorId: string
+  kind?: $Enums.DocumentSubmissionKind
+  targetDocumentId?: string | null
+  baseVersion?: number | null
   title: string
   type?: string | null
   reference?: string | null
@@ -534,12 +611,15 @@ export type DocumentSubmissionCreateManyInput = {
   status?: $Enums.DocumentSubmissionStatus
   submittedAt?: Date | string | null
   documentId?: string | null
+  issuedVersionId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
 
 export type DocumentSubmissionUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  kind?: Prisma.EnumDocumentSubmissionKindFieldUpdateOperationsInput | $Enums.DocumentSubmissionKind
+  baseVersion?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -560,6 +640,9 @@ export type DocumentSubmissionUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   organizationId?: Prisma.StringFieldUpdateOperationsInput | string
   creatorId?: Prisma.StringFieldUpdateOperationsInput | string
+  kind?: Prisma.EnumDocumentSubmissionKindFieldUpdateOperationsInput | $Enums.DocumentSubmissionKind
+  targetDocumentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  baseVersion?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -573,6 +656,7 @@ export type DocumentSubmissionUncheckedUpdateManyInput = {
   status?: Prisma.EnumDocumentSubmissionStatusFieldUpdateOperationsInput | $Enums.DocumentSubmissionStatus
   submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   documentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  issuedVersionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -591,6 +675,9 @@ export type DocumentSubmissionCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   organizationId?: Prisma.SortOrder
   creatorId?: Prisma.SortOrder
+  kind?: Prisma.SortOrder
+  targetDocumentId?: Prisma.SortOrder
+  baseVersion?: Prisma.SortOrder
   title?: Prisma.SortOrder
   type?: Prisma.SortOrder
   reference?: Prisma.SortOrder
@@ -604,11 +691,13 @@ export type DocumentSubmissionCountOrderByAggregateInput = {
   status?: Prisma.SortOrder
   submittedAt?: Prisma.SortOrder
   documentId?: Prisma.SortOrder
+  issuedVersionId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
 export type DocumentSubmissionAvgOrderByAggregateInput = {
+  baseVersion?: Prisma.SortOrder
   size?: Prisma.SortOrder
 }
 
@@ -616,6 +705,9 @@ export type DocumentSubmissionMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   organizationId?: Prisma.SortOrder
   creatorId?: Prisma.SortOrder
+  kind?: Prisma.SortOrder
+  targetDocumentId?: Prisma.SortOrder
+  baseVersion?: Prisma.SortOrder
   title?: Prisma.SortOrder
   type?: Prisma.SortOrder
   reference?: Prisma.SortOrder
@@ -629,6 +721,7 @@ export type DocumentSubmissionMaxOrderByAggregateInput = {
   status?: Prisma.SortOrder
   submittedAt?: Prisma.SortOrder
   documentId?: Prisma.SortOrder
+  issuedVersionId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -637,6 +730,9 @@ export type DocumentSubmissionMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   organizationId?: Prisma.SortOrder
   creatorId?: Prisma.SortOrder
+  kind?: Prisma.SortOrder
+  targetDocumentId?: Prisma.SortOrder
+  baseVersion?: Prisma.SortOrder
   title?: Prisma.SortOrder
   type?: Prisma.SortOrder
   reference?: Prisma.SortOrder
@@ -650,11 +746,13 @@ export type DocumentSubmissionMinOrderByAggregateInput = {
   status?: Prisma.SortOrder
   submittedAt?: Prisma.SortOrder
   documentId?: Prisma.SortOrder
+  issuedVersionId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
 export type DocumentSubmissionSumOrderByAggregateInput = {
+  baseVersion?: Prisma.SortOrder
   size?: Prisma.SortOrder
 }
 
@@ -752,6 +850,18 @@ export type DocumentSubmissionUncheckedUpdateManyWithoutOrganizationNestedInput 
   deleteMany?: Prisma.DocumentSubmissionScalarWhereInput | Prisma.DocumentSubmissionScalarWhereInput[]
 }
 
+export type EnumDocumentSubmissionKindFieldUpdateOperationsInput = {
+  set?: $Enums.DocumentSubmissionKind
+}
+
+export type NullableIntFieldUpdateOperationsInput = {
+  set?: number | null
+  increment?: number
+  decrement?: number
+  multiply?: number
+  divide?: number
+}
+
 export type NullableStringFieldUpdateOperationsInput = {
   set?: string | null
 }
@@ -792,10 +902,24 @@ export type DocumentSubmissionCreateNestedOneWithoutDocumentInput = {
   connect?: Prisma.DocumentSubmissionWhereUniqueInput
 }
 
+export type DocumentSubmissionCreateNestedManyWithoutTargetDocumentInput = {
+  create?: Prisma.XOR<Prisma.DocumentSubmissionCreateWithoutTargetDocumentInput, Prisma.DocumentSubmissionUncheckedCreateWithoutTargetDocumentInput> | Prisma.DocumentSubmissionCreateWithoutTargetDocumentInput[] | Prisma.DocumentSubmissionUncheckedCreateWithoutTargetDocumentInput[]
+  connectOrCreate?: Prisma.DocumentSubmissionCreateOrConnectWithoutTargetDocumentInput | Prisma.DocumentSubmissionCreateOrConnectWithoutTargetDocumentInput[]
+  createMany?: Prisma.DocumentSubmissionCreateManyTargetDocumentInputEnvelope
+  connect?: Prisma.DocumentSubmissionWhereUniqueInput | Prisma.DocumentSubmissionWhereUniqueInput[]
+}
+
 export type DocumentSubmissionUncheckedCreateNestedOneWithoutDocumentInput = {
   create?: Prisma.XOR<Prisma.DocumentSubmissionCreateWithoutDocumentInput, Prisma.DocumentSubmissionUncheckedCreateWithoutDocumentInput>
   connectOrCreate?: Prisma.DocumentSubmissionCreateOrConnectWithoutDocumentInput
   connect?: Prisma.DocumentSubmissionWhereUniqueInput
+}
+
+export type DocumentSubmissionUncheckedCreateNestedManyWithoutTargetDocumentInput = {
+  create?: Prisma.XOR<Prisma.DocumentSubmissionCreateWithoutTargetDocumentInput, Prisma.DocumentSubmissionUncheckedCreateWithoutTargetDocumentInput> | Prisma.DocumentSubmissionCreateWithoutTargetDocumentInput[] | Prisma.DocumentSubmissionUncheckedCreateWithoutTargetDocumentInput[]
+  connectOrCreate?: Prisma.DocumentSubmissionCreateOrConnectWithoutTargetDocumentInput | Prisma.DocumentSubmissionCreateOrConnectWithoutTargetDocumentInput[]
+  createMany?: Prisma.DocumentSubmissionCreateManyTargetDocumentInputEnvelope
+  connect?: Prisma.DocumentSubmissionWhereUniqueInput | Prisma.DocumentSubmissionWhereUniqueInput[]
 }
 
 export type DocumentSubmissionUpdateOneWithoutDocumentNestedInput = {
@@ -808,6 +932,20 @@ export type DocumentSubmissionUpdateOneWithoutDocumentNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.DocumentSubmissionUpdateToOneWithWhereWithoutDocumentInput, Prisma.DocumentSubmissionUpdateWithoutDocumentInput>, Prisma.DocumentSubmissionUncheckedUpdateWithoutDocumentInput>
 }
 
+export type DocumentSubmissionUpdateManyWithoutTargetDocumentNestedInput = {
+  create?: Prisma.XOR<Prisma.DocumentSubmissionCreateWithoutTargetDocumentInput, Prisma.DocumentSubmissionUncheckedCreateWithoutTargetDocumentInput> | Prisma.DocumentSubmissionCreateWithoutTargetDocumentInput[] | Prisma.DocumentSubmissionUncheckedCreateWithoutTargetDocumentInput[]
+  connectOrCreate?: Prisma.DocumentSubmissionCreateOrConnectWithoutTargetDocumentInput | Prisma.DocumentSubmissionCreateOrConnectWithoutTargetDocumentInput[]
+  upsert?: Prisma.DocumentSubmissionUpsertWithWhereUniqueWithoutTargetDocumentInput | Prisma.DocumentSubmissionUpsertWithWhereUniqueWithoutTargetDocumentInput[]
+  createMany?: Prisma.DocumentSubmissionCreateManyTargetDocumentInputEnvelope
+  set?: Prisma.DocumentSubmissionWhereUniqueInput | Prisma.DocumentSubmissionWhereUniqueInput[]
+  disconnect?: Prisma.DocumentSubmissionWhereUniqueInput | Prisma.DocumentSubmissionWhereUniqueInput[]
+  delete?: Prisma.DocumentSubmissionWhereUniqueInput | Prisma.DocumentSubmissionWhereUniqueInput[]
+  connect?: Prisma.DocumentSubmissionWhereUniqueInput | Prisma.DocumentSubmissionWhereUniqueInput[]
+  update?: Prisma.DocumentSubmissionUpdateWithWhereUniqueWithoutTargetDocumentInput | Prisma.DocumentSubmissionUpdateWithWhereUniqueWithoutTargetDocumentInput[]
+  updateMany?: Prisma.DocumentSubmissionUpdateManyWithWhereWithoutTargetDocumentInput | Prisma.DocumentSubmissionUpdateManyWithWhereWithoutTargetDocumentInput[]
+  deleteMany?: Prisma.DocumentSubmissionScalarWhereInput | Prisma.DocumentSubmissionScalarWhereInput[]
+}
+
 export type DocumentSubmissionUncheckedUpdateOneWithoutDocumentNestedInput = {
   create?: Prisma.XOR<Prisma.DocumentSubmissionCreateWithoutDocumentInput, Prisma.DocumentSubmissionUncheckedCreateWithoutDocumentInput>
   connectOrCreate?: Prisma.DocumentSubmissionCreateOrConnectWithoutDocumentInput
@@ -818,8 +956,56 @@ export type DocumentSubmissionUncheckedUpdateOneWithoutDocumentNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.DocumentSubmissionUpdateToOneWithWhereWithoutDocumentInput, Prisma.DocumentSubmissionUpdateWithoutDocumentInput>, Prisma.DocumentSubmissionUncheckedUpdateWithoutDocumentInput>
 }
 
+export type DocumentSubmissionUncheckedUpdateManyWithoutTargetDocumentNestedInput = {
+  create?: Prisma.XOR<Prisma.DocumentSubmissionCreateWithoutTargetDocumentInput, Prisma.DocumentSubmissionUncheckedCreateWithoutTargetDocumentInput> | Prisma.DocumentSubmissionCreateWithoutTargetDocumentInput[] | Prisma.DocumentSubmissionUncheckedCreateWithoutTargetDocumentInput[]
+  connectOrCreate?: Prisma.DocumentSubmissionCreateOrConnectWithoutTargetDocumentInput | Prisma.DocumentSubmissionCreateOrConnectWithoutTargetDocumentInput[]
+  upsert?: Prisma.DocumentSubmissionUpsertWithWhereUniqueWithoutTargetDocumentInput | Prisma.DocumentSubmissionUpsertWithWhereUniqueWithoutTargetDocumentInput[]
+  createMany?: Prisma.DocumentSubmissionCreateManyTargetDocumentInputEnvelope
+  set?: Prisma.DocumentSubmissionWhereUniqueInput | Prisma.DocumentSubmissionWhereUniqueInput[]
+  disconnect?: Prisma.DocumentSubmissionWhereUniqueInput | Prisma.DocumentSubmissionWhereUniqueInput[]
+  delete?: Prisma.DocumentSubmissionWhereUniqueInput | Prisma.DocumentSubmissionWhereUniqueInput[]
+  connect?: Prisma.DocumentSubmissionWhereUniqueInput | Prisma.DocumentSubmissionWhereUniqueInput[]
+  update?: Prisma.DocumentSubmissionUpdateWithWhereUniqueWithoutTargetDocumentInput | Prisma.DocumentSubmissionUpdateWithWhereUniqueWithoutTargetDocumentInput[]
+  updateMany?: Prisma.DocumentSubmissionUpdateManyWithWhereWithoutTargetDocumentInput | Prisma.DocumentSubmissionUpdateManyWithWhereWithoutTargetDocumentInput[]
+  deleteMany?: Prisma.DocumentSubmissionScalarWhereInput | Prisma.DocumentSubmissionScalarWhereInput[]
+}
+
+export type DocumentSubmissionCreateNestedOneWithoutIssuedVersionInput = {
+  create?: Prisma.XOR<Prisma.DocumentSubmissionCreateWithoutIssuedVersionInput, Prisma.DocumentSubmissionUncheckedCreateWithoutIssuedVersionInput>
+  connectOrCreate?: Prisma.DocumentSubmissionCreateOrConnectWithoutIssuedVersionInput
+  connect?: Prisma.DocumentSubmissionWhereUniqueInput
+}
+
+export type DocumentSubmissionUncheckedCreateNestedOneWithoutIssuedVersionInput = {
+  create?: Prisma.XOR<Prisma.DocumentSubmissionCreateWithoutIssuedVersionInput, Prisma.DocumentSubmissionUncheckedCreateWithoutIssuedVersionInput>
+  connectOrCreate?: Prisma.DocumentSubmissionCreateOrConnectWithoutIssuedVersionInput
+  connect?: Prisma.DocumentSubmissionWhereUniqueInput
+}
+
+export type DocumentSubmissionUpdateOneWithoutIssuedVersionNestedInput = {
+  create?: Prisma.XOR<Prisma.DocumentSubmissionCreateWithoutIssuedVersionInput, Prisma.DocumentSubmissionUncheckedCreateWithoutIssuedVersionInput>
+  connectOrCreate?: Prisma.DocumentSubmissionCreateOrConnectWithoutIssuedVersionInput
+  upsert?: Prisma.DocumentSubmissionUpsertWithoutIssuedVersionInput
+  disconnect?: Prisma.DocumentSubmissionWhereInput | boolean
+  delete?: Prisma.DocumentSubmissionWhereInput | boolean
+  connect?: Prisma.DocumentSubmissionWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.DocumentSubmissionUpdateToOneWithWhereWithoutIssuedVersionInput, Prisma.DocumentSubmissionUpdateWithoutIssuedVersionInput>, Prisma.DocumentSubmissionUncheckedUpdateWithoutIssuedVersionInput>
+}
+
+export type DocumentSubmissionUncheckedUpdateOneWithoutIssuedVersionNestedInput = {
+  create?: Prisma.XOR<Prisma.DocumentSubmissionCreateWithoutIssuedVersionInput, Prisma.DocumentSubmissionUncheckedCreateWithoutIssuedVersionInput>
+  connectOrCreate?: Prisma.DocumentSubmissionCreateOrConnectWithoutIssuedVersionInput
+  upsert?: Prisma.DocumentSubmissionUpsertWithoutIssuedVersionInput
+  disconnect?: Prisma.DocumentSubmissionWhereInput | boolean
+  delete?: Prisma.DocumentSubmissionWhereInput | boolean
+  connect?: Prisma.DocumentSubmissionWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.DocumentSubmissionUpdateToOneWithWhereWithoutIssuedVersionInput, Prisma.DocumentSubmissionUpdateWithoutIssuedVersionInput>, Prisma.DocumentSubmissionUncheckedUpdateWithoutIssuedVersionInput>
+}
+
 export type DocumentSubmissionCreateWithoutCreatorInput = {
   id?: string
+  kind?: $Enums.DocumentSubmissionKind
+  baseVersion?: number | null
   title: string
   type?: string | null
   reference?: string | null
@@ -835,13 +1021,18 @@ export type DocumentSubmissionCreateWithoutCreatorInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   organization: Prisma.OrganizationCreateNestedOneWithoutSubmissionsInput
+  targetDocument?: Prisma.DocumentCreateNestedOneWithoutVersionSubmissionsInput
   document?: Prisma.DocumentCreateNestedOneWithoutSourceSubmissionInput
+  issuedVersion?: Prisma.DocumentVersionCreateNestedOneWithoutIssuedBySubmissionInput
   decisions?: Prisma.DocumentSubmissionDecisionCreateNestedManyWithoutSubmissionInput
 }
 
 export type DocumentSubmissionUncheckedCreateWithoutCreatorInput = {
   id?: string
   organizationId: string
+  kind?: $Enums.DocumentSubmissionKind
+  targetDocumentId?: string | null
+  baseVersion?: number | null
   title: string
   type?: string | null
   reference?: string | null
@@ -855,6 +1046,7 @@ export type DocumentSubmissionUncheckedCreateWithoutCreatorInput = {
   status?: $Enums.DocumentSubmissionStatus
   submittedAt?: Date | string | null
   documentId?: string | null
+  issuedVersionId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   decisions?: Prisma.DocumentSubmissionDecisionUncheckedCreateNestedManyWithoutSubmissionInput
@@ -893,6 +1085,9 @@ export type DocumentSubmissionScalarWhereInput = {
   id?: Prisma.StringFilter<"DocumentSubmission"> | string
   organizationId?: Prisma.StringFilter<"DocumentSubmission"> | string
   creatorId?: Prisma.StringFilter<"DocumentSubmission"> | string
+  kind?: Prisma.EnumDocumentSubmissionKindFilter<"DocumentSubmission"> | $Enums.DocumentSubmissionKind
+  targetDocumentId?: Prisma.StringNullableFilter<"DocumentSubmission"> | string | null
+  baseVersion?: Prisma.IntNullableFilter<"DocumentSubmission"> | number | null
   title?: Prisma.StringFilter<"DocumentSubmission"> | string
   type?: Prisma.StringNullableFilter<"DocumentSubmission"> | string | null
   reference?: Prisma.StringNullableFilter<"DocumentSubmission"> | string | null
@@ -906,12 +1101,15 @@ export type DocumentSubmissionScalarWhereInput = {
   status?: Prisma.EnumDocumentSubmissionStatusFilter<"DocumentSubmission"> | $Enums.DocumentSubmissionStatus
   submittedAt?: Prisma.DateTimeNullableFilter<"DocumentSubmission"> | Date | string | null
   documentId?: Prisma.StringNullableFilter<"DocumentSubmission"> | string | null
+  issuedVersionId?: Prisma.StringNullableFilter<"DocumentSubmission"> | string | null
   createdAt?: Prisma.DateTimeFilter<"DocumentSubmission"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"DocumentSubmission"> | Date | string
 }
 
 export type DocumentSubmissionCreateWithoutOrganizationInput = {
   id?: string
+  kind?: $Enums.DocumentSubmissionKind
+  baseVersion?: number | null
   title: string
   type?: string | null
   reference?: string | null
@@ -927,13 +1125,18 @@ export type DocumentSubmissionCreateWithoutOrganizationInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   creator: Prisma.UserCreateNestedOneWithoutCreatedSubmissionsInput
+  targetDocument?: Prisma.DocumentCreateNestedOneWithoutVersionSubmissionsInput
   document?: Prisma.DocumentCreateNestedOneWithoutSourceSubmissionInput
+  issuedVersion?: Prisma.DocumentVersionCreateNestedOneWithoutIssuedBySubmissionInput
   decisions?: Prisma.DocumentSubmissionDecisionCreateNestedManyWithoutSubmissionInput
 }
 
 export type DocumentSubmissionUncheckedCreateWithoutOrganizationInput = {
   id?: string
   creatorId: string
+  kind?: $Enums.DocumentSubmissionKind
+  targetDocumentId?: string | null
+  baseVersion?: number | null
   title: string
   type?: string | null
   reference?: string | null
@@ -947,6 +1150,7 @@ export type DocumentSubmissionUncheckedCreateWithoutOrganizationInput = {
   status?: $Enums.DocumentSubmissionStatus
   submittedAt?: Date | string | null
   documentId?: string | null
+  issuedVersionId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   decisions?: Prisma.DocumentSubmissionDecisionUncheckedCreateNestedManyWithoutSubmissionInput
@@ -980,6 +1184,8 @@ export type DocumentSubmissionUpdateManyWithWhereWithoutOrganizationInput = {
 
 export type DocumentSubmissionCreateWithoutDecisionsInput = {
   id?: string
+  kind?: $Enums.DocumentSubmissionKind
+  baseVersion?: number | null
   title: string
   type?: string | null
   reference?: string | null
@@ -996,13 +1202,18 @@ export type DocumentSubmissionCreateWithoutDecisionsInput = {
   updatedAt?: Date | string
   organization: Prisma.OrganizationCreateNestedOneWithoutSubmissionsInput
   creator: Prisma.UserCreateNestedOneWithoutCreatedSubmissionsInput
+  targetDocument?: Prisma.DocumentCreateNestedOneWithoutVersionSubmissionsInput
   document?: Prisma.DocumentCreateNestedOneWithoutSourceSubmissionInput
+  issuedVersion?: Prisma.DocumentVersionCreateNestedOneWithoutIssuedBySubmissionInput
 }
 
 export type DocumentSubmissionUncheckedCreateWithoutDecisionsInput = {
   id?: string
   organizationId: string
   creatorId: string
+  kind?: $Enums.DocumentSubmissionKind
+  targetDocumentId?: string | null
+  baseVersion?: number | null
   title: string
   type?: string | null
   reference?: string | null
@@ -1016,6 +1227,7 @@ export type DocumentSubmissionUncheckedCreateWithoutDecisionsInput = {
   status?: $Enums.DocumentSubmissionStatus
   submittedAt?: Date | string | null
   documentId?: string | null
+  issuedVersionId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -1038,6 +1250,8 @@ export type DocumentSubmissionUpdateToOneWithWhereWithoutDecisionsInput = {
 
 export type DocumentSubmissionUpdateWithoutDecisionsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  kind?: Prisma.EnumDocumentSubmissionKindFieldUpdateOperationsInput | $Enums.DocumentSubmissionKind
+  baseVersion?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1054,13 +1268,18 @@ export type DocumentSubmissionUpdateWithoutDecisionsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   organization?: Prisma.OrganizationUpdateOneRequiredWithoutSubmissionsNestedInput
   creator?: Prisma.UserUpdateOneRequiredWithoutCreatedSubmissionsNestedInput
+  targetDocument?: Prisma.DocumentUpdateOneWithoutVersionSubmissionsNestedInput
   document?: Prisma.DocumentUpdateOneWithoutSourceSubmissionNestedInput
+  issuedVersion?: Prisma.DocumentVersionUpdateOneWithoutIssuedBySubmissionNestedInput
 }
 
 export type DocumentSubmissionUncheckedUpdateWithoutDecisionsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   organizationId?: Prisma.StringFieldUpdateOperationsInput | string
   creatorId?: Prisma.StringFieldUpdateOperationsInput | string
+  kind?: Prisma.EnumDocumentSubmissionKindFieldUpdateOperationsInput | $Enums.DocumentSubmissionKind
+  targetDocumentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  baseVersion?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1074,12 +1293,15 @@ export type DocumentSubmissionUncheckedUpdateWithoutDecisionsInput = {
   status?: Prisma.EnumDocumentSubmissionStatusFieldUpdateOperationsInput | $Enums.DocumentSubmissionStatus
   submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   documentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  issuedVersionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type DocumentSubmissionCreateWithoutDocumentInput = {
   id?: string
+  kind?: $Enums.DocumentSubmissionKind
+  baseVersion?: number | null
   title: string
   type?: string | null
   reference?: string | null
@@ -1096,6 +1318,8 @@ export type DocumentSubmissionCreateWithoutDocumentInput = {
   updatedAt?: Date | string
   organization: Prisma.OrganizationCreateNestedOneWithoutSubmissionsInput
   creator: Prisma.UserCreateNestedOneWithoutCreatedSubmissionsInput
+  targetDocument?: Prisma.DocumentCreateNestedOneWithoutVersionSubmissionsInput
+  issuedVersion?: Prisma.DocumentVersionCreateNestedOneWithoutIssuedBySubmissionInput
   decisions?: Prisma.DocumentSubmissionDecisionCreateNestedManyWithoutSubmissionInput
 }
 
@@ -1103,6 +1327,36 @@ export type DocumentSubmissionUncheckedCreateWithoutDocumentInput = {
   id?: string
   organizationId: string
   creatorId: string
+  kind?: $Enums.DocumentSubmissionKind
+  targetDocumentId?: string | null
+  baseVersion?: number | null
+  title: string
+  type?: string | null
+  reference?: string | null
+  issuedAt?: Date | string | null
+  originalFileAccess?: $Enums.OriginalFileAccess
+  filename: string
+  mimeType: string
+  size: number
+  sha256: string
+  storageKey: string
+  status?: $Enums.DocumentSubmissionStatus
+  submittedAt?: Date | string | null
+  issuedVersionId?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  decisions?: Prisma.DocumentSubmissionDecisionUncheckedCreateNestedManyWithoutSubmissionInput
+}
+
+export type DocumentSubmissionCreateOrConnectWithoutDocumentInput = {
+  where: Prisma.DocumentSubmissionWhereUniqueInput
+  create: Prisma.XOR<Prisma.DocumentSubmissionCreateWithoutDocumentInput, Prisma.DocumentSubmissionUncheckedCreateWithoutDocumentInput>
+}
+
+export type DocumentSubmissionCreateWithoutTargetDocumentInput = {
+  id?: string
+  kind?: $Enums.DocumentSubmissionKind
+  baseVersion?: number | null
   title: string
   type?: string | null
   reference?: string | null
@@ -1117,12 +1371,46 @@ export type DocumentSubmissionUncheckedCreateWithoutDocumentInput = {
   submittedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  organization: Prisma.OrganizationCreateNestedOneWithoutSubmissionsInput
+  creator: Prisma.UserCreateNestedOneWithoutCreatedSubmissionsInput
+  document?: Prisma.DocumentCreateNestedOneWithoutSourceSubmissionInput
+  issuedVersion?: Prisma.DocumentVersionCreateNestedOneWithoutIssuedBySubmissionInput
+  decisions?: Prisma.DocumentSubmissionDecisionCreateNestedManyWithoutSubmissionInput
+}
+
+export type DocumentSubmissionUncheckedCreateWithoutTargetDocumentInput = {
+  id?: string
+  organizationId: string
+  creatorId: string
+  kind?: $Enums.DocumentSubmissionKind
+  baseVersion?: number | null
+  title: string
+  type?: string | null
+  reference?: string | null
+  issuedAt?: Date | string | null
+  originalFileAccess?: $Enums.OriginalFileAccess
+  filename: string
+  mimeType: string
+  size: number
+  sha256: string
+  storageKey: string
+  status?: $Enums.DocumentSubmissionStatus
+  submittedAt?: Date | string | null
+  documentId?: string | null
+  issuedVersionId?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
   decisions?: Prisma.DocumentSubmissionDecisionUncheckedCreateNestedManyWithoutSubmissionInput
 }
 
-export type DocumentSubmissionCreateOrConnectWithoutDocumentInput = {
+export type DocumentSubmissionCreateOrConnectWithoutTargetDocumentInput = {
   where: Prisma.DocumentSubmissionWhereUniqueInput
-  create: Prisma.XOR<Prisma.DocumentSubmissionCreateWithoutDocumentInput, Prisma.DocumentSubmissionUncheckedCreateWithoutDocumentInput>
+  create: Prisma.XOR<Prisma.DocumentSubmissionCreateWithoutTargetDocumentInput, Prisma.DocumentSubmissionUncheckedCreateWithoutTargetDocumentInput>
+}
+
+export type DocumentSubmissionCreateManyTargetDocumentInputEnvelope = {
+  data: Prisma.DocumentSubmissionCreateManyTargetDocumentInput | Prisma.DocumentSubmissionCreateManyTargetDocumentInput[]
+  skipDuplicates?: boolean
 }
 
 export type DocumentSubmissionUpsertWithoutDocumentInput = {
@@ -1138,6 +1426,8 @@ export type DocumentSubmissionUpdateToOneWithWhereWithoutDocumentInput = {
 
 export type DocumentSubmissionUpdateWithoutDocumentInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  kind?: Prisma.EnumDocumentSubmissionKindFieldUpdateOperationsInput | $Enums.DocumentSubmissionKind
+  baseVersion?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1154,6 +1444,8 @@ export type DocumentSubmissionUpdateWithoutDocumentInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   organization?: Prisma.OrganizationUpdateOneRequiredWithoutSubmissionsNestedInput
   creator?: Prisma.UserUpdateOneRequiredWithoutCreatedSubmissionsNestedInput
+  targetDocument?: Prisma.DocumentUpdateOneWithoutVersionSubmissionsNestedInput
+  issuedVersion?: Prisma.DocumentVersionUpdateOneWithoutIssuedBySubmissionNestedInput
   decisions?: Prisma.DocumentSubmissionDecisionUpdateManyWithoutSubmissionNestedInput
 }
 
@@ -1161,6 +1453,9 @@ export type DocumentSubmissionUncheckedUpdateWithoutDocumentInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   organizationId?: Prisma.StringFieldUpdateOperationsInput | string
   creatorId?: Prisma.StringFieldUpdateOperationsInput | string
+  kind?: Prisma.EnumDocumentSubmissionKindFieldUpdateOperationsInput | $Enums.DocumentSubmissionKind
+  targetDocumentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  baseVersion?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1173,6 +1468,139 @@ export type DocumentSubmissionUncheckedUpdateWithoutDocumentInput = {
   storageKey?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumDocumentSubmissionStatusFieldUpdateOperationsInput | $Enums.DocumentSubmissionStatus
   submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  issuedVersionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  decisions?: Prisma.DocumentSubmissionDecisionUncheckedUpdateManyWithoutSubmissionNestedInput
+}
+
+export type DocumentSubmissionUpsertWithWhereUniqueWithoutTargetDocumentInput = {
+  where: Prisma.DocumentSubmissionWhereUniqueInput
+  update: Prisma.XOR<Prisma.DocumentSubmissionUpdateWithoutTargetDocumentInput, Prisma.DocumentSubmissionUncheckedUpdateWithoutTargetDocumentInput>
+  create: Prisma.XOR<Prisma.DocumentSubmissionCreateWithoutTargetDocumentInput, Prisma.DocumentSubmissionUncheckedCreateWithoutTargetDocumentInput>
+}
+
+export type DocumentSubmissionUpdateWithWhereUniqueWithoutTargetDocumentInput = {
+  where: Prisma.DocumentSubmissionWhereUniqueInput
+  data: Prisma.XOR<Prisma.DocumentSubmissionUpdateWithoutTargetDocumentInput, Prisma.DocumentSubmissionUncheckedUpdateWithoutTargetDocumentInput>
+}
+
+export type DocumentSubmissionUpdateManyWithWhereWithoutTargetDocumentInput = {
+  where: Prisma.DocumentSubmissionScalarWhereInput
+  data: Prisma.XOR<Prisma.DocumentSubmissionUpdateManyMutationInput, Prisma.DocumentSubmissionUncheckedUpdateManyWithoutTargetDocumentInput>
+}
+
+export type DocumentSubmissionCreateWithoutIssuedVersionInput = {
+  id?: string
+  kind?: $Enums.DocumentSubmissionKind
+  baseVersion?: number | null
+  title: string
+  type?: string | null
+  reference?: string | null
+  issuedAt?: Date | string | null
+  originalFileAccess?: $Enums.OriginalFileAccess
+  filename: string
+  mimeType: string
+  size: number
+  sha256: string
+  storageKey: string
+  status?: $Enums.DocumentSubmissionStatus
+  submittedAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  organization: Prisma.OrganizationCreateNestedOneWithoutSubmissionsInput
+  creator: Prisma.UserCreateNestedOneWithoutCreatedSubmissionsInput
+  targetDocument?: Prisma.DocumentCreateNestedOneWithoutVersionSubmissionsInput
+  document?: Prisma.DocumentCreateNestedOneWithoutSourceSubmissionInput
+  decisions?: Prisma.DocumentSubmissionDecisionCreateNestedManyWithoutSubmissionInput
+}
+
+export type DocumentSubmissionUncheckedCreateWithoutIssuedVersionInput = {
+  id?: string
+  organizationId: string
+  creatorId: string
+  kind?: $Enums.DocumentSubmissionKind
+  targetDocumentId?: string | null
+  baseVersion?: number | null
+  title: string
+  type?: string | null
+  reference?: string | null
+  issuedAt?: Date | string | null
+  originalFileAccess?: $Enums.OriginalFileAccess
+  filename: string
+  mimeType: string
+  size: number
+  sha256: string
+  storageKey: string
+  status?: $Enums.DocumentSubmissionStatus
+  submittedAt?: Date | string | null
+  documentId?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  decisions?: Prisma.DocumentSubmissionDecisionUncheckedCreateNestedManyWithoutSubmissionInput
+}
+
+export type DocumentSubmissionCreateOrConnectWithoutIssuedVersionInput = {
+  where: Prisma.DocumentSubmissionWhereUniqueInput
+  create: Prisma.XOR<Prisma.DocumentSubmissionCreateWithoutIssuedVersionInput, Prisma.DocumentSubmissionUncheckedCreateWithoutIssuedVersionInput>
+}
+
+export type DocumentSubmissionUpsertWithoutIssuedVersionInput = {
+  update: Prisma.XOR<Prisma.DocumentSubmissionUpdateWithoutIssuedVersionInput, Prisma.DocumentSubmissionUncheckedUpdateWithoutIssuedVersionInput>
+  create: Prisma.XOR<Prisma.DocumentSubmissionCreateWithoutIssuedVersionInput, Prisma.DocumentSubmissionUncheckedCreateWithoutIssuedVersionInput>
+  where?: Prisma.DocumentSubmissionWhereInput
+}
+
+export type DocumentSubmissionUpdateToOneWithWhereWithoutIssuedVersionInput = {
+  where?: Prisma.DocumentSubmissionWhereInput
+  data: Prisma.XOR<Prisma.DocumentSubmissionUpdateWithoutIssuedVersionInput, Prisma.DocumentSubmissionUncheckedUpdateWithoutIssuedVersionInput>
+}
+
+export type DocumentSubmissionUpdateWithoutIssuedVersionInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  kind?: Prisma.EnumDocumentSubmissionKindFieldUpdateOperationsInput | $Enums.DocumentSubmissionKind
+  baseVersion?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  issuedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  originalFileAccess?: Prisma.EnumOriginalFileAccessFieldUpdateOperationsInput | $Enums.OriginalFileAccess
+  filename?: Prisma.StringFieldUpdateOperationsInput | string
+  mimeType?: Prisma.StringFieldUpdateOperationsInput | string
+  size?: Prisma.IntFieldUpdateOperationsInput | number
+  sha256?: Prisma.StringFieldUpdateOperationsInput | string
+  storageKey?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumDocumentSubmissionStatusFieldUpdateOperationsInput | $Enums.DocumentSubmissionStatus
+  submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  organization?: Prisma.OrganizationUpdateOneRequiredWithoutSubmissionsNestedInput
+  creator?: Prisma.UserUpdateOneRequiredWithoutCreatedSubmissionsNestedInput
+  targetDocument?: Prisma.DocumentUpdateOneWithoutVersionSubmissionsNestedInput
+  document?: Prisma.DocumentUpdateOneWithoutSourceSubmissionNestedInput
+  decisions?: Prisma.DocumentSubmissionDecisionUpdateManyWithoutSubmissionNestedInput
+}
+
+export type DocumentSubmissionUncheckedUpdateWithoutIssuedVersionInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  organizationId?: Prisma.StringFieldUpdateOperationsInput | string
+  creatorId?: Prisma.StringFieldUpdateOperationsInput | string
+  kind?: Prisma.EnumDocumentSubmissionKindFieldUpdateOperationsInput | $Enums.DocumentSubmissionKind
+  targetDocumentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  baseVersion?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  issuedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  originalFileAccess?: Prisma.EnumOriginalFileAccessFieldUpdateOperationsInput | $Enums.OriginalFileAccess
+  filename?: Prisma.StringFieldUpdateOperationsInput | string
+  mimeType?: Prisma.StringFieldUpdateOperationsInput | string
+  size?: Prisma.IntFieldUpdateOperationsInput | number
+  sha256?: Prisma.StringFieldUpdateOperationsInput | string
+  storageKey?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumDocumentSubmissionStatusFieldUpdateOperationsInput | $Enums.DocumentSubmissionStatus
+  submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  documentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   decisions?: Prisma.DocumentSubmissionDecisionUncheckedUpdateManyWithoutSubmissionNestedInput
@@ -1181,6 +1609,9 @@ export type DocumentSubmissionUncheckedUpdateWithoutDocumentInput = {
 export type DocumentSubmissionCreateManyCreatorInput = {
   id?: string
   organizationId: string
+  kind?: $Enums.DocumentSubmissionKind
+  targetDocumentId?: string | null
+  baseVersion?: number | null
   title: string
   type?: string | null
   reference?: string | null
@@ -1194,12 +1625,15 @@ export type DocumentSubmissionCreateManyCreatorInput = {
   status?: $Enums.DocumentSubmissionStatus
   submittedAt?: Date | string | null
   documentId?: string | null
+  issuedVersionId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
 
 export type DocumentSubmissionUpdateWithoutCreatorInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  kind?: Prisma.EnumDocumentSubmissionKindFieldUpdateOperationsInput | $Enums.DocumentSubmissionKind
+  baseVersion?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1215,13 +1649,18 @@ export type DocumentSubmissionUpdateWithoutCreatorInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   organization?: Prisma.OrganizationUpdateOneRequiredWithoutSubmissionsNestedInput
+  targetDocument?: Prisma.DocumentUpdateOneWithoutVersionSubmissionsNestedInput
   document?: Prisma.DocumentUpdateOneWithoutSourceSubmissionNestedInput
+  issuedVersion?: Prisma.DocumentVersionUpdateOneWithoutIssuedBySubmissionNestedInput
   decisions?: Prisma.DocumentSubmissionDecisionUpdateManyWithoutSubmissionNestedInput
 }
 
 export type DocumentSubmissionUncheckedUpdateWithoutCreatorInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   organizationId?: Prisma.StringFieldUpdateOperationsInput | string
+  kind?: Prisma.EnumDocumentSubmissionKindFieldUpdateOperationsInput | $Enums.DocumentSubmissionKind
+  targetDocumentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  baseVersion?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1235,6 +1674,7 @@ export type DocumentSubmissionUncheckedUpdateWithoutCreatorInput = {
   status?: Prisma.EnumDocumentSubmissionStatusFieldUpdateOperationsInput | $Enums.DocumentSubmissionStatus
   submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   documentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  issuedVersionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   decisions?: Prisma.DocumentSubmissionDecisionUncheckedUpdateManyWithoutSubmissionNestedInput
@@ -1243,6 +1683,9 @@ export type DocumentSubmissionUncheckedUpdateWithoutCreatorInput = {
 export type DocumentSubmissionUncheckedUpdateManyWithoutCreatorInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   organizationId?: Prisma.StringFieldUpdateOperationsInput | string
+  kind?: Prisma.EnumDocumentSubmissionKindFieldUpdateOperationsInput | $Enums.DocumentSubmissionKind
+  targetDocumentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  baseVersion?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1256,6 +1699,7 @@ export type DocumentSubmissionUncheckedUpdateManyWithoutCreatorInput = {
   status?: Prisma.EnumDocumentSubmissionStatusFieldUpdateOperationsInput | $Enums.DocumentSubmissionStatus
   submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   documentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  issuedVersionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1263,6 +1707,9 @@ export type DocumentSubmissionUncheckedUpdateManyWithoutCreatorInput = {
 export type DocumentSubmissionCreateManyOrganizationInput = {
   id?: string
   creatorId: string
+  kind?: $Enums.DocumentSubmissionKind
+  targetDocumentId?: string | null
+  baseVersion?: number | null
   title: string
   type?: string | null
   reference?: string | null
@@ -1276,12 +1723,15 @@ export type DocumentSubmissionCreateManyOrganizationInput = {
   status?: $Enums.DocumentSubmissionStatus
   submittedAt?: Date | string | null
   documentId?: string | null
+  issuedVersionId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
 
 export type DocumentSubmissionUpdateWithoutOrganizationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  kind?: Prisma.EnumDocumentSubmissionKindFieldUpdateOperationsInput | $Enums.DocumentSubmissionKind
+  baseVersion?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1297,13 +1747,18 @@ export type DocumentSubmissionUpdateWithoutOrganizationInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   creator?: Prisma.UserUpdateOneRequiredWithoutCreatedSubmissionsNestedInput
+  targetDocument?: Prisma.DocumentUpdateOneWithoutVersionSubmissionsNestedInput
   document?: Prisma.DocumentUpdateOneWithoutSourceSubmissionNestedInput
+  issuedVersion?: Prisma.DocumentVersionUpdateOneWithoutIssuedBySubmissionNestedInput
   decisions?: Prisma.DocumentSubmissionDecisionUpdateManyWithoutSubmissionNestedInput
 }
 
 export type DocumentSubmissionUncheckedUpdateWithoutOrganizationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   creatorId?: Prisma.StringFieldUpdateOperationsInput | string
+  kind?: Prisma.EnumDocumentSubmissionKindFieldUpdateOperationsInput | $Enums.DocumentSubmissionKind
+  targetDocumentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  baseVersion?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1317,6 +1772,7 @@ export type DocumentSubmissionUncheckedUpdateWithoutOrganizationInput = {
   status?: Prisma.EnumDocumentSubmissionStatusFieldUpdateOperationsInput | $Enums.DocumentSubmissionStatus
   submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   documentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  issuedVersionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   decisions?: Prisma.DocumentSubmissionDecisionUncheckedUpdateManyWithoutSubmissionNestedInput
@@ -1325,6 +1781,9 @@ export type DocumentSubmissionUncheckedUpdateWithoutOrganizationInput = {
 export type DocumentSubmissionUncheckedUpdateManyWithoutOrganizationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   creatorId?: Prisma.StringFieldUpdateOperationsInput | string
+  kind?: Prisma.EnumDocumentSubmissionKindFieldUpdateOperationsInput | $Enums.DocumentSubmissionKind
+  targetDocumentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  baseVersion?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1338,6 +1797,105 @@ export type DocumentSubmissionUncheckedUpdateManyWithoutOrganizationInput = {
   status?: Prisma.EnumDocumentSubmissionStatusFieldUpdateOperationsInput | $Enums.DocumentSubmissionStatus
   submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   documentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  issuedVersionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type DocumentSubmissionCreateManyTargetDocumentInput = {
+  id?: string
+  organizationId: string
+  creatorId: string
+  kind?: $Enums.DocumentSubmissionKind
+  baseVersion?: number | null
+  title: string
+  type?: string | null
+  reference?: string | null
+  issuedAt?: Date | string | null
+  originalFileAccess?: $Enums.OriginalFileAccess
+  filename: string
+  mimeType: string
+  size: number
+  sha256: string
+  storageKey: string
+  status?: $Enums.DocumentSubmissionStatus
+  submittedAt?: Date | string | null
+  documentId?: string | null
+  issuedVersionId?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type DocumentSubmissionUpdateWithoutTargetDocumentInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  kind?: Prisma.EnumDocumentSubmissionKindFieldUpdateOperationsInput | $Enums.DocumentSubmissionKind
+  baseVersion?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  issuedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  originalFileAccess?: Prisma.EnumOriginalFileAccessFieldUpdateOperationsInput | $Enums.OriginalFileAccess
+  filename?: Prisma.StringFieldUpdateOperationsInput | string
+  mimeType?: Prisma.StringFieldUpdateOperationsInput | string
+  size?: Prisma.IntFieldUpdateOperationsInput | number
+  sha256?: Prisma.StringFieldUpdateOperationsInput | string
+  storageKey?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumDocumentSubmissionStatusFieldUpdateOperationsInput | $Enums.DocumentSubmissionStatus
+  submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  organization?: Prisma.OrganizationUpdateOneRequiredWithoutSubmissionsNestedInput
+  creator?: Prisma.UserUpdateOneRequiredWithoutCreatedSubmissionsNestedInput
+  document?: Prisma.DocumentUpdateOneWithoutSourceSubmissionNestedInput
+  issuedVersion?: Prisma.DocumentVersionUpdateOneWithoutIssuedBySubmissionNestedInput
+  decisions?: Prisma.DocumentSubmissionDecisionUpdateManyWithoutSubmissionNestedInput
+}
+
+export type DocumentSubmissionUncheckedUpdateWithoutTargetDocumentInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  organizationId?: Prisma.StringFieldUpdateOperationsInput | string
+  creatorId?: Prisma.StringFieldUpdateOperationsInput | string
+  kind?: Prisma.EnumDocumentSubmissionKindFieldUpdateOperationsInput | $Enums.DocumentSubmissionKind
+  baseVersion?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  issuedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  originalFileAccess?: Prisma.EnumOriginalFileAccessFieldUpdateOperationsInput | $Enums.OriginalFileAccess
+  filename?: Prisma.StringFieldUpdateOperationsInput | string
+  mimeType?: Prisma.StringFieldUpdateOperationsInput | string
+  size?: Prisma.IntFieldUpdateOperationsInput | number
+  sha256?: Prisma.StringFieldUpdateOperationsInput | string
+  storageKey?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumDocumentSubmissionStatusFieldUpdateOperationsInput | $Enums.DocumentSubmissionStatus
+  submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  documentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  issuedVersionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  decisions?: Prisma.DocumentSubmissionDecisionUncheckedUpdateManyWithoutSubmissionNestedInput
+}
+
+export type DocumentSubmissionUncheckedUpdateManyWithoutTargetDocumentInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  organizationId?: Prisma.StringFieldUpdateOperationsInput | string
+  creatorId?: Prisma.StringFieldUpdateOperationsInput | string
+  kind?: Prisma.EnumDocumentSubmissionKindFieldUpdateOperationsInput | $Enums.DocumentSubmissionKind
+  baseVersion?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  issuedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  originalFileAccess?: Prisma.EnumOriginalFileAccessFieldUpdateOperationsInput | $Enums.OriginalFileAccess
+  filename?: Prisma.StringFieldUpdateOperationsInput | string
+  mimeType?: Prisma.StringFieldUpdateOperationsInput | string
+  size?: Prisma.IntFieldUpdateOperationsInput | number
+  sha256?: Prisma.StringFieldUpdateOperationsInput | string
+  storageKey?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumDocumentSubmissionStatusFieldUpdateOperationsInput | $Enums.DocumentSubmissionStatus
+  submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  documentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  issuedVersionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1377,6 +1935,9 @@ export type DocumentSubmissionSelect<ExtArgs extends runtime.Types.Extensions.In
   id?: boolean
   organizationId?: boolean
   creatorId?: boolean
+  kind?: boolean
+  targetDocumentId?: boolean
+  baseVersion?: boolean
   title?: boolean
   type?: boolean
   reference?: boolean
@@ -1390,11 +1951,14 @@ export type DocumentSubmissionSelect<ExtArgs extends runtime.Types.Extensions.In
   status?: boolean
   submittedAt?: boolean
   documentId?: boolean
+  issuedVersionId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
   creator?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  targetDocument?: boolean | Prisma.DocumentSubmission$targetDocumentArgs<ExtArgs>
   document?: boolean | Prisma.DocumentSubmission$documentArgs<ExtArgs>
+  issuedVersion?: boolean | Prisma.DocumentSubmission$issuedVersionArgs<ExtArgs>
   decisions?: boolean | Prisma.DocumentSubmission$decisionsArgs<ExtArgs>
   _count?: boolean | Prisma.DocumentSubmissionCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["documentSubmission"]>
@@ -1403,6 +1967,9 @@ export type DocumentSubmissionSelectCreateManyAndReturn<ExtArgs extends runtime.
   id?: boolean
   organizationId?: boolean
   creatorId?: boolean
+  kind?: boolean
+  targetDocumentId?: boolean
+  baseVersion?: boolean
   title?: boolean
   type?: boolean
   reference?: boolean
@@ -1416,17 +1983,23 @@ export type DocumentSubmissionSelectCreateManyAndReturn<ExtArgs extends runtime.
   status?: boolean
   submittedAt?: boolean
   documentId?: boolean
+  issuedVersionId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
   creator?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  targetDocument?: boolean | Prisma.DocumentSubmission$targetDocumentArgs<ExtArgs>
   document?: boolean | Prisma.DocumentSubmission$documentArgs<ExtArgs>
+  issuedVersion?: boolean | Prisma.DocumentSubmission$issuedVersionArgs<ExtArgs>
 }, ExtArgs["result"]["documentSubmission"]>
 
 export type DocumentSubmissionSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   organizationId?: boolean
   creatorId?: boolean
+  kind?: boolean
+  targetDocumentId?: boolean
+  baseVersion?: boolean
   title?: boolean
   type?: boolean
   reference?: boolean
@@ -1440,17 +2013,23 @@ export type DocumentSubmissionSelectUpdateManyAndReturn<ExtArgs extends runtime.
   status?: boolean
   submittedAt?: boolean
   documentId?: boolean
+  issuedVersionId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
   creator?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  targetDocument?: boolean | Prisma.DocumentSubmission$targetDocumentArgs<ExtArgs>
   document?: boolean | Prisma.DocumentSubmission$documentArgs<ExtArgs>
+  issuedVersion?: boolean | Prisma.DocumentSubmission$issuedVersionArgs<ExtArgs>
 }, ExtArgs["result"]["documentSubmission"]>
 
 export type DocumentSubmissionSelectScalar = {
   id?: boolean
   organizationId?: boolean
   creatorId?: boolean
+  kind?: boolean
+  targetDocumentId?: boolean
+  baseVersion?: boolean
   title?: boolean
   type?: boolean
   reference?: boolean
@@ -1464,27 +2043,34 @@ export type DocumentSubmissionSelectScalar = {
   status?: boolean
   submittedAt?: boolean
   documentId?: boolean
+  issuedVersionId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type DocumentSubmissionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "organizationId" | "creatorId" | "title" | "type" | "reference" | "issuedAt" | "originalFileAccess" | "filename" | "mimeType" | "size" | "sha256" | "storageKey" | "status" | "submittedAt" | "documentId" | "createdAt" | "updatedAt", ExtArgs["result"]["documentSubmission"]>
+export type DocumentSubmissionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "organizationId" | "creatorId" | "kind" | "targetDocumentId" | "baseVersion" | "title" | "type" | "reference" | "issuedAt" | "originalFileAccess" | "filename" | "mimeType" | "size" | "sha256" | "storageKey" | "status" | "submittedAt" | "documentId" | "issuedVersionId" | "createdAt" | "updatedAt", ExtArgs["result"]["documentSubmission"]>
 export type DocumentSubmissionInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
   creator?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  targetDocument?: boolean | Prisma.DocumentSubmission$targetDocumentArgs<ExtArgs>
   document?: boolean | Prisma.DocumentSubmission$documentArgs<ExtArgs>
+  issuedVersion?: boolean | Prisma.DocumentSubmission$issuedVersionArgs<ExtArgs>
   decisions?: boolean | Prisma.DocumentSubmission$decisionsArgs<ExtArgs>
   _count?: boolean | Prisma.DocumentSubmissionCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type DocumentSubmissionIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
   creator?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  targetDocument?: boolean | Prisma.DocumentSubmission$targetDocumentArgs<ExtArgs>
   document?: boolean | Prisma.DocumentSubmission$documentArgs<ExtArgs>
+  issuedVersion?: boolean | Prisma.DocumentSubmission$issuedVersionArgs<ExtArgs>
 }
 export type DocumentSubmissionIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
   creator?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  targetDocument?: boolean | Prisma.DocumentSubmission$targetDocumentArgs<ExtArgs>
   document?: boolean | Prisma.DocumentSubmission$documentArgs<ExtArgs>
+  issuedVersion?: boolean | Prisma.DocumentSubmission$issuedVersionArgs<ExtArgs>
 }
 
 export type $DocumentSubmissionPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1492,13 +2078,40 @@ export type $DocumentSubmissionPayload<ExtArgs extends runtime.Types.Extensions.
   objects: {
     organization: Prisma.$OrganizationPayload<ExtArgs>
     creator: Prisma.$UserPayload<ExtArgs>
+    targetDocument: Prisma.$DocumentPayload<ExtArgs> | null
     document: Prisma.$DocumentPayload<ExtArgs> | null
+    issuedVersion: Prisma.$DocumentVersionPayload<ExtArgs> | null
     decisions: Prisma.$DocumentSubmissionDecisionPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     organizationId: string
     creatorId: string
+    /**
+     * *
+     *    * NEW_DOCUMENT = emissão inicial de um novo
+     *    * documento Vera.
+     *    * NEW_VERSION = nova versão de um Document
+     *    * Vera já existente.
+     */
+    kind: $Enums.DocumentSubmissionKind
+    /**
+     * *
+     *    * Apenas NEW_VERSION.
+     *    * Documento lógico ao qual a nova versão
+     *    * será adicionada.
+     */
+    targetDocumentId: string | null
+    /**
+     * *
+     *    * Apenas NEW_VERSION.
+     *    * Número da versão atual no momento em que
+     *    * a submissão foi criada.
+     *    * Funciona como controlo otimista para
+     *    * impedir emissão sobre uma base que já
+     *    * deixou de ser a versão atual.
+     */
+    baseVersion: number | null
     title: string
     type: string | null
     reference: string | null
@@ -1508,7 +2121,7 @@ export type $DocumentSubmissionPayload<ExtArgs extends runtime.Types.Extensions.
      * *
      *    * Ficheiro submetido para revisão.
      *    * Este ficheiro ainda NÃO representa
-     *    * um Document oficial da Vera.
+     *    * um DocumentVersion oficial da Vera.
      */
     filename: string
     mimeType: string
@@ -1524,10 +2137,20 @@ export type $DocumentSubmissionPayload<ExtArgs extends runtime.Types.Extensions.
     submittedAt: Date | null
     /**
      * *
-     *    * Só é preenchido depois da aprovação
-     *    * final e criação do Document oficial.
+     *    * Apenas a submissão NEW_DOCUMENT que
+     *    * originou o Document.
+     *    * Mantido para compatibilidade e para
+     *    * preservar a proveniência da emissão
+     *    * inicial.
      */
     documentId: string | null
+    /**
+     * *
+     *    * Versão oficial efetivamente produzida
+     *    * por esta submissão.
+     *    * Pode apontar para v1, v2, v3...
+     */
+    issuedVersionId: string | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["documentSubmission"]>
@@ -1926,7 +2549,9 @@ export interface Prisma__DocumentSubmissionClient<T, Null = never, ExtArgs exten
   readonly [Symbol.toStringTag]: "PrismaPromise"
   organization<T extends Prisma.OrganizationDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.OrganizationDefaultArgs<ExtArgs>>): Prisma.Prisma__OrganizationClient<runtime.Types.Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   creator<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  targetDocument<T extends Prisma.DocumentSubmission$targetDocumentArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.DocumentSubmission$targetDocumentArgs<ExtArgs>>): Prisma.Prisma__DocumentClient<runtime.Types.Result.GetResult<Prisma.$DocumentPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   document<T extends Prisma.DocumentSubmission$documentArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.DocumentSubmission$documentArgs<ExtArgs>>): Prisma.Prisma__DocumentClient<runtime.Types.Result.GetResult<Prisma.$DocumentPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  issuedVersion<T extends Prisma.DocumentSubmission$issuedVersionArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.DocumentSubmission$issuedVersionArgs<ExtArgs>>): Prisma.Prisma__DocumentVersionClient<runtime.Types.Result.GetResult<Prisma.$DocumentVersionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   decisions<T extends Prisma.DocumentSubmission$decisionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.DocumentSubmission$decisionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$DocumentSubmissionDecisionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -1960,6 +2585,9 @@ export interface DocumentSubmissionFieldRefs {
   readonly id: Prisma.FieldRef<"DocumentSubmission", 'String'>
   readonly organizationId: Prisma.FieldRef<"DocumentSubmission", 'String'>
   readonly creatorId: Prisma.FieldRef<"DocumentSubmission", 'String'>
+  readonly kind: Prisma.FieldRef<"DocumentSubmission", 'DocumentSubmissionKind'>
+  readonly targetDocumentId: Prisma.FieldRef<"DocumentSubmission", 'String'>
+  readonly baseVersion: Prisma.FieldRef<"DocumentSubmission", 'Int'>
   readonly title: Prisma.FieldRef<"DocumentSubmission", 'String'>
   readonly type: Prisma.FieldRef<"DocumentSubmission", 'String'>
   readonly reference: Prisma.FieldRef<"DocumentSubmission", 'String'>
@@ -1973,6 +2601,7 @@ export interface DocumentSubmissionFieldRefs {
   readonly status: Prisma.FieldRef<"DocumentSubmission", 'DocumentSubmissionStatus'>
   readonly submittedAt: Prisma.FieldRef<"DocumentSubmission", 'DateTime'>
   readonly documentId: Prisma.FieldRef<"DocumentSubmission", 'String'>
+  readonly issuedVersionId: Prisma.FieldRef<"DocumentSubmission", 'String'>
   readonly createdAt: Prisma.FieldRef<"DocumentSubmission", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"DocumentSubmission", 'DateTime'>
 }
@@ -2376,6 +3005,25 @@ export type DocumentSubmissionDeleteManyArgs<ExtArgs extends runtime.Types.Exten
 }
 
 /**
+ * DocumentSubmission.targetDocument
+ */
+export type DocumentSubmission$targetDocumentArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Document
+   */
+  select?: Prisma.DocumentSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Document
+   */
+  omit?: Prisma.DocumentOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.DocumentInclude<ExtArgs> | null
+  where?: Prisma.DocumentWhereInput
+}
+
+/**
  * DocumentSubmission.document
  */
 export type DocumentSubmission$documentArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -2392,6 +3040,25 @@ export type DocumentSubmission$documentArgs<ExtArgs extends runtime.Types.Extens
    */
   include?: Prisma.DocumentInclude<ExtArgs> | null
   where?: Prisma.DocumentWhereInput
+}
+
+/**
+ * DocumentSubmission.issuedVersion
+ */
+export type DocumentSubmission$issuedVersionArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the DocumentVersion
+   */
+  select?: Prisma.DocumentVersionSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the DocumentVersion
+   */
+  omit?: Prisma.DocumentVersionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.DocumentVersionInclude<ExtArgs> | null
+  where?: Prisma.DocumentVersionWhereInput
 }
 
 /**

@@ -262,6 +262,7 @@ export type DocumentVersionWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"DocumentVersion"> | Date | string
   document?: Prisma.XOR<Prisma.DocumentScalarRelationFilter, Prisma.DocumentWhereInput>
   attestation?: Prisma.XOR<Prisma.AttestationNullableScalarRelationFilter, Prisma.AttestationWhereInput> | null
+  issuedBySubmission?: Prisma.XOR<Prisma.DocumentSubmissionNullableScalarRelationFilter, Prisma.DocumentSubmissionWhereInput> | null
 }
 
 export type DocumentVersionOrderByWithRelationInput = {
@@ -277,6 +278,7 @@ export type DocumentVersionOrderByWithRelationInput = {
   createdAt?: Prisma.SortOrder
   document?: Prisma.DocumentOrderByWithRelationInput
   attestation?: Prisma.AttestationOrderByWithRelationInput
+  issuedBySubmission?: Prisma.DocumentSubmissionOrderByWithRelationInput
 }
 
 export type DocumentVersionWhereUniqueInput = Prisma.AtLeast<{
@@ -296,6 +298,7 @@ export type DocumentVersionWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"DocumentVersion"> | Date | string
   document?: Prisma.XOR<Prisma.DocumentScalarRelationFilter, Prisma.DocumentWhereInput>
   attestation?: Prisma.XOR<Prisma.AttestationNullableScalarRelationFilter, Prisma.AttestationWhereInput> | null
+  issuedBySubmission?: Prisma.XOR<Prisma.DocumentSubmissionNullableScalarRelationFilter, Prisma.DocumentSubmissionWhereInput> | null
 }, "id" | "sha256" | "storageKey" | "qrProof" | "documentId_version">
 
 export type DocumentVersionOrderByWithAggregationInput = {
@@ -344,6 +347,7 @@ export type DocumentVersionCreateInput = {
   createdAt?: Date | string
   document: Prisma.DocumentCreateNestedOneWithoutVersionsInput
   attestation?: Prisma.AttestationCreateNestedOneWithoutDocumentVersionInput
+  issuedBySubmission?: Prisma.DocumentSubmissionCreateNestedOneWithoutIssuedVersionInput
 }
 
 export type DocumentVersionUncheckedCreateInput = {
@@ -358,6 +362,7 @@ export type DocumentVersionUncheckedCreateInput = {
   documentId: string
   createdAt?: Date | string
   attestation?: Prisma.AttestationUncheckedCreateNestedOneWithoutDocumentVersionInput
+  issuedBySubmission?: Prisma.DocumentSubmissionUncheckedCreateNestedOneWithoutIssuedVersionInput
 }
 
 export type DocumentVersionUpdateInput = {
@@ -372,6 +377,7 @@ export type DocumentVersionUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   document?: Prisma.DocumentUpdateOneRequiredWithoutVersionsNestedInput
   attestation?: Prisma.AttestationUpdateOneWithoutDocumentVersionNestedInput
+  issuedBySubmission?: Prisma.DocumentSubmissionUpdateOneWithoutIssuedVersionNestedInput
 }
 
 export type DocumentVersionUncheckedUpdateInput = {
@@ -386,6 +392,7 @@ export type DocumentVersionUncheckedUpdateInput = {
   documentId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   attestation?: Prisma.AttestationUncheckedUpdateOneWithoutDocumentVersionNestedInput
+  issuedBySubmission?: Prisma.DocumentSubmissionUncheckedUpdateOneWithoutIssuedVersionNestedInput
 }
 
 export type DocumentVersionCreateManyInput = {
@@ -424,6 +431,11 @@ export type DocumentVersionUncheckedUpdateManyInput = {
   qrProof?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   documentId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type DocumentVersionNullableScalarRelationFilter = {
+  is?: Prisma.DocumentVersionWhereInput | null
+  isNot?: Prisma.DocumentVersionWhereInput | null
 }
 
 export type DocumentVersionListRelationFilter = {
@@ -495,6 +507,22 @@ export type DocumentVersionScalarRelationFilter = {
   isNot?: Prisma.DocumentVersionWhereInput
 }
 
+export type DocumentVersionCreateNestedOneWithoutIssuedBySubmissionInput = {
+  create?: Prisma.XOR<Prisma.DocumentVersionCreateWithoutIssuedBySubmissionInput, Prisma.DocumentVersionUncheckedCreateWithoutIssuedBySubmissionInput>
+  connectOrCreate?: Prisma.DocumentVersionCreateOrConnectWithoutIssuedBySubmissionInput
+  connect?: Prisma.DocumentVersionWhereUniqueInput
+}
+
+export type DocumentVersionUpdateOneWithoutIssuedBySubmissionNestedInput = {
+  create?: Prisma.XOR<Prisma.DocumentVersionCreateWithoutIssuedBySubmissionInput, Prisma.DocumentVersionUncheckedCreateWithoutIssuedBySubmissionInput>
+  connectOrCreate?: Prisma.DocumentVersionCreateOrConnectWithoutIssuedBySubmissionInput
+  upsert?: Prisma.DocumentVersionUpsertWithoutIssuedBySubmissionInput
+  disconnect?: Prisma.DocumentVersionWhereInput | boolean
+  delete?: Prisma.DocumentVersionWhereInput | boolean
+  connect?: Prisma.DocumentVersionWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.DocumentVersionUpdateToOneWithWhereWithoutIssuedBySubmissionInput, Prisma.DocumentVersionUpdateWithoutIssuedBySubmissionInput>, Prisma.DocumentVersionUncheckedUpdateWithoutIssuedBySubmissionInput>
+}
+
 export type DocumentVersionCreateNestedManyWithoutDocumentInput = {
   create?: Prisma.XOR<Prisma.DocumentVersionCreateWithoutDocumentInput, Prisma.DocumentVersionUncheckedCreateWithoutDocumentInput> | Prisma.DocumentVersionCreateWithoutDocumentInput[] | Prisma.DocumentVersionUncheckedCreateWithoutDocumentInput[]
   connectOrCreate?: Prisma.DocumentVersionCreateOrConnectWithoutDocumentInput | Prisma.DocumentVersionCreateOrConnectWithoutDocumentInput[]
@@ -551,6 +579,78 @@ export type DocumentVersionUpdateOneRequiredWithoutAttestationNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.DocumentVersionUpdateToOneWithWhereWithoutAttestationInput, Prisma.DocumentVersionUpdateWithoutAttestationInput>, Prisma.DocumentVersionUncheckedUpdateWithoutAttestationInput>
 }
 
+export type DocumentVersionCreateWithoutIssuedBySubmissionInput = {
+  id?: string
+  version: number
+  filename: string
+  mimeType: string
+  size: number
+  sha256: string
+  storageKey?: string | null
+  qrProof?: string | null
+  createdAt?: Date | string
+  document: Prisma.DocumentCreateNestedOneWithoutVersionsInput
+  attestation?: Prisma.AttestationCreateNestedOneWithoutDocumentVersionInput
+}
+
+export type DocumentVersionUncheckedCreateWithoutIssuedBySubmissionInput = {
+  id?: string
+  version: number
+  filename: string
+  mimeType: string
+  size: number
+  sha256: string
+  storageKey?: string | null
+  qrProof?: string | null
+  documentId: string
+  createdAt?: Date | string
+  attestation?: Prisma.AttestationUncheckedCreateNestedOneWithoutDocumentVersionInput
+}
+
+export type DocumentVersionCreateOrConnectWithoutIssuedBySubmissionInput = {
+  where: Prisma.DocumentVersionWhereUniqueInput
+  create: Prisma.XOR<Prisma.DocumentVersionCreateWithoutIssuedBySubmissionInput, Prisma.DocumentVersionUncheckedCreateWithoutIssuedBySubmissionInput>
+}
+
+export type DocumentVersionUpsertWithoutIssuedBySubmissionInput = {
+  update: Prisma.XOR<Prisma.DocumentVersionUpdateWithoutIssuedBySubmissionInput, Prisma.DocumentVersionUncheckedUpdateWithoutIssuedBySubmissionInput>
+  create: Prisma.XOR<Prisma.DocumentVersionCreateWithoutIssuedBySubmissionInput, Prisma.DocumentVersionUncheckedCreateWithoutIssuedBySubmissionInput>
+  where?: Prisma.DocumentVersionWhereInput
+}
+
+export type DocumentVersionUpdateToOneWithWhereWithoutIssuedBySubmissionInput = {
+  where?: Prisma.DocumentVersionWhereInput
+  data: Prisma.XOR<Prisma.DocumentVersionUpdateWithoutIssuedBySubmissionInput, Prisma.DocumentVersionUncheckedUpdateWithoutIssuedBySubmissionInput>
+}
+
+export type DocumentVersionUpdateWithoutIssuedBySubmissionInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  version?: Prisma.IntFieldUpdateOperationsInput | number
+  filename?: Prisma.StringFieldUpdateOperationsInput | string
+  mimeType?: Prisma.StringFieldUpdateOperationsInput | string
+  size?: Prisma.IntFieldUpdateOperationsInput | number
+  sha256?: Prisma.StringFieldUpdateOperationsInput | string
+  storageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  qrProof?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  document?: Prisma.DocumentUpdateOneRequiredWithoutVersionsNestedInput
+  attestation?: Prisma.AttestationUpdateOneWithoutDocumentVersionNestedInput
+}
+
+export type DocumentVersionUncheckedUpdateWithoutIssuedBySubmissionInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  version?: Prisma.IntFieldUpdateOperationsInput | number
+  filename?: Prisma.StringFieldUpdateOperationsInput | string
+  mimeType?: Prisma.StringFieldUpdateOperationsInput | string
+  size?: Prisma.IntFieldUpdateOperationsInput | number
+  sha256?: Prisma.StringFieldUpdateOperationsInput | string
+  storageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  qrProof?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  documentId?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  attestation?: Prisma.AttestationUncheckedUpdateOneWithoutDocumentVersionNestedInput
+}
+
 export type DocumentVersionCreateWithoutDocumentInput = {
   id?: string
   version: number
@@ -562,6 +662,7 @@ export type DocumentVersionCreateWithoutDocumentInput = {
   qrProof?: string | null
   createdAt?: Date | string
   attestation?: Prisma.AttestationCreateNestedOneWithoutDocumentVersionInput
+  issuedBySubmission?: Prisma.DocumentSubmissionCreateNestedOneWithoutIssuedVersionInput
 }
 
 export type DocumentVersionUncheckedCreateWithoutDocumentInput = {
@@ -575,6 +676,7 @@ export type DocumentVersionUncheckedCreateWithoutDocumentInput = {
   qrProof?: string | null
   createdAt?: Date | string
   attestation?: Prisma.AttestationUncheckedCreateNestedOneWithoutDocumentVersionInput
+  issuedBySubmission?: Prisma.DocumentSubmissionUncheckedCreateNestedOneWithoutIssuedVersionInput
 }
 
 export type DocumentVersionCreateOrConnectWithoutDocumentInput = {
@@ -630,6 +732,7 @@ export type DocumentVersionCreateWithoutAttestationInput = {
   qrProof?: string | null
   createdAt?: Date | string
   document: Prisma.DocumentCreateNestedOneWithoutVersionsInput
+  issuedBySubmission?: Prisma.DocumentSubmissionCreateNestedOneWithoutIssuedVersionInput
 }
 
 export type DocumentVersionUncheckedCreateWithoutAttestationInput = {
@@ -643,6 +746,7 @@ export type DocumentVersionUncheckedCreateWithoutAttestationInput = {
   qrProof?: string | null
   documentId: string
   createdAt?: Date | string
+  issuedBySubmission?: Prisma.DocumentSubmissionUncheckedCreateNestedOneWithoutIssuedVersionInput
 }
 
 export type DocumentVersionCreateOrConnectWithoutAttestationInput = {
@@ -672,6 +776,7 @@ export type DocumentVersionUpdateWithoutAttestationInput = {
   qrProof?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   document?: Prisma.DocumentUpdateOneRequiredWithoutVersionsNestedInput
+  issuedBySubmission?: Prisma.DocumentSubmissionUpdateOneWithoutIssuedVersionNestedInput
 }
 
 export type DocumentVersionUncheckedUpdateWithoutAttestationInput = {
@@ -685,6 +790,7 @@ export type DocumentVersionUncheckedUpdateWithoutAttestationInput = {
   qrProof?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   documentId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  issuedBySubmission?: Prisma.DocumentSubmissionUncheckedUpdateOneWithoutIssuedVersionNestedInput
 }
 
 export type DocumentVersionCreateManyDocumentInput = {
@@ -710,6 +816,7 @@ export type DocumentVersionUpdateWithoutDocumentInput = {
   qrProof?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   attestation?: Prisma.AttestationUpdateOneWithoutDocumentVersionNestedInput
+  issuedBySubmission?: Prisma.DocumentSubmissionUpdateOneWithoutIssuedVersionNestedInput
 }
 
 export type DocumentVersionUncheckedUpdateWithoutDocumentInput = {
@@ -723,6 +830,7 @@ export type DocumentVersionUncheckedUpdateWithoutDocumentInput = {
   qrProof?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   attestation?: Prisma.AttestationUncheckedUpdateOneWithoutDocumentVersionNestedInput
+  issuedBySubmission?: Prisma.DocumentSubmissionUncheckedUpdateOneWithoutIssuedVersionNestedInput
 }
 
 export type DocumentVersionUncheckedUpdateManyWithoutDocumentInput = {
@@ -752,6 +860,7 @@ export type DocumentVersionSelect<ExtArgs extends runtime.Types.Extensions.Inter
   createdAt?: boolean
   document?: boolean | Prisma.DocumentDefaultArgs<ExtArgs>
   attestation?: boolean | Prisma.DocumentVersion$attestationArgs<ExtArgs>
+  issuedBySubmission?: boolean | Prisma.DocumentVersion$issuedBySubmissionArgs<ExtArgs>
 }, ExtArgs["result"]["documentVersion"]>
 
 export type DocumentVersionSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -799,6 +908,7 @@ export type DocumentVersionOmit<ExtArgs extends runtime.Types.Extensions.Interna
 export type DocumentVersionInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   document?: boolean | Prisma.DocumentDefaultArgs<ExtArgs>
   attestation?: boolean | Prisma.DocumentVersion$attestationArgs<ExtArgs>
+  issuedBySubmission?: boolean | Prisma.DocumentVersion$issuedBySubmissionArgs<ExtArgs>
 }
 export type DocumentVersionIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   document?: boolean | Prisma.DocumentDefaultArgs<ExtArgs>
@@ -812,6 +922,13 @@ export type $DocumentVersionPayload<ExtArgs extends runtime.Types.Extensions.Int
   objects: {
     document: Prisma.$DocumentPayload<ExtArgs>
     attestation: Prisma.$AttestationPayload<ExtArgs> | null
+    /**
+     * *
+     *    * Submissão que produziu esta versão.
+     *    * null mantém compatibilidade com
+     *    * versões emitidas antes deste modelo.
+     */
+    issuedBySubmission: Prisma.$DocumentSubmissionPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1227,6 +1344,7 @@ export interface Prisma__DocumentVersionClient<T, Null = never, ExtArgs extends 
   readonly [Symbol.toStringTag]: "PrismaPromise"
   document<T extends Prisma.DocumentDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.DocumentDefaultArgs<ExtArgs>>): Prisma.Prisma__DocumentClient<runtime.Types.Result.GetResult<Prisma.$DocumentPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   attestation<T extends Prisma.DocumentVersion$attestationArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.DocumentVersion$attestationArgs<ExtArgs>>): Prisma.Prisma__AttestationClient<runtime.Types.Result.GetResult<Prisma.$AttestationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  issuedBySubmission<T extends Prisma.DocumentVersion$issuedBySubmissionArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.DocumentVersion$issuedBySubmissionArgs<ExtArgs>>): Prisma.Prisma__DocumentSubmissionClient<runtime.Types.Result.GetResult<Prisma.$DocumentSubmissionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1683,6 +1801,25 @@ export type DocumentVersion$attestationArgs<ExtArgs extends runtime.Types.Extens
    */
   include?: Prisma.AttestationInclude<ExtArgs> | null
   where?: Prisma.AttestationWhereInput
+}
+
+/**
+ * DocumentVersion.issuedBySubmission
+ */
+export type DocumentVersion$issuedBySubmissionArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the DocumentSubmission
+   */
+  select?: Prisma.DocumentSubmissionSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the DocumentSubmission
+   */
+  omit?: Prisma.DocumentSubmissionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.DocumentSubmissionInclude<ExtArgs> | null
+  where?: Prisma.DocumentSubmissionWhereInput
 }
 
 /**

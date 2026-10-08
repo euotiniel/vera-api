@@ -32,12 +32,36 @@ async function bootstrap() {
    * CORS
    * ============================================================
    *
-   * Em produção isto será movido para
-   * configuração por ambiente.
+   * Em desenvolvimento:
+   *
+   * CORS_ORIGINS=http://localhost:3000
+   *
+   * Em produção:
+   *
+   * CORS_ORIGINS=https://vera.ao
+   *
+   * Também suporta múltiplas origens
+   * separadas por vírgula.
    */
+
+  const corsOrigins =
+    (
+      process.env
+        .CORS_ORIGINS ??
+      'http://localhost:3000'
+    )
+      .split(',')
+      .map(
+        (origin) =>
+          origin.trim(),
+      )
+      .filter(
+        Boolean,
+      );
+
   app.enableCors({
     origin:
-      'http://localhost:3000',
+      corsOrigins,
 
     credentials:
       true,
@@ -58,18 +82,22 @@ async function bootstrap() {
       .setVersion(
         '0.1.0',
       )
+
       .addTag(
         'System',
         'Estado e informações básicas da API.',
       )
+
       .addTag(
         'Documents',
         'Registo, consulta e obtenção de provas de documentos.',
       )
+
       .addTag(
         'Verifications',
         'Verificação pública por ID, ficheiro ou QR Proof.',
       )
+
       .build();
 
   const swaggerDocument =
@@ -120,15 +148,15 @@ async function bootstrap() {
   );
 
   console.log(
-    `Vera API running on http://localhost:${port}/api`,
+    `Vera API running on port ${port}`,
   );
 
   console.log(
-    `Vera API docs on http://localhost:${port}/api/docs`,
+    `Vera API docs available at /api/docs`,
   );
 
   console.log(
-    `Vera OpenAPI JSON on http://localhost:${port}/api/docs-json`,
+    `Vera OpenAPI JSON available at /api/docs-json`,
   );
 }
 

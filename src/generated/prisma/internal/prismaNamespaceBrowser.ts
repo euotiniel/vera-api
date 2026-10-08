@@ -61,7 +61,8 @@ export const ModelName = {
   DocumentVersion: 'DocumentVersion',
   Attestation: 'Attestation',
   DocumentLifecycleEvent: 'DocumentLifecycleEvent',
-  VerificationEvent: 'VerificationEvent'
+  VerificationEvent: 'VerificationEvent',
+  VerificationAuditEvent: 'VerificationAuditEvent'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -245,6 +246,22 @@ export const VerificationEventScalarFieldEnum = {
 } as const
 
 export type VerificationEventScalarFieldEnum = (typeof VerificationEventScalarFieldEnum)[keyof typeof VerificationEventScalarFieldEnum]
+
+
+export const VerificationAuditEventScalarFieldEnum = {
+  id: 'id',
+  method: 'method',
+  policy: 'policy',
+  verdictCode: 'verdictCode',
+  verified: 'verified',
+  publicId: 'publicId',
+  documentId: 'documentId',
+  hash: 'hash',
+  matched: 'matched',
+  createdAt: 'createdAt'
+} as const
+
+export type VerificationAuditEventScalarFieldEnum = (typeof VerificationAuditEventScalarFieldEnum)[keyof typeof VerificationAuditEventScalarFieldEnum]
 
 
 export const SortOrder = {

@@ -26,6 +26,10 @@ import {
 } from '@nestjs/swagger';
 
 import {
+  PrismaService,
+} from '../prisma/prisma.service.js';
+
+import {
   VerificationsService,
 } from './verifications.service.js';
 
@@ -42,6 +46,9 @@ export class VerificationsController {
 
     private readonly qrVerificationService:
       QrVerificationService,
+
+    private readonly prisma:
+      PrismaService,
   ) {}
 
   /*
@@ -151,10 +158,17 @@ O resultado é expresso através da Verification Policy da Vera.
     publicId:
       string,
   ) {
-    return this.verificationsService
-      .verifyByPublicId(
-        publicId,
-      );
+    const result =
+      await this.verificationsService
+        .verifyByPublicId(
+          publicId,
+        );
+
+    await this.recordAudit(
+      result,
+    );
+
+    return result;
   }
 
   /*
@@ -311,10 +325,17 @@ O ficheiro não é normalizado ou regravado antes do hash.
       );
     }
 
-    return this.verificationsService
-      .verifyFile(
-        file,
-      );
+    const result =
+      await this.verificationsService
+        .verifyFile(
+          file,
+        );
+
+    await this.recordAudit(
+      result,
+    );
+
+    return result;
   }
 
   /*
@@ -471,9 +492,172 @@ de o documento ter sido revogado. Nesse caso o verdict será REVOKED.
       );
     }
 
-    return this.qrVerificationService
-      .verify(
-        proof,
+    const result =
+      await this.qrVerificationService
+        .verify(
+          proof,
+        );
+
+    await this.recordAudit(
+      result,
+    );
+
+    return result;
+  }
+
+  /*
+   * ============================================================
+   * VERIFICATION AUDIT
+   * ============================================================
+   */
+
+  private async recordAudit(
+    result:
+      unknown,
+  ): Promise<void> {
+    if (
+      !this.isRecord(
+        result,
+      )
+    ) {
+      throw new Error(
+        'Resultado de verificação inválido para auditoria.',
       );
+    }
+
+    const method =
+      result.method;
+
+    const policy =
+      result.policy;
+
+    const verdict =
+      result.verdict;
+
+    if (
+      (
+        method !==
+          'PUBLIC_ID' &&
+        method !==
+          'FILE' &&
+        method !==
+          'QR'
+      ) ||
+      typeof policy !==
+        'string' ||
+      !this.isRecord(
+        verdict,
+      ) ||
+      typeof verdict.code !==
+        'string' ||
+      typeof verdict.verified !==
+        'boolean'
+    ) {
+      throw new Error(
+        'Resultado de verificação incompleto para auditoria.',
+      );
+    }
+
+    let publicId:
+      string |
+      null =
+        typeof result.publicId ===
+        'string'
+          ? result.publicId
+          : null;
+
+    if (
+      !publicId &&
+      this.isRecord(
+        result.document,
+      ) &&
+      typeof result.document
+        .publicId ===
+        'string'
+    ) {
+      publicId =
+        result.document.publicId;
+    }
+
+    let documentId:
+      string |
+      null =
+        null;
+
+    if (publicId) {
+      const document =
+        await this.prisma
+          .document
+          .findUnique({
+            where: {
+              publicId,
+            },
+
+            select: {
+              id:
+                true,
+            },
+          });
+
+      documentId =
+        document?.id ??
+        null;
+    }
+
+    const hash =
+      method ===
+        'FILE' &&
+      typeof result.hash ===
+        'string'
+        ? result.hash
+        : null;
+
+    const matched =
+      method ===
+        'FILE' &&
+      typeof result.exactMatch ===
+        'boolean'
+        ? result.exactMatch
+        : null;
+
+    await this.prisma
+      .verificationAuditEvent
+      .create({
+        data: {
+          method,
+
+          policy,
+
+          verdictCode:
+            verdict.code,
+
+          verified:
+            verdict.verified,
+
+          publicId,
+
+          documentId,
+
+          hash,
+
+          matched,
+        },
+      });
+  }
+
+  private isRecord(
+    value:
+      unknown,
+  ): value is
+    Record<
+      string,
+      unknown
+    > {
+    return (
+      typeof value ===
+        'object' &&
+      value !==
+        null
+    );
   }
 }

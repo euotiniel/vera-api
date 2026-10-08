@@ -407,7 +407,8 @@ export const ModelName = {
   DocumentVersion: 'DocumentVersion',
   Attestation: 'Attestation',
   DocumentLifecycleEvent: 'DocumentLifecycleEvent',
-  VerificationEvent: 'VerificationEvent'
+  VerificationEvent: 'VerificationEvent',
+  VerificationAuditEvent: 'VerificationAuditEvent'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -423,7 +424,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "session" | "organization" | "organizationMember" | "documentSubmission" | "documentSubmissionDecision" | "document" | "documentVersion" | "attestation" | "documentLifecycleEvent" | "verificationEvent"
+    modelProps: "user" | "session" | "organization" | "organizationMember" | "documentSubmission" | "documentSubmissionDecision" | "document" | "documentVersion" | "attestation" | "documentLifecycleEvent" | "verificationEvent" | "verificationAuditEvent"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1241,6 +1242,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    VerificationAuditEvent: {
+      payload: Prisma.$VerificationAuditEventPayload<ExtArgs>
+      fields: Prisma.VerificationAuditEventFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.VerificationAuditEventFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VerificationAuditEventPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.VerificationAuditEventFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VerificationAuditEventPayload>
+        }
+        findFirst: {
+          args: Prisma.VerificationAuditEventFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VerificationAuditEventPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.VerificationAuditEventFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VerificationAuditEventPayload>
+        }
+        findMany: {
+          args: Prisma.VerificationAuditEventFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VerificationAuditEventPayload>[]
+        }
+        create: {
+          args: Prisma.VerificationAuditEventCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VerificationAuditEventPayload>
+        }
+        createMany: {
+          args: Prisma.VerificationAuditEventCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.VerificationAuditEventCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VerificationAuditEventPayload>[]
+        }
+        delete: {
+          args: Prisma.VerificationAuditEventDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VerificationAuditEventPayload>
+        }
+        update: {
+          args: Prisma.VerificationAuditEventUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VerificationAuditEventPayload>
+        }
+        deleteMany: {
+          args: Prisma.VerificationAuditEventDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.VerificationAuditEventUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.VerificationAuditEventUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VerificationAuditEventPayload>[]
+        }
+        upsert: {
+          args: Prisma.VerificationAuditEventUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VerificationAuditEventPayload>
+        }
+        aggregate: {
+          args: Prisma.VerificationAuditEventAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateVerificationAuditEvent>
+        }
+        groupBy: {
+          args: Prisma.VerificationAuditEventGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.VerificationAuditEventGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.VerificationAuditEventCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.VerificationAuditEventCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -1445,6 +1520,22 @@ export const VerificationEventScalarFieldEnum = {
 } as const
 
 export type VerificationEventScalarFieldEnum = (typeof VerificationEventScalarFieldEnum)[keyof typeof VerificationEventScalarFieldEnum]
+
+
+export const VerificationAuditEventScalarFieldEnum = {
+  id: 'id',
+  method: 'method',
+  policy: 'policy',
+  verdictCode: 'verdictCode',
+  verified: 'verified',
+  publicId: 'publicId',
+  documentId: 'documentId',
+  hash: 'hash',
+  matched: 'matched',
+  createdAt: 'createdAt'
+} as const
+
+export type VerificationAuditEventScalarFieldEnum = (typeof VerificationAuditEventScalarFieldEnum)[keyof typeof VerificationAuditEventScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -1827,6 +1918,7 @@ export type GlobalOmitConfig = {
   attestation?: Prisma.AttestationOmit
   documentLifecycleEvent?: Prisma.DocumentLifecycleEventOmit
   verificationEvent?: Prisma.VerificationEventOmit
+  verificationAuditEvent?: Prisma.VerificationAuditEventOmit
 }
 
 /* Types for Logging */

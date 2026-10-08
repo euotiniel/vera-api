@@ -72,3 +72,8 @@ export type DocumentLifecycleEvent = Prisma.DocumentLifecycleEventModel
  * 
  */
 export type VerificationEvent = Prisma.VerificationEventModel
+/**
+ * Model VerificationAuditEvent
+ * 
+ */
+export type VerificationAuditEvent = Prisma.VerificationAuditEventModel

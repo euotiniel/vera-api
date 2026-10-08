@@ -384,7 +384,7 @@ model DocumentLifecycleEvent {
 
 /**
  * ============================================================
- * VERIFICATION AUDIT
+ * VERIFICATION ANALYTICS
  * ============================================================
  */
 
@@ -399,4 +399,54 @@ model VerificationEvent {
 
   @@index([hash])
   @@index([documentId])
+}
+
+/**
+ * ============================================================
+ * VERIFICATION AUDIT
+ * ============================================================
+ */
+
+model VerificationAuditEvent {
+  id String @id @default(cuid())
+
+  /**
+   * PUBLIC_ID | FILE | QR
+   */
+  method String
+
+  /**
+   * Política que produziu o verdict.
+   * Ex.: vera.public-verification.v4
+   */
+  policy String
+
+  /**
+   * Resultado materializado naquele momento.
+   * Ex.: VERIFIED, REVOKED, NOT_FOUND.
+   */
+  verdictCode String
+  verified    Boolean
+
+  /**
+   * Identificadores conhecidos no momento
+   * da verificação.
+   */
+  publicId   String?
+  documentId String?
+
+  /**
+   * Apenas relevante para FILE.
+   */
+  hash    String?
+  matched Boolean?
+
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([method, createdAt])
+  @@index([verdictCode, createdAt])
+  @@index([verified, createdAt])
+  @@index([publicId, createdAt])
+  @@index([documentId, createdAt])
 }

@@ -53,6 +53,20 @@ interface CreateSubmissionInput {
     | 'PRIVATE';
 }
 
+interface CreateVersionSubmissionInput {
+  file:
+    Express.Multer.File;
+
+  organizationId:
+    string;
+
+  creatorId:
+    string;
+
+  publicId:
+    string;
+}
+
 interface ReviewSubmissionInput {
   organizationId:
     string;
@@ -69,6 +83,21 @@ interface ReviewSubmissionInput {
 
   reason?:
     string;
+}
+
+interface VersionSubmissionState {
+  kind:
+    | 'NEW_DOCUMENT'
+    | 'NEW_VERSION';
+
+  organizationId:
+    string;
+
+  targetDocumentId:
+    string | null;
+
+  baseVersion:
+    number | null;
 }
 
 @Injectable()
@@ -88,6 +117,12 @@ export class SubmissionsService {
     private readonly pdfValidationService:
       PdfValidationService,
   ) {}
+
+  /*
+   * ============================================================
+   * CREATE NEW DOCUMENT DRAFT
+   * ============================================================
+   */
 
   async createDraft(
     input:
@@ -111,7 +146,6 @@ export class SubmissionsService {
 
             slug:
               true,
-
           },
         });
 
@@ -121,88 +155,16 @@ export class SubmissionsService {
       );
     }
 
-    const validatedPdf =
-      await this.pdfValidationService
-        .validate(
-          input.file.buffer,
-        );
-
-    const sha256 =
-      createHash(
-        'sha256',
-      )
-        .update(
-          input.file.buffer,
-        )
-        .digest(
-          'hex',
-        );
-
-    const existingDocumentVersion =
-      await this.prisma
-        .documentVersion
-        .findUnique({
-          where: {
-            sha256,
-          },
-
-          select: {
-            id:
-              true,
-
-            documentId:
-              true,
-          },
-        });
-
-    if (existingDocumentVersion) {
-      throw new ConflictException(
-        'Este ficheiro já está registado como documento oficial na Vera.',
+    const preparedFile =
+      await this.prepareIncomingFile(
+        input.file,
+        organization.id,
       );
-    }
-
-    const existingSubmission =
-      await this.prisma
-        .documentSubmission
-        .findFirst({
-          where: {
-            organizationId:
-              organization.id,
-
-            sha256,
-
-            status: {
-              in: [
-                'DRAFT',
-                'PENDING_REVIEW',
-                'PENDING_APPROVAL',
-                'APPROVED',
-              ],
-            },
-          },
-
-          select: {
-            id:
-              true,
-
-            status:
-              true,
-          },
-        });
-
-    if (existingSubmission) {
-      throw new ConflictException(
-        'Este ficheiro já possui uma submissão ativa nesta organização.',
-      );
-    }
 
     const storageKey =
-      [
-        'submissions',
+      this.buildSubmissionStorageKey(
         organization.id,
-        randomUUID(),
-        'original.pdf',
-      ].join('/');
+      );
 
     await this.storageService
       .putFile({
@@ -213,37 +175,15 @@ export class SubmissionsService {
           input.file.buffer,
 
         contentType:
-          validatedPdf.mimeType,
+          preparedFile.mimeType,
       });
 
     try {
-      const storedFile =
-        await this.storageService
-          .getFile(
-            storageKey,
-          );
-
-      const storedSha256 =
-        createHash(
-          'sha256',
-        )
-          .update(
-            storedFile.body,
-          )
-          .digest(
-            'hex',
-          );
-
-      if (
-        storedSha256 !==
-          sha256 ||
-        storedFile.body.length !==
-          validatedPdf.size
-      ) {
-        throw new InternalServerErrorException(
-          'A integridade do ficheiro armazenado não pôde ser confirmada.',
-        );
-      }
+      await this.assertStoredFileIntegrity(
+        storageKey,
+        preparedFile.sha256,
+        preparedFile.size,
+      );
 
       const submission =
         await this.prisma
@@ -255,6 +195,15 @@ export class SubmissionsService {
 
               creatorId:
                 input.creatorId,
+
+              kind:
+                'NEW_DOCUMENT',
+
+              targetDocumentId:
+                null,
+
+              baseVersion:
+                null,
 
               title:
                 input.title.trim(),
@@ -285,13 +234,14 @@ export class SubmissionsService {
                   .originalname,
 
               mimeType:
-                validatedPdf
+                preparedFile
                   .mimeType,
 
               size:
-                validatedPdf.size,
+                preparedFile.size,
 
-              sha256,
+              sha256:
+                preparedFile.sha256,
 
               storageKey,
 
@@ -325,6 +275,19 @@ export class SubmissionsService {
                     true,
                 },
               },
+
+              targetDocument: {
+                select: {
+                  id:
+                    true,
+
+                  publicId:
+                    true,
+
+                  status:
+                    true,
+                },
+              },
             },
           });
 
@@ -335,20 +298,9 @@ export class SubmissionsService {
       error:
         unknown
     ) {
-      try {
-        await this.storageService
-          .deleteFile(
-            storageKey,
-          );
-      } catch (
-        cleanupError:
-          unknown
-      ) {
-        this.logger.error(
-          `Falha ao remover objecto órfão da submissão: ${storageKey}`,
-          cleanupError,
-        );
-      }
+      await this.cleanupSubmissionFile(
+        storageKey,
+      );
 
       if (
         this.isUniqueConstraintViolation(
@@ -363,6 +315,263 @@ export class SubmissionsService {
       throw error;
     }
   }
+
+  /*
+   * ============================================================
+   * CREATE NEW VERSION DRAFT
+   * ============================================================
+   */
+
+  async createVersionDraft(
+    input:
+      CreateVersionSubmissionInput,
+  ) {
+    const normalizedPublicId =
+      input.publicId
+        .trim()
+        .toUpperCase();
+
+    const document =
+      await this.prisma
+        .document
+        .findFirst({
+          where: {
+            publicId:
+              normalizedPublicId,
+
+            organizationId:
+              input.organizationId,
+          },
+
+          include: {
+            organization: {
+              select: {
+                id:
+                  true,
+
+                name:
+                  true,
+
+                slug:
+                  true,
+              },
+            },
+
+            versions: {
+              orderBy: {
+                version:
+                  'desc',
+              },
+
+              take:
+                1,
+
+              select: {
+                version:
+                  true,
+              },
+            },
+          },
+        });
+
+    if (!document) {
+      throw new NotFoundException(
+        'Documento alvo não encontrado nesta organização.',
+      );
+    }
+
+    if (
+      document.status !==
+      'VALID'
+    ) {
+      throw new ConflictException(
+        'Apenas documentos atualmente válidos podem receber uma nova versão.',
+      );
+    }
+
+    const latestVersion =
+      document.versions[0];
+
+    if (!latestVersion) {
+      throw new ConflictException(
+        'O documento alvo não possui uma versão oficial válida.',
+      );
+    }
+
+    const preparedFile =
+      await this.prepareIncomingFile(
+        input.file,
+        input.organizationId,
+      );
+
+    const storageKey =
+      this.buildSubmissionStorageKey(
+        input.organizationId,
+      );
+
+    await this.storageService
+      .putFile({
+        key:
+          storageKey,
+
+        body:
+          input.file.buffer,
+
+        contentType:
+          preparedFile.mimeType,
+      });
+
+    try {
+      await this.assertStoredFileIntegrity(
+        storageKey,
+        preparedFile.sha256,
+        preparedFile.size,
+      );
+
+      /*
+       * Guardamos a versão corrente no momento
+       * da criação.
+       *
+       * Se outra submissão produzir v2 antes
+       * desta chegar à aprovação, baseVersion
+       * permitirá detetar que esta submissão
+       * ficou stale.
+       */
+      const submission =
+        await this.prisma
+          .documentSubmission
+          .create({
+            data: {
+              organizationId:
+                document.organizationId,
+
+              creatorId:
+                input.creatorId,
+
+              kind:
+                'NEW_VERSION',
+
+              targetDocumentId:
+                document.id,
+
+              baseVersion:
+                latestVersion.version,
+
+              /*
+               * Metadados lógicos são herdados.
+               *
+               * Uma nova versão altera os bytes
+               * versionados, não a identidade
+               * do Document.
+               */
+              title:
+                document.title,
+
+              type:
+                document.type,
+
+              reference:
+                document.reference,
+
+              issuedAt:
+                document.issuedAt,
+
+              originalFileAccess:
+                document
+                  .originalFileAccess,
+
+              filename:
+                input.file
+                  .originalname,
+
+              mimeType:
+                preparedFile
+                  .mimeType,
+
+              size:
+                preparedFile.size,
+
+              sha256:
+                preparedFile.sha256,
+
+              storageKey,
+
+              status:
+                'DRAFT',
+            },
+
+            include: {
+              organization: {
+                select: {
+                  id:
+                    true,
+
+                  name:
+                    true,
+
+                  slug:
+                    true,
+                },
+              },
+
+              creator: {
+                select: {
+                  id:
+                    true,
+
+                  name:
+                    true,
+
+                  email:
+                    true,
+                },
+              },
+
+              targetDocument: {
+                select: {
+                  id:
+                    true,
+
+                  publicId:
+                    true,
+
+                  status:
+                    true,
+                },
+              },
+            },
+          });
+
+      return this.toSubmissionResponse(
+        submission,
+      );
+    } catch (
+      error:
+        unknown
+    ) {
+      await this.cleanupSubmissionFile(
+        storageKey,
+      );
+
+      if (
+        this.isUniqueConstraintViolation(
+          error,
+        )
+      ) {
+        throw new ConflictException(
+          'Este ficheiro já possui uma submissão ativa nesta organização.',
+        );
+      }
+
+      throw error;
+    }
+  }
+
+  /*
+   * ============================================================
+   * SUBMIT DRAFT
+   * ============================================================
+   */
 
   async submitDraft(
     input: {
@@ -412,6 +621,10 @@ export class SubmissionsService {
         'Apenas submissões em DRAFT podem ser enviadas para revisão.',
       );
     }
+
+    await this.assertVersionSubmissionCurrent(
+      submission,
+    );
 
     await this.assertStoredFileIntegrity(
       submission.storageKey,
@@ -467,6 +680,12 @@ export class SubmissionsService {
     );
   }
 
+  /*
+   * ============================================================
+   * PENDING REVIEW
+   * ============================================================
+   */
+
   async listPendingReview(
     organizationId:
       string,
@@ -483,6 +702,15 @@ export class SubmissionsService {
 
         select: {
           id:
+            true,
+
+          kind:
+            true,
+
+          targetDocumentId:
+            true,
+
+          baseVersion:
             true,
 
           title:
@@ -524,6 +752,19 @@ export class SubmissionsService {
           updatedAt:
             true,
 
+          targetDocument: {
+            select: {
+              id:
+                true,
+
+              publicId:
+                true,
+
+              status:
+                true,
+            },
+          },
+
           creator: {
             select: {
               id:
@@ -544,6 +785,12 @@ export class SubmissionsService {
         },
       });
   }
+
+  /*
+   * ============================================================
+   * INTERNAL FILE
+   * ============================================================
+   */
 
   async getInternalFile(
     organizationId:
@@ -633,6 +880,12 @@ export class SubmissionsService {
     };
   }
 
+  /*
+   * ============================================================
+   * REVIEW
+   * ============================================================
+   */
+
   async review(
     input:
       ReviewSubmissionInput,
@@ -668,7 +921,19 @@ export class SubmissionsService {
             id:
               true,
 
+            organizationId:
+              true,
+
             creatorId:
+              true,
+
+            kind:
+              true,
+
+            targetDocumentId:
+              true,
+
+            baseVersion:
               true,
 
             status:
@@ -706,6 +971,22 @@ export class SubmissionsService {
     ) {
       throw new ForbiddenException(
         'O criador da submissão não pode rever a própria submissão.',
+      );
+    }
+
+    /*
+     * Uma submissão stale continua podendo
+     * ser REJECTED.
+     *
+     * Apenas impedimos que ela avance para
+     * aprovação final.
+     */
+    if (
+      input.decision ===
+      'APPROVED'
+    ) {
+      await this.assertVersionSubmissionCurrent(
+        submission,
       );
     }
 
@@ -784,6 +1065,219 @@ export class SubmissionsService {
     );
   }
 
+  /*
+   * ============================================================
+   * VERSION SUBMISSION STATE
+   * ============================================================
+   */
+
+  private async assertVersionSubmissionCurrent(
+    submission:
+      VersionSubmissionState,
+  ): Promise<void> {
+    if (
+      submission.kind !==
+      'NEW_VERSION'
+    ) {
+      return;
+    }
+
+    if (
+      !submission
+        .targetDocumentId ||
+      submission.baseVersion ===
+        null
+    ) {
+      throw new ConflictException(
+        'A submissão de nova versão não possui documento alvo ou versão-base válidos.',
+      );
+    }
+
+    const document =
+      await this.prisma
+        .document
+        .findFirst({
+          where: {
+            id:
+              submission
+                .targetDocumentId,
+
+            organizationId:
+              submission
+                .organizationId,
+          },
+
+          select: {
+            status:
+              true,
+
+            versions: {
+              orderBy: {
+                version:
+                  'desc',
+              },
+
+              take:
+                1,
+
+              select: {
+                version:
+                  true,
+              },
+            },
+          },
+        });
+
+    if (!document) {
+      throw new NotFoundException(
+        'Documento alvo não encontrado.',
+      );
+    }
+
+    if (
+      document.status !==
+      'VALID'
+    ) {
+      throw new ConflictException(
+        'Apenas documentos atualmente válidos podem receber uma nova versão.',
+      );
+    }
+
+    const latestVersion =
+      document.versions[0];
+
+    if (!latestVersion) {
+      throw new ConflictException(
+        'O documento alvo não possui uma versão oficial válida.',
+      );
+    }
+
+    if (
+      latestVersion.version !==
+      submission.baseVersion
+    ) {
+      throw new ConflictException(
+        'O documento já recebeu uma versão posterior à utilizada por esta submissão.',
+      );
+    }
+  }
+
+  /*
+   * ============================================================
+   * FILE ADMISSION
+   * ============================================================
+   */
+
+  private async prepareIncomingFile(
+    file:
+      Express.Multer.File,
+
+    organizationId:
+      string,
+  ) {
+    const validatedPdf =
+      await this.pdfValidationService
+        .validate(
+          file.buffer,
+        );
+
+    const sha256 =
+      createHash(
+        'sha256',
+      )
+        .update(
+          file.buffer,
+        )
+        .digest(
+          'hex',
+        );
+
+    const existingDocumentVersion =
+      await this.prisma
+        .documentVersion
+        .findUnique({
+          where: {
+            sha256,
+          },
+
+          select: {
+            id:
+              true,
+
+            documentId:
+              true,
+          },
+        });
+
+    if (existingDocumentVersion) {
+      throw new ConflictException(
+        'Este ficheiro já está registado como documento oficial na Vera.',
+      );
+    }
+
+    const existingSubmission =
+      await this.prisma
+        .documentSubmission
+        .findFirst({
+          where: {
+            organizationId,
+
+            sha256,
+
+            status: {
+              in: [
+                'DRAFT',
+                'PENDING_REVIEW',
+                'PENDING_APPROVAL',
+                'APPROVED',
+              ],
+            },
+          },
+
+          select: {
+            id:
+              true,
+
+            status:
+              true,
+          },
+        });
+
+    if (existingSubmission) {
+      throw new ConflictException(
+        'Este ficheiro já possui uma submissão ativa nesta organização.',
+      );
+    }
+
+    return {
+      mimeType:
+        validatedPdf.mimeType,
+
+      size:
+        validatedPdf.size,
+
+      sha256,
+    };
+  }
+
+  private buildSubmissionStorageKey(
+    organizationId:
+      string,
+  ): string {
+    return [
+      'submissions',
+      organizationId,
+      randomUUID(),
+      'original.pdf',
+    ].join('/');
+  }
+
+  /*
+   * ============================================================
+   * STORAGE INTEGRITY
+   * ============================================================
+   */
+
   private async assertStoredFileIntegrity(
     storageKey:
       string,
@@ -823,6 +1317,32 @@ export class SubmissionsService {
     }
   }
 
+  private async cleanupSubmissionFile(
+    storageKey:
+      string,
+  ): Promise<void> {
+    try {
+      await this.storageService
+        .deleteFile(
+          storageKey,
+        );
+    } catch (
+      cleanupError:
+        unknown
+    ) {
+      this.logger.error(
+        `Falha ao remover objecto órfão da submissão: ${storageKey}`,
+        cleanupError,
+      );
+    }
+  }
+
+  /*
+   * ============================================================
+   * RESPONSE QUERIES
+   * ============================================================
+   */
+
   private async findSubmissionForResponse(
     submissionId:
       string,
@@ -859,6 +1379,19 @@ export class SubmissionsService {
                   true,
 
                 email:
+                  true,
+              },
+            },
+
+            targetDocument: {
+              select: {
+                id:
+                  true,
+
+                publicId:
+                  true,
+
+                status:
                   true,
               },
             },
@@ -914,6 +1447,19 @@ export class SubmissionsService {
               },
             },
 
+            targetDocument: {
+              select: {
+                id:
+                  true,
+
+                publicId:
+                  true,
+
+                status:
+                  true,
+              },
+            },
+
             decisions: {
               orderBy: {
                 createdAt:
@@ -954,6 +1500,12 @@ export class SubmissionsService {
     };
   }
 
+  /*
+   * ============================================================
+   * PRISMA
+   * ============================================================
+   */
+
   private isUniqueConstraintViolation(
     error:
       unknown,
@@ -974,13 +1526,35 @@ export class SubmissionsService {
     );
   }
 
+  /*
+   * ============================================================
+   * RESPONSE
+   * ============================================================
+   */
+
   private toSubmissionResponse(
     submission: {
       id:
         string;
 
+      kind:
+        'NEW_DOCUMENT'
+        | 'NEW_VERSION';
+
       status:
         string;
+
+      targetDocumentId:
+        string | null;
+
+      baseVersion:
+        number | null;
+
+      issuedVersionId:
+        string | null;
+
+      documentId:
+        string | null;
 
       title:
         string;
@@ -1039,11 +1613,27 @@ export class SubmissionsService {
         email:
           string;
       };
+
+      targetDocument:
+        | {
+            id:
+              string;
+
+            publicId:
+              string;
+
+            status:
+              string;
+          }
+        | null;
     },
   ) {
     return {
       id:
         submission.id,
+
+      kind:
+        submission.kind,
 
       status:
         submission.status,
@@ -1083,6 +1673,24 @@ export class SubmissionsService {
         sha256:
           submission.sha256,
       },
+
+      targetDocumentId:
+        submission
+          .targetDocumentId,
+
+      targetDocument:
+        submission
+          .targetDocument,
+
+      baseVersion:
+        submission.baseVersion,
+
+      documentId:
+        submission.documentId,
+
+      issuedVersionId:
+        submission
+          .issuedVersionId,
 
       submittedAt:
         submission.submittedAt,

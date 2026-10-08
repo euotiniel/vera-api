@@ -1,10 +1,22 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+} from '@nestjs/common';
 
-import { PrismaService } from '../prisma/prisma.service.js';
-import { QrProofService } from '../trust/qr-proof.service.js';
+import {
+  PrismaService,
+} from '../prisma/prisma.service.js';
 
-import { VerificationPolicyService } from './verification-policy.service.js';
-import { VerificationsService } from './verifications.service.js';
+import {
+  QrProofService,
+} from '../trust/qr-proof.service.js';
+
+import {
+  VerificationPolicyService,
+} from './verification-policy.service.js';
+
+import {
+  VerificationsService,
+} from './verifications.service.js';
 
 @Injectable()
 export class QrVerificationService {
@@ -23,19 +35,28 @@ export class QrVerificationService {
   ) {}
 
   async verify(
-    proofInput: string,
+    proofInput:
+      string,
   ) {
     const proof =
-      proofInput?.trim();
+      proofInput
+        ?.trim();
 
     if (!proof) {
       return this.invalidProof();
     }
 
+    /*
+     * ============================================================
+     * CRYPTOGRAPHIC QR VERIFICATION
+     * ============================================================
+     */
+
     const qr =
-      this.qrProofService.verify(
-        proof,
-      );
+      this.qrProofService
+        .verify(
+          proof,
+        );
 
     if (
       !qr.valid ||
@@ -93,12 +114,24 @@ export class QrVerificationService {
       qr.payload;
 
     /*
-     * Só consultamos o banco depois
-     * de confirmar que a assinatura
-     * do QR é válida.
+     * ============================================================
+     * DOCUMENT + VERSION
+     * ============================================================
+     *
+     * Um QR Vera está ligado a uma versão
+     * específica.
+     *
+     * Não usamos apenas a versão mais recente.
+     *
+     * Assim:
+     *
+     * QR v1 continua verificável depois de v2.
+     * QR v2 continua verificável depois de v3.
      */
+
     const document =
-      await this.prisma.document
+      await this.prisma
+        .document
         .findUnique({
           where: {
             publicId:
@@ -111,9 +144,6 @@ export class QrVerificationService {
                 version:
                   'desc',
               },
-
-              take:
-                1,
 
               include: {
                 attestation:
@@ -180,8 +210,24 @@ export class QrVerificationService {
       };
     }
 
+    const latestVersion =
+      document.versions[0] ??
+      null;
+
+    /*
+     * Procuramos EXATAMENTE a versão
+     * declarada no QR Proof.
+     */
     const version =
-      document.versions[0];
+      document.versions
+        .find(
+          (
+            candidate,
+          ) =>
+            candidate.version ===
+            payload.version,
+        ) ??
+      null;
 
     if (!version) {
       return {
@@ -221,22 +267,57 @@ export class QrVerificationService {
           recordFound:
             false,
         },
+
+        versioning: {
+          checkedVersion:
+            payload.version,
+
+          latestVersion:
+            latestVersion
+              ?.version ??
+            null,
+
+          currentVersion:
+            false,
+        },
+
+        qr: {
+          valid:
+            true,
+
+          structureValid:
+            true,
+
+          signatureValid:
+            true,
+
+          keyId:
+            qr.keyId,
+
+          payload,
+        },
       };
     }
 
     /*
-     * O QR submetido precisa ser
-     * EXATAMENTE a prova canónica
-     * persistida para esta versão.
+     * ============================================================
+     * CANONICAL PROOF
+     * ============================================================
+     *
+     * O token recebido precisa ser exatamente
+     * o QR Proof persistido para ESTA versão.
      */
+
     const storedProofMatch =
       version.qrProof ===
       proof;
 
     /*
-     * As claims do QR também precisam
-     * corresponder à versão atual.
+     * As claims assinadas também precisam
+     * corresponder exatamente ao registo
+     * materializado desta versão.
      */
+
     const claimsMatch =
       payload.publicId ===
         document.publicId &&
@@ -252,9 +333,10 @@ export class QrVerificationService {
           .toISOString();
 
     /*
-     * O QR v2 também está ligado à
-     * Attestation específica desta versão.
+     * O QR v2 está criptograficamente ligado
+     * à Attestation da mesma DocumentVersion.
      */
+
     const attestationBindingValid =
       version.attestation
         ? payload
@@ -279,11 +361,6 @@ export class QrVerificationService {
             })
         : false;
 
-    /*
-     * Mesmo com assinatura Vera válida,
-     * recusamos qualquer QR que não seja
-     * a prova canónica deste registo.
-     */
     if (
       !storedProofMatch ||
       !claimsMatch ||
@@ -345,6 +422,22 @@ export class QrVerificationService {
             attestationBindingValid,
         },
 
+        versioning: {
+          checkedVersion:
+            version.version,
+
+          latestVersion:
+            latestVersion
+              ?.version ??
+            version.version,
+
+          currentVersion:
+            latestVersion
+              ? version.version ===
+                latestVersion.version
+              : true,
+        },
+
         qr: {
           valid:
             true,
@@ -370,33 +463,32 @@ export class QrVerificationService {
     }
 
     /*
-     * QR íntegro.
+     * ============================================================
+     * FULL PUBLIC VERIFICATION
+     * ============================================================
      *
-     * Agora reutilizamos toda a
-     * verificação pública já existente:
+     * Reutilizamos a verificação pública,
+     * mas explicitamente para a versão
+     * declarada no QR.
      *
-     * - emissor
-     * - attestation
-     * - lifecycle
-     * - status
-     * - storage
+     * Isto é o ponto que permite verificar
+     * corretamente QR Proofs históricos.
      */
+
     const base =
-      await this.verificationsService
+      await this
+        .verificationsService
         .verifyByPublicId(
           payload.publicId,
+          payload.version,
         );
 
     /*
-     * O retorno de verifyByPublicId()
-     * é uma union.
-     *
-     * Em erros iniciais ele pode não
-     * possuir status/originalFile.
-     *
-     * Fazemos narrowing explícito antes
-     * de usar esses campos.
+     * verifyByPublicId() possui retornos
+     * iniciais que podem não conter
+     * status/originalFile.
      */
+
     const baseStatus =
       'status' in base
         ? base.status
@@ -433,13 +525,40 @@ export class QrVerificationService {
               recordFound:
                 false,
             }),
+
+        qr: {
+          valid:
+            true,
+
+          structureValid:
+            true,
+
+          signatureValid:
+            true,
+
+          storedProofMatch:
+            true,
+
+          claimsMatch:
+            true,
+
+          attestationBindingValid:
+            true,
+
+          keyId:
+            qr.keyId,
+
+          payload,
+        },
       };
     }
 
     /*
-     * Agora TypeScript e runtime sabem
-     * que status/originalFile existem.
+     * ============================================================
+     * FINAL QR POLICY
+     * ============================================================
      */
+
     const verdict =
       this.verificationPolicyService
         .evaluate({

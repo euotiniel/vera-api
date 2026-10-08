@@ -33,6 +33,28 @@ interface DecideApprovalInput {
     string;
 }
 
+type InitialIssuanceResult =
+  Awaited<
+    ReturnType<
+      DocumentIssuanceService[
+        'createInitialDocument'
+      ]
+    >
+  >;
+
+type NewVersionIssuanceResult =
+  Awaited<
+    ReturnType<
+      DocumentIssuanceService[
+        'createNewVersion'
+      ]
+    >
+  >;
+
+type IssuanceResult =
+  | InitialIssuanceResult
+  | NewVersionIssuanceResult;
+
 @Injectable()
 export class SubmissionApprovalService {
   constructor(
@@ -59,6 +81,15 @@ export class SubmissionApprovalService {
 
         select: {
           id:
+            true,
+
+          kind:
+            true,
+
+          targetDocumentId:
+            true,
+
+          baseVersion:
             true,
 
           title:
@@ -99,6 +130,19 @@ export class SubmissionApprovalService {
 
           updatedAt:
             true,
+
+          targetDocument: {
+            select: {
+              id:
+                true,
+
+              publicId:
+                true,
+
+              status:
+                true,
+            },
+          },
 
           creator: {
             select: {
@@ -195,6 +239,25 @@ export class SubmissionApprovalService {
 
             decisions:
               true,
+
+            targetDocument: {
+              include: {
+                versions: {
+                  orderBy: {
+                    version:
+                      'desc',
+                  },
+
+                  take:
+                    1,
+
+                  select: {
+                    version:
+                      true,
+                  },
+                },
+              },
+            },
           },
         });
 
@@ -280,37 +343,130 @@ export class SubmissionApprovalService {
     }
 
     /*
-     * O DocumentIssuanceService:
+     * ============================================================
+     * NEW VERSION PREVALIDATION
+     * ============================================================
      *
-     * - relê o ficheiro submetido;
-     * - confirma SHA-256 e tamanho;
-     * - valida novamente o PDF;
-     * - verifica duplicação oficial;
-     * - cria e valida a cópia no namespace
-     *   oficial do storage.
+     * Evitamos copiar bytes para o namespace
+     * oficial quando já sabemos que a
+     * submissão ficou stale.
+     *
+     * A mesma validação será repetida dentro
+     * da transaction pelo DocumentIssuanceService.
      */
+
+    if (
+      submission.kind ===
+      'NEW_VERSION'
+    ) {
+      if (
+        !submission
+          .targetDocumentId ||
+        submission.baseVersion ===
+          null
+      ) {
+        throw new ConflictException(
+          'A submissão de nova versão não possui documento alvo ou versão-base válidos.',
+        );
+      }
+
+      const targetDocument =
+        submission.targetDocument;
+
+      if (!targetDocument) {
+        throw new NotFoundException(
+          'Documento alvo não encontrado.',
+        );
+      }
+
+      if (
+        targetDocument
+          .organizationId !==
+        submission.organizationId
+      ) {
+        throw new ConflictException(
+          'O documento alvo não pertence à organização desta submissão.',
+        );
+      }
+
+      if (
+        targetDocument.status !==
+        'VALID'
+      ) {
+        throw new ConflictException(
+          'Apenas documentos atualmente válidos podem receber uma nova versão.',
+        );
+      }
+
+      const latestVersion =
+        targetDocument
+          .versions[0];
+
+      if (!latestVersion) {
+        throw new ConflictException(
+          'O documento alvo não possui uma versão oficial válida.',
+        );
+      }
+
+      if (
+        latestVersion.version !==
+        submission.baseVersion
+      ) {
+        throw new ConflictException(
+          'O documento já recebeu uma versão posterior à utilizada por esta submissão.',
+        );
+      }
+    }
+
+    /*
+     * ============================================================
+     * PREPARE OFFICIAL FILE
+     * ============================================================
+     *
+     * A preparação acontece antes da
+     * transaction porque o object storage
+     * não participa da transaction SQL.
+     */
+
     const prepared =
-      await this
-        .documentIssuanceService
-        .prepareInitialDocument({
-          sourceStorageKey:
-            submission.storageKey,
+      submission.kind ===
+      'NEW_DOCUMENT'
+        ? await this
+            .documentIssuanceService
+            .prepareInitialDocument({
+              sourceStorageKey:
+                submission.storageKey,
 
-          expectedSha256:
-            submission.sha256,
+              expectedSha256:
+                submission.sha256,
 
-          expectedSize:
-            submission.size,
-        });
+              expectedSize:
+                submission.size,
+            })
+        : await this
+            .documentIssuanceService
+            .prepareNewVersion({
+              sourceStorageKey:
+                submission.storageKey,
+
+              expectedSha256:
+                submission.sha256,
+
+              expectedSize:
+                submission.size,
+
+              documentPublicId:
+                submission
+                  .targetDocument!
+                  .publicId,
+
+              baseVersion:
+                submission
+                  .baseVersion!,
+            });
 
     let issuanceResult:
-      Awaited<
-        ReturnType<
-          DocumentIssuanceService[
-            'createInitialDocument'
-          ]
-        >
-      >;
+      IssuanceResult;
 
     try {
       issuanceResult =
@@ -347,9 +503,7 @@ export class SubmissionApprovalService {
                     },
                   });
 
-              if (
-                !organization
-              ) {
+              if (!organization) {
                 throw new NotFoundException(
                   'Organização não encontrada.',
                 );
@@ -365,11 +519,9 @@ export class SubmissionApprovalService {
               }
 
               /*
-               * Esta transição funciona como
-               * lock lógico otimista.
-               *
                * Apenas uma operação pode
-               * consumir PENDING_APPROVAL.
+               * consumir esta submissão em
+               * PENDING_APPROVAL.
                */
               const transition =
                 await tx
@@ -401,52 +553,118 @@ export class SubmissionApprovalService {
                 );
               }
 
+              let issuance:
+                IssuanceResult;
+
               /*
-               * Document, Version,
-               * Attestation, QR e Lifecycle
-               * usam exatamente esta mesma
-               * transaction PostgreSQL.
+               * ==================================================
+               * NEW DOCUMENT
+               * ==================================================
                */
-              const issuance =
-                await this
-                  .documentIssuanceService
-                  .createInitialDocument(
-                    tx,
-                    {
-                      prepared,
 
-                      organization: {
-                        id:
-                          organization.id,
+              if (
+                submission.kind ===
+                'NEW_DOCUMENT'
+              ) {
+                issuance =
+                  await this
+                    .documentIssuanceService
+                    .createInitialDocument(
+                      tx,
+                      {
+                        prepared,
 
-                        name:
-                          organization.name,
+                        organization: {
+                          id:
+                            organization.id,
 
-                        slug:
-                          organization.slug,
+                          name:
+                            organization.name,
+
+                          slug:
+                            organization.slug,
+                        },
+
+                        title:
+                          submission.title,
+
+                        type:
+                          submission.type,
+
+                        reference:
+                          submission
+                            .reference,
+
+                        issuedAt:
+                          submission
+                            .issuedAt,
+
+                        originalFileAccess:
+                          submission
+                            .originalFileAccess,
+
+                        filename:
+                          submission
+                            .filename,
                       },
+                    );
+              } else {
+                /*
+                 * ================================================
+                 * NEW VERSION
+                 * ================================================
+                 */
 
-                      title:
-                        submission.title,
-
-                      type:
-                        submission.type,
-
-                      reference:
-                        submission.reference,
-
-                      issuedAt:
-                        submission.issuedAt,
-
-                      originalFileAccess:
-                        submission
-                          .originalFileAccess,
-
-                      filename:
-                        submission.filename,
-                    },
+                if (
+                  !submission
+                    .targetDocumentId ||
+                  submission
+                    .baseVersion ===
+                    null
+                ) {
+                  throw new ConflictException(
+                    'A submissão de nova versão não possui documento alvo ou versão-base válidos.',
                   );
+                }
 
+                issuance =
+                  await this
+                    .documentIssuanceService
+                    .createNewVersion(
+                      tx,
+                      {
+                        prepared,
+
+                        documentId:
+                          submission
+                            .targetDocumentId,
+
+                        organization: {
+                          id:
+                            organization.id,
+
+                          name:
+                            organization.name,
+
+                          slug:
+                            organization.slug,
+                        },
+
+                        expectedBaseVersion:
+                          submission
+                            .baseVersion,
+
+                        filename:
+                          submission
+                            .filename,
+                      },
+                    );
+              }
+
+              /*
+               * A decisão final pertence à
+               * mesma transaction da emissão.
+               */
               await tx
                 .documentSubmissionDecision
                 .create({
@@ -468,20 +686,53 @@ export class SubmissionApprovalService {
                   },
                 });
 
-              await tx
-                .documentSubmission
-                .update({
-                  where: {
-                    id:
-                      submission.id,
-                  },
+              /*
+               * issuedVersionId identifica
+               * exatamente a versão produzida
+               * por qualquer submissão.
+               *
+               * documentId continua reservado
+               * para a submissão NEW_DOCUMENT
+               * que originou o Document.
+               */
+              if (
+                submission.kind ===
+                'NEW_DOCUMENT'
+              ) {
+                await tx
+                  .documentSubmission
+                  .update({
+                    where: {
+                      id:
+                        submission.id,
+                    },
 
-                  data: {
-                    documentId:
-                      issuance.document
-                        .id,
-                  },
-                });
+                    data: {
+                      documentId:
+                        issuance
+                          .document.id,
+
+                      issuedVersionId:
+                        issuance
+                          .version.id,
+                    },
+                  });
+              } else {
+                await tx
+                  .documentSubmission
+                  .update({
+                    where: {
+                      id:
+                        submission.id,
+                    },
+
+                    data: {
+                      issuedVersionId:
+                        issuance
+                          .version.id,
+                    },
+                  });
+              }
 
               return issuance;
             },
@@ -494,15 +745,19 @@ export class SubmissionApprovalService {
        * PostgreSQL rollbacka automaticamente.
        *
        * O object storage não participa da
-       * transaction, portanto compensamos
-       * removendo a cópia oficial.
+       * transaction, portanto removemos a
+       * cópia oficial preparada.
        */
       await this
         .documentIssuanceService
-        .cleanupPreparedInitialDocument(
+        .cleanupPreparedDocument(
           prepared.storageKey,
         );
 
+      /*
+       * Primeiro distinguimos duplicação
+       * global dos mesmos bytes.
+       */
       if (
         this.isUniqueConstraintViolation(
           error,
@@ -528,6 +783,21 @@ export class SubmissionApprovalService {
             'Este ficheiro já está registado como documento oficial na Vera.',
           );
         }
+
+        /*
+         * Para NEW_VERSION, um P2002 sem
+         * colisão de SHA normalmente significa
+         * que outra operação já materializou
+         * (documentId, version).
+         */
+        if (
+          submission.kind ===
+          'NEW_VERSION'
+        ) {
+          throw new ConflictException(
+            'O documento já recebeu uma versão posterior à utilizada por esta submissão.',
+          );
+        }
       }
 
       throw error;
@@ -538,13 +808,67 @@ export class SubmissionApprovalService {
      * FORA do catch acima.
      *
      * Se a transaction já foi commitada e
-     * apenas esta leitura de resposta falhar,
-     * nunca devemos apagar o ficheiro oficial.
+     * apenas esta leitura falhar, nunca
+     * apagamos a cópia oficial.
      */
     const updatedSubmission =
       await this.getDetailedSubmission(
         submission.id,
       );
+
+    /*
+     * Uma nova versão não altera o estado
+     * lifecycle do Document.
+     *
+     * REGISTERED existe apenas na criação
+     * inicial. v2/v3 têm a sua própria
+     * Attestation e QR Proof.
+     */
+    const lifecycle =
+      'lifecycleEvent' in
+      issuanceResult
+        ? {
+            sequence:
+              issuanceResult
+                .lifecycleEvent
+                .sequence,
+
+            type:
+              issuanceResult
+                .lifecycleEvent
+                .type,
+
+            fromStatus:
+              issuanceResult
+                .lifecycleEvent
+                .fromStatus,
+
+            toStatus:
+              issuanceResult
+                .lifecycleEvent
+                .toStatus,
+
+            eventHash:
+              issuanceResult
+                .lifecycleEvent
+                .eventHash,
+
+            algorithm:
+              issuanceResult
+                .lifecycleEvent
+                .algorithm,
+
+            keyId:
+              issuanceResult
+                .lifecycleEvent
+                .keyId,
+
+            createdAt:
+              issuanceResult
+                .lifecycleEvent
+                .createdAt,
+          }
+        : null;
 
     return {
       submission:
@@ -656,47 +980,7 @@ export class SubmissionApprovalService {
               .createdAt,
         },
 
-        lifecycle: {
-          sequence:
-            issuanceResult
-              .lifecycleEvent
-              .sequence,
-
-          type:
-            issuanceResult
-              .lifecycleEvent
-              .type,
-
-          fromStatus:
-            issuanceResult
-              .lifecycleEvent
-              .fromStatus,
-
-          toStatus:
-            issuanceResult
-              .lifecycleEvent
-              .toStatus,
-
-          eventHash:
-            issuanceResult
-              .lifecycleEvent
-              .eventHash,
-
-          algorithm:
-            issuanceResult
-              .lifecycleEvent
-              .algorithm,
-
-          keyId:
-            issuanceResult
-              .lifecycleEvent
-              .keyId,
-
-          createdAt:
-            issuanceResult
-              .lifecycleEvent
-              .createdAt,
-        },
+        lifecycle,
       },
     };
   }
@@ -818,7 +1102,19 @@ export class SubmissionApprovalService {
             id:
               true,
 
+            kind:
+              true,
+
             status:
+              true,
+
+            targetDocumentId:
+              true,
+
+            baseVersion:
+              true,
+
+            issuedVersionId:
               true,
 
             title:
@@ -935,6 +1231,41 @@ export class SubmissionApprovalService {
                   true,
               },
             },
+
+            targetDocument: {
+              select: {
+                id:
+                  true,
+
+                publicId:
+                  true,
+
+                status:
+                  true,
+              },
+            },
+
+            issuedVersion: {
+              select: {
+                id:
+                  true,
+
+                documentId:
+                  true,
+
+                version:
+                  true,
+
+                filename:
+                  true,
+
+                sha256:
+                  true,
+
+                createdAt:
+                  true,
+              },
+            },
           },
         });
 
@@ -947,6 +1278,9 @@ export class SubmissionApprovalService {
     return {
       id:
         submission.id,
+
+      kind:
+        submission.kind,
 
       status:
         submission.status,
@@ -995,6 +1329,25 @@ export class SubmissionApprovalService {
 
       document:
         submission.document,
+
+      targetDocumentId:
+        submission
+          .targetDocumentId,
+
+      targetDocument:
+        submission
+          .targetDocument,
+
+      baseVersion:
+        submission.baseVersion,
+
+      issuedVersionId:
+        submission
+          .issuedVersionId,
+
+      issuedVersion:
+        submission
+          .issuedVersion,
 
       decisions:
         submission.decisions,

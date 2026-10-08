@@ -108,13 +108,19 @@ export class SubmissionsController {
       SubmissionApprovalService,
   ) {}
 
+  /*
+   * ============================================================
+   * NEW DOCUMENT
+   * ============================================================
+   */
+
   @Post()
   @OrganizationRoles(
     'CREATOR',
   )
   @ApiOperation({
     summary:
-      'Criar draft documental',
+      'Criar draft de novo documento',
   })
   @ApiParam({
     name:
@@ -192,7 +198,7 @@ export class SubmissionsController {
   })
   @ApiCreatedResponse({
     description:
-      'Draft criado.',
+      'Draft de novo documento criado.',
   })
   @ApiBadRequestResponse({
     description:
@@ -266,6 +272,148 @@ export class SubmissionsController {
       });
   }
 
+  /*
+   * ============================================================
+   * NEW VERSION
+   * ============================================================
+   */
+
+  @Post(
+    'versions/:publicId',
+  )
+  @OrganizationRoles(
+    'CREATOR',
+  )
+  @ApiOperation({
+    summary:
+      'Criar draft de nova versão de um documento',
+
+    description:
+      `
+Cria uma submissão NEW_VERSION para um Document Vera existente.
+
+O Public ID do documento é preservado.
+
+A nova versão herda os metadados lógicos do documento e passa pelo mesmo fluxo:
+
+CREATOR → REVIEWER → APPROVER.
+
+A versão apenas é materializada depois da aprovação final.
+      `,
+  })
+  @ApiParam({
+    name:
+      'organizationId',
+  })
+  @ApiParam({
+    name:
+      'publicId',
+
+    description:
+      'Public ID Vera do documento que receberá a nova versão.',
+  })
+  @ApiConsumes(
+    'multipart/form-data',
+  )
+  @ApiBody({
+    schema: {
+      type:
+        'object',
+
+      required: [
+        'file',
+      ],
+
+      properties: {
+        file: {
+          type:
+            'string',
+
+          format:
+            'binary',
+        },
+      },
+    },
+  })
+  @ApiCreatedResponse({
+    description:
+      'Draft de nova versão criado.',
+  })
+  @ApiBadRequestResponse({
+    description:
+      'PDF inválido.',
+  })
+  @ApiNotFoundResponse({
+    description:
+      'Documento alvo não encontrado.',
+  })
+  @ApiConflictResponse({
+    description:
+      'Documento não pode receber nova versão ou o ficheiro já está registado.',
+  })
+  @ApiForbiddenResponse({
+    description:
+      'CREATOR necessário.',
+  })
+  @UseInterceptors(
+    FileInterceptor(
+      'file',
+      {
+        limits: {
+          fileSize:
+            10 *
+            1024 *
+            1024,
+        },
+      },
+    ),
+  )
+  async createVersion(
+    @Param(
+      'organizationId',
+    )
+    organizationId:
+      string,
+
+    @Param(
+      'publicId',
+    )
+    publicId:
+      string,
+
+    @UploadedFile()
+    file:
+      Express.Multer.File,
+
+    @CurrentUser()
+    user:
+      AuthenticatedUser,
+  ) {
+    if (!file) {
+      throw new BadRequestException(
+        'O ficheiro PDF é obrigatório.',
+      );
+    }
+
+    return this.submissionsService
+      .createVersionDraft({
+        file,
+
+        organizationId,
+
+        creatorId:
+          user.id,
+
+        publicId,
+      });
+  }
+
+  /*
+   * ============================================================
+   * SUBMIT
+   * ============================================================
+   */
+
   @Post(
     ':submissionId/submit',
   )
@@ -285,7 +433,7 @@ export class SubmissionsController {
   })
   @ApiConflictResponse({
     description:
-      'Submissão fora de DRAFT.',
+      'Submissão fora de DRAFT ou nova versão já ficou desatualizada.',
   })
   submit(
     @Param(
@@ -315,6 +463,12 @@ export class SubmissionsController {
       });
   }
 
+  /*
+   * ============================================================
+   * REVIEW QUEUE
+   * ============================================================
+   */
+
   @Get(
     'pending-review',
   )
@@ -342,6 +496,12 @@ export class SubmissionsController {
       );
   }
 
+  /*
+   * ============================================================
+   * APPROVAL QUEUE
+   * ============================================================
+   */
+
   @Get(
     'pending-approval',
   )
@@ -368,6 +528,12 @@ export class SubmissionsController {
         organizationId,
       );
   }
+
+  /*
+   * ============================================================
+   * INTERNAL FILE
+   * ============================================================
+   */
 
   @Get(
     ':submissionId/file',
@@ -433,6 +599,12 @@ export class SubmissionsController {
     );
   }
 
+  /*
+   * ============================================================
+   * REVIEW
+   * ============================================================
+   */
+
   @Post(
     ':submissionId/review',
   )
@@ -456,7 +628,7 @@ export class SubmissionsController {
   })
   @ApiConflictResponse({
     description:
-      'A submissão já não está em PENDING_REVIEW.',
+      'Submissão fora de PENDING_REVIEW ou nova versão desatualizada.',
   })
   @ApiUnauthorizedResponse({
     description:
@@ -468,7 +640,7 @@ export class SubmissionsController {
   })
   @ApiNotFoundResponse({
     description:
-      'Submissão não encontrada.',
+      'Submissão ou documento alvo não encontrado.',
   })
   review(
     @Param(
@@ -508,6 +680,12 @@ export class SubmissionsController {
       });
   }
 
+  /*
+   * ============================================================
+   * FINAL APPROVAL
+   * ============================================================
+   */
+
   @Post(
     ':submissionId/approval',
   )
@@ -523,18 +701,25 @@ export class SubmissionsController {
 
     description:
       `
-APPROVED emite o documento oficial Vera.
+APPROVED executa a emissão oficial correspondente ao tipo da submissão.
 
-A emissão cria:
+NEW_DOCUMENT cria:
 
 - Document;
-- DocumentVersion;
+- DocumentVersion v1;
 - Attestation;
 - QR Proof;
-- evento REGISTERED;
-- ligação entre a submissão e o documento oficial.
+- evento lifecycle REGISTERED.
 
-REJECTED encerra a submissão sem emitir qualquer documento.
+NEW_VERSION cria:
+
+- nova DocumentVersion no mesmo Public ID;
+- nova Attestation;
+- novo QR Proof.
+
+Ambos preservam o workflow CREATOR → REVIEWER → APPROVER.
+
+REJECTED encerra a submissão sem emitir documento ou versão.
       `,
   })
   @ApiOkResponse({
@@ -547,7 +732,7 @@ REJECTED encerra a submissão sem emitir qualquer documento.
   })
   @ApiConflictResponse({
     description:
-      'Submissão fora de PENDING_APPROVAL ou sem revisão aprovada.',
+      'Submissão fora de PENDING_APPROVAL, sem revisão aprovada ou versão-base desatualizada.',
   })
   @ApiUnauthorizedResponse({
     description:
@@ -559,7 +744,7 @@ REJECTED encerra a submissão sem emitir qualquer documento.
   })
   @ApiNotFoundResponse({
     description:
-      'Submissão não encontrada.',
+      'Submissão ou documento alvo não encontrado.',
   })
   approve(
     @Param(

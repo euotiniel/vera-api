@@ -35,53 +35,56 @@ import {
   VerificationPolicyService,
 } from './verification-policy.service.js';
 
-type OriginalFileAccessValue =
-  | 'PUBLIC'
-  | 'RESTRICTED'
-  | 'PRIVATE';
-
 interface AttestationV2Payload {
   schema:
     'vera.attestation.v2';
 
   document: {
-    publicId: string;
+    publicId:
+      string;
 
-    title: string;
+    title:
+      string;
 
     type:
-      | string
-      | null;
+      string | null;
 
     reference:
-      | string
-      | null;
+      string | null;
 
     issuedAt:
-      | string
-      | null;
+      string | null;
   };
 
   issuer: {
-    id: string;
+    id:
+      string;
 
-    slug: string;
+    slug:
+      string;
 
-    name: string;
+    name:
+      string;
   };
 
   version: {
-    number: number;
+    number:
+      number;
 
-    filename: string;
+    filename:
+      string;
 
-    mimeType: string;
+    mimeType:
+      string;
 
-    size: number;
+    size:
+      number;
 
-    sha256: string;
+    sha256:
+      string;
 
-    registeredAt: string;
+    registeredAt:
+      string;
   };
 }
 
@@ -107,12 +110,10 @@ interface LifecyclePayload {
     DocumentStatusValue;
 
   reason:
-    | string
-    | null;
+    string | null;
 
   previousEventHash:
-    | string
-    | null;
+    string | null;
 
   occurredAt:
     string;
@@ -149,15 +150,13 @@ interface VersionInput {
     string;
 
   storageKey:
-    | string
-    | null;
+    string | null;
 
   createdAt:
     Date;
 
   attestation:
-    | AttestationInput
-    | null;
+    AttestationInput | null;
 }
 
 interface LifecycleEventInput {
@@ -176,12 +175,10 @@ interface LifecycleEventInput {
     DocumentStatusValue;
 
   reason:
-    | string
-    | null;
+    string | null;
 
   previousEventHash:
-    | string
-    | null;
+    string | null;
 
   payload:
     string;
@@ -228,20 +225,28 @@ export class VerificationsService {
    * ============================================================
    * VERIFY BY PUBLIC ID
    * ============================================================
+   *
+   * Sem requestedVersion:
+   * verifica a versão corrente.
+   *
+   * Com requestedVersion:
+   * verifica exatamente essa versão.
+   * Este modo é utilizado internamente,
+   * principalmente pela verificação QR.
    */
 
   async verifyByPublicId(
-    publicId: string,
+    publicId:
+      string,
+
+    requestedVersion?:
+      number,
   ) {
     const normalizedPublicId =
       publicId
         .trim()
         .toUpperCase();
 
-    /*
-     * Checksum antes de qualquer
-     * consulta à base de dados.
-     */
     const idChecksumValid =
       isValidPublicId(
         normalizedPublicId,
@@ -284,12 +289,9 @@ export class VerificationsService {
       };
     }
 
-    /*
-     * Para PUBLIC_ID usamos a versão
-     * mais recente do documento.
-     */
     const document =
-      await this.prisma.document
+      await this.prisma
+        .document
         .findUnique({
           where: {
             publicId:
@@ -358,13 +360,86 @@ export class VerificationsService {
       };
     }
 
-    const version =
+    const latestVersion =
       document.versions[0] ??
       null;
 
+    const version =
+      requestedVersion ===
+        undefined
+        ? latestVersion
+        : document.versions
+            .find(
+              (
+                candidate,
+              ) =>
+                candidate.version ===
+                requestedVersion,
+            ) ??
+          null;
+
     /*
-     * Avaliação da Attestation.
+     * O documento existe, mas a versão
+     * solicitada não existe.
+     *
+     * Isto é especialmente relevante para
+     * QR Proofs que referenciem um número
+     * de versão inexistente.
      */
+    if (
+      requestedVersion !==
+        undefined &&
+      !version
+    ) {
+      const verdict =
+        this.verificationPolicyService
+          .evaluate({
+            method:
+              'PUBLIC_ID',
+
+            idChecksumValid:
+              true,
+
+            recordFound:
+              false,
+          });
+
+      return {
+        method:
+          'PUBLIC_ID',
+
+        policy:
+          this.verificationPolicyService
+            .policyId,
+
+        verdict,
+
+        publicId:
+          document.publicId,
+
+        checks: {
+          idChecksumValid:
+            true,
+
+          recordFound:
+            false,
+        },
+
+        versioning: {
+          checkedVersion:
+            requestedVersion,
+
+          latestVersion:
+            latestVersion
+              ?.version ??
+            null,
+
+          currentVersion:
+            false,
+        },
+      };
+    }
+
     const attestation =
       version
         ? this.evaluateAttestation(
@@ -411,10 +486,6 @@ export class VerificationsService {
               false,
           };
 
-    /*
-     * Avaliação da cadeia assinada
-     * de lifecycle.
-     */
     const lifecycle =
       this.evaluateLifecycle(
         document.publicId,
@@ -427,16 +498,23 @@ export class VerificationsService {
       );
 
     /*
-     * Verificação real dos bytes
-     * armazenados.
+     * Quando verificamos uma versão específica,
+     * validamos os bytes dessa versão.
      *
-     * O nível PUBLIC/PRIVATE não
-     * desativa esta verificação.
+     * PUBLIC_ID normal continua selecionando
+     * a versão mais recente.
      */
     const originalFile =
       await this.evaluateOriginalFile(
-        document.versions as
-          VersionInput[],
+        version,
+      );
+
+    const currentVersion =
+      Boolean(
+        version &&
+        latestVersion &&
+        version.version ===
+          latestVersion.version,
       );
 
     const verdict =
@@ -553,7 +631,8 @@ export class VerificationsService {
 
       originalFile: {
         access:
-          document.originalFileAccess,
+          document
+            .originalFileAccess,
 
         stored:
           originalFile.available,
@@ -563,7 +642,8 @@ export class VerificationsService {
             .integrityValid,
 
         canDisplay:
-          document.originalFileAccess ===
+          document
+            .originalFileAccess ===
             'PUBLIC' &&
           originalFile.available ===
             true &&
@@ -578,6 +658,20 @@ export class VerificationsService {
 
         database:
           document.status,
+      },
+
+      versioning: {
+        checkedVersion:
+          version
+            ?.version ??
+          null,
+
+        latestVersion:
+          latestVersion
+            ?.version ??
+          null,
+
+        currentVersion,
       },
 
       document: {
@@ -644,32 +738,17 @@ export class VerificationsService {
       Express.Multer.File,
   ) {
     /*
-     * Não confiamos no MIME declarado
-     * pelo cliente.
+     * Exact Match não normaliza nem regrava
+     * os bytes enviados.
      *
-     * Exact Match não precisa executar
-     * todo o parser estrutural.
-     *
-     * Apenas confirmamos que os bytes
-     * se apresentam como PDF antes de
-     * calcular o SHA-256.
+     * Apenas confirmamos que aparentam ser
+     * um PDF antes do SHA-256.
      */
     this.pdfValidationService
       .assertPdfSignature(
         file.buffer,
       );
 
-    /*
-     * Hash dos bytes EXATAMENTE como
-     * foram recebidos.
-     *
-     * Não:
-     *
-     * - regravamos
-     * - sanitizamos
-     * - normalizamos
-     * - alteramos o PDF
-     */
     const sha256 =
       createHash(
         'sha256',
@@ -681,10 +760,6 @@ export class VerificationsService {
           'hex',
         );
 
-    /*
-     * sha256 é unique em
-     * DocumentVersion.
-     */
     const version =
       await this.prisma
         .documentVersion
@@ -708,15 +783,26 @@ export class VerificationsService {
                       'asc',
                   },
                 },
+
+                versions: {
+                  orderBy: {
+                    version:
+                      'desc',
+                  },
+
+                  take:
+                    1,
+
+                  select: {
+                    version:
+                      true,
+                  },
+                },
               },
             },
           },
         });
 
-    /*
-     * Nenhum conjunto idêntico
-     * de bytes registado.
-     */
     if (!version) {
       await this.prisma
         .verificationEvent
@@ -772,10 +858,6 @@ export class VerificationsService {
     const document =
       version.document;
 
-    /*
-     * Registo de auditoria da tentativa
-     * de verificação.
-     */
     await this.prisma
       .verificationEvent
       .create({
@@ -837,13 +919,15 @@ export class VerificationsService {
           LifecycleEventInput[],
       );
 
-    /*
-     * FILE não depende do object storage.
-     *
-     * Os próprios bytes enviados pelo
-     * utilizador já foram comparados
-     * diretamente pelo SHA-256.
-     */
+    const latestVersionNumber =
+      document.versions[0]
+        ?.version ??
+      version.version;
+
+    const currentVersion =
+      version.version ===
+      latestVersionNumber;
+
     const verdict =
       this.verificationPolicyService
         .evaluate({
@@ -954,6 +1038,21 @@ export class VerificationsService {
           document.status,
       },
 
+      /*
+       * Exact Match responde explicitamente
+       * se os bytes pertencem à versão atual
+       * ou a uma versão anterior legítima.
+       */
+      versioning: {
+        checkedVersion:
+          version.version,
+
+        latestVersion:
+          latestVersionNumber,
+
+        currentVersion,
+      },
+
       document: {
         publicId:
           document.publicId,
@@ -1019,16 +1118,13 @@ export class VerificationsService {
         string;
 
       type:
-        | string
-        | null;
+        string | null;
 
       reference:
-        | string
-        | null;
+        string | null;
 
       issuedAt:
-        | Date
-        | null;
+        Date | null;
     },
 
     organization: {
@@ -1063,8 +1159,7 @@ export class VerificationsService {
     },
 
     attestation:
-      | AttestationInput
-      | null,
+      AttestationInput | null,
   ) {
     if (!attestation) {
       return {
@@ -1087,11 +1182,8 @@ export class VerificationsService {
         this.attestationService
           .verify(
             attestation.payload,
-
             attestation.signature,
-
             attestation.algorithm,
-
             attestation.keyId,
           );
     } catch {
@@ -1182,19 +1274,9 @@ export class VerificationsService {
    */
 
   private async evaluateOriginalFile(
-    versions:
-      VersionInput[],
+    version:
+      VersionInput | null,
   ) {
-    /*
-     * PUBLIC_ID sempre usa
-     * a versão mais recente.
-     *
-     * As versões já chegam
-     * ordenadas desc pelo Prisma.
-     */
-    const version =
-      versions[0];
-
     if (
       !version ||
       !version.storageKey
@@ -1209,20 +1291,12 @@ export class VerificationsService {
     }
 
     try {
-      /*
-       * A Vera lê os bytes reais
-       * do object storage.
-       */
       const storedFile =
         await this.storageService
           .getFile(
             version.storageKey,
           );
 
-      /*
-       * Hash calculado no momento
-       * da verificação.
-       */
       const storedSha256 =
         createHash(
           'sha256',
@@ -1248,11 +1322,6 @@ export class VerificationsService {
         integrityValid,
       };
     } catch {
-      /*
-       * Storage fora do ar,
-       * objecto apagado,
-       * key inexistente etc.
-       */
       return {
         available:
           false,
@@ -1279,12 +1348,9 @@ export class VerificationsService {
     events:
       LifecycleEventInput[],
   ) {
-    /*
-     * Documento sem lifecycle
-     * não satisfaz a política atual.
-     */
     if (
-      events.length === 0
+      events.length ===
+      0
     ) {
       return {
         valid:
@@ -1343,11 +1409,6 @@ export class VerificationsService {
           ? events[index - 1]
           : null;
 
-      /*
-       * Sequência monotónica:
-       *
-       * 1, 2, 3, ...
-       */
       const expectedSequence =
         index + 1;
 
@@ -1359,9 +1420,6 @@ export class VerificationsService {
           false;
       }
 
-      /*
-       * Assinatura Ed25519.
-       */
       let signatureValid =
         false;
 
@@ -1386,20 +1444,13 @@ export class VerificationsService {
           false;
       }
 
-      if (
-        !signatureValid
-      ) {
+      if (!signatureValid) {
         signaturesValid =
           false;
       }
 
-      /*
-       * Hash do envelope
-       * do evento.
-       */
       let calculatedEventHash:
-        | string
-        | null =
+        string | null =
         null;
 
       try {
@@ -1431,11 +1482,6 @@ export class VerificationsService {
           false;
       }
 
-      /*
-       * Claims assinadas precisam
-       * corresponder exatamente
-       * ao registo materializado.
-       */
       try {
         const payload =
           JSON.parse(
@@ -1483,14 +1529,13 @@ export class VerificationsService {
           false;
       }
 
-      /*
-       * Primeiro evento.
-       */
       if (
-        index === 0
+        index ===
+        0
       ) {
         if (
-          event.sequence !== 1 ||
+          event.sequence !==
+            1 ||
           event.type !==
             'REGISTERED' ||
           event.fromStatus !==
@@ -1505,11 +1550,6 @@ export class VerificationsService {
         continue;
       }
 
-      /*
-       * Eventos posteriores precisam
-       * encadear corretamente
-       * o anterior.
-       */
       if (!previousEvent) {
         chainLinksValid =
           false;
@@ -1549,13 +1589,8 @@ export class VerificationsService {
       chainLinksValid &&
       sequenceValid;
 
-    /*
-     * Só derivamos o estado quando
-     * TODA a cadeia é válida.
-     */
     const derivedStatus:
-      | DocumentStatusValue
-      | null =
+      DocumentStatusValue | null =
       valid
         ? events[
             events.length - 1

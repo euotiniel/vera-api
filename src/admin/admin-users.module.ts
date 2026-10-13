@@ -38,6 +38,14 @@ import {
   AdminUsersController,
 } from './admin-users.controller.js';
 
+import {
+  AdminVerificationAuditController,
+} from './admin-verification-audit.controller.js';
+
+import {
+  AdminVerificationAuditService,
+} from './admin-verification-audit.service.js';
+
 @Module({
   imports: [
     JwtModule.register({}),
@@ -57,10 +65,14 @@ import {
     AdminOrganizationMembersController,
 
     AdminOrganizationsController,
+
+    AdminVerificationAuditController,
   ],
 
   providers: [
     AdminOrganizationsService,
+
+    AdminVerificationAuditService,
   ],
 })
 export class AdminUsersModule {}

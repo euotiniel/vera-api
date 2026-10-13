@@ -466,7 +466,8 @@ export class VerificationsService {
 
           issuerVerified:
             document.organization
-              .verified,
+              .verificationStatus ===
+            'VERIFIED',
 
           attestationValid:
             attestation.valid,
@@ -515,7 +516,12 @@ export class VerificationsService {
 
         issuerVerified:
           document.organization
-            .verified,
+            .verificationStatus ===
+          'VERIFIED',
+
+        issuerVerificationStatus:
+          document.organization
+            .verificationStatus,
 
         attestationValid:
           attestation.valid,
@@ -684,7 +690,12 @@ export class VerificationsService {
 
           verified:
             document.organization
-              .verified,
+              .verificationStatus ===
+            'VERIFIED',
+
+          verificationStatus:
+            document.organization
+              .verificationStatus,
         },
 
         version:
@@ -944,7 +955,8 @@ export class VerificationsService {
 
           issuerVerified:
             document.organization
-              .verified,
+              .verificationStatus ===
+            'VERIFIED',
 
           attestationValid:
             attestation.valid,
@@ -989,7 +1001,12 @@ export class VerificationsService {
 
         issuerVerified:
           document.organization
-            .verified,
+            .verificationStatus ===
+          'VERIFIED',
+
+        issuerVerificationStatus:
+          document.organization
+            .verificationStatus,
 
         attestationValid:
           attestation.valid,
@@ -1125,7 +1142,12 @@ export class VerificationsService {
 
           verified:
             document.organization
-              .verified,
+              .verificationStatus ===
+            'VERIFIED',
+
+          verificationStatus:
+            document.organization
+              .verificationStatus,
         },
 
         version: {

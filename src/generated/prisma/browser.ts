@@ -33,6 +33,11 @@ export type Session = Prisma.SessionModel
  */
 export type Organization = Prisma.OrganizationModel
 /**
+ * Model OrganizationVerificationEvent
+ * 
+ */
+export type OrganizationVerificationEvent = Prisma.OrganizationVerificationEventModel
+/**
  * Model OrganizationMember
  * 
  */

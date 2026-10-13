@@ -72,10 +72,16 @@ async function main() {
    * DEVELOPMENT ORGANIZATION
    * ============================================================
    *
-   * verified=true ainda é temporário.
+   * O seed pode provisionar a organização
+   * inicialmente como VERIFIED.
    *
-   * Será substituído pelo mecanismo
-   * real de confiança do emissor.
+   * Mas nunca pode alterar o estado de
+   * confiança de uma organização que já
+   * existe.
+   *
+   * Isto impede que executar novamente
+   * o seed reative silenciosamente um
+   * issuer SUSPENDED ou REVOKED.
    */
 
   const organization =
@@ -89,9 +95,6 @@ async function main() {
         update: {
           name:
             'Associação dos Estudantes da Universidade Católica de Angola',
-
-          verified:
-            true,
         },
 
         create: {
@@ -103,6 +106,9 @@ async function main() {
 
           verified:
             true,
+
+          verificationStatus:
+            'VERIFIED',
         },
       });
 
@@ -174,6 +180,68 @@ async function main() {
       });
 
   /*
+   * ============================================================
+   * INITIAL TRUST HISTORY
+   * ============================================================
+   *
+   * Em bases já migradas existe normalmente
+   * o evento MIGRATION criado pela migration.
+   *
+   * Numa base criada do zero depois desta
+   * versão, o seed cria apenas o baseline
+   * administrativo que estiver em falta.
+   */
+
+  const existingVerificationEvent =
+    await prisma
+      .organizationVerificationEvent
+      .findFirst({
+        where: {
+          organizationId:
+            organization.id,
+        },
+
+        select: {
+          id:
+            true,
+        },
+
+        orderBy: {
+          createdAt:
+            'asc',
+        },
+      });
+
+  if (
+    !existingVerificationEvent
+  ) {
+    await prisma
+      .organizationVerificationEvent
+      .create({
+        data: {
+          organizationId:
+            organization.id,
+
+          actorId:
+            platformAdmin.id,
+
+          source:
+            'ADMIN',
+
+          fromStatus:
+            null,
+
+          toStatus:
+            organization
+              .verificationStatus,
+
+          reason:
+            'Initial development organization trust state.',
+        },
+      });
+  }
+
+  /*
    * Nunca imprimimos:
    *
    * - password
@@ -195,6 +263,10 @@ async function main() {
 
       verified:
         organization.verified,
+
+      verificationStatus:
+        organization
+          .verificationStatus,
     },
 
     platformAdmin: {

@@ -68,6 +68,21 @@ interface VerificationPolicyInput {
   exactMatch?:
     boolean | null;
 
+  /**
+   * Estado administrativo atual do issuer.
+   *
+   * É mantido neste contrato porque continua
+   * útil como check informativo na resposta
+   * pública.
+   *
+   * Não participa, porém, do verdict histórico
+   * do documento.
+   *
+   * Um issuer pode ser SUSPENDED ou REVOKED
+   * hoje sem que documentos oficialmente
+   * emitidos antes dessa alteração sejam
+   * automaticamente revogados.
+   */
   issuerVerified?:
     boolean | null;
 
@@ -195,21 +210,29 @@ export class VerificationPolicyService {
       };
     }
 
-    if (
-      input.issuerVerified !==
-        true
-    ) {
-      return {
-        code:
-          'ISSUER_UNVERIFIED',
-
-        verified:
-          false,
-
-        message:
-          'A identidade do emissor não pôde ser confirmada.',
-      };
-    }
+    /*
+     * IMPORTANTE:
+     *
+     * issuerVerified representa o estado
+     * administrativo ATUAL do emissor.
+     *
+     * Não o usamos para reescrever
+     * retroativamente o estado de um
+     * documento já emitido.
+     *
+     * A capacidade de emitir é controlada
+     * na fronteira de emissão.
+     *
+     * A validade deste documento é
+     * determinada pelas suas próprias
+     * provas:
+     *
+     * - Attestation;
+     * - Lifecycle;
+     * - estado materializado;
+     * - integridade do original;
+     * - QR, quando aplicável.
+     */
 
     if (
       input.attestationValid !==

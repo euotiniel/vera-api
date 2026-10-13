@@ -27,6 +27,14 @@ import {
 } from './admin-organization-members.controller.js';
 
 import {
+  AdminOrganizationsController,
+} from './admin-organizations.controller.js';
+
+import {
+  AdminOrganizationsService,
+} from './admin-organizations.service.js';
+
+import {
   AdminUsersController,
 } from './admin-users.controller.js';
 
@@ -47,6 +55,12 @@ import {
     AdminUsersController,
 
     AdminOrganizationMembersController,
+
+    AdminOrganizationsController,
+  ],
+
+  providers: [
+    AdminOrganizationsService,
   ],
 })
 export class AdminUsersModule {}

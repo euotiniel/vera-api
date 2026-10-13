@@ -54,6 +54,7 @@ export const ModelName = {
   User: 'User',
   Session: 'Session',
   Organization: 'Organization',
+  OrganizationVerificationEvent: 'OrganizationVerificationEvent',
   OrganizationMember: 'OrganizationMember',
   DocumentSubmission: 'DocumentSubmission',
   DocumentSubmissionDecision: 'DocumentSubmissionDecision',
@@ -115,11 +116,26 @@ export const OrganizationScalarFieldEnum = {
   name: 'name',
   slug: 'slug',
   verified: 'verified',
+  verificationStatus: 'verificationStatus',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
 
 export type OrganizationScalarFieldEnum = (typeof OrganizationScalarFieldEnum)[keyof typeof OrganizationScalarFieldEnum]
+
+
+export const OrganizationVerificationEventScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  actorId: 'actorId',
+  source: 'source',
+  fromStatus: 'fromStatus',
+  toStatus: 'toStatus',
+  reason: 'reason',
+  createdAt: 'createdAt'
+} as const
+
+export type OrganizationVerificationEventScalarFieldEnum = (typeof OrganizationVerificationEventScalarFieldEnum)[keyof typeof OrganizationVerificationEventScalarFieldEnum]
 
 
 export const OrganizationMemberScalarFieldEnum = {

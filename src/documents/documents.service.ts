@@ -253,7 +253,12 @@ export class DocumentsService {
 
         verified:
           document.organization
-            .verified,
+            .verificationStatus ===
+          'VERIFIED',
+
+        verificationStatus:
+          document.organization
+            .verificationStatus,
       },
 
       versions:

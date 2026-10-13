@@ -11,6 +11,7 @@
 export type * from './models/User.js'
 export type * from './models/Session.js'
 export type * from './models/Organization.js'
+export type * from './models/OrganizationVerificationEvent.js'
 export type * from './models/OrganizationMember.js'
 export type * from './models/DocumentSubmission.js'
 export type * from './models/DocumentSubmissionDecision.js'

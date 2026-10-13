@@ -34,6 +34,24 @@ export const OrganizationRole = {
 export type OrganizationRole = (typeof OrganizationRole)[keyof typeof OrganizationRole]
 
 
+export const OrganizationVerificationStatus = {
+  PENDING: 'PENDING',
+  VERIFIED: 'VERIFIED',
+  SUSPENDED: 'SUSPENDED',
+  REVOKED: 'REVOKED'
+} as const
+
+export type OrganizationVerificationStatus = (typeof OrganizationVerificationStatus)[keyof typeof OrganizationVerificationStatus]
+
+
+export const OrganizationVerificationEventSource = {
+  MIGRATION: 'MIGRATION',
+  ADMIN: 'ADMIN'
+} as const
+
+export type OrganizationVerificationEventSource = (typeof OrganizationVerificationEventSource)[keyof typeof OrganizationVerificationEventSource]
+
+
 export const DocumentSubmissionStatus = {
   DRAFT: 'DRAFT',
   PENDING_REVIEW: 'PENDING_REVIEW',

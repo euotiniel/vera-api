@@ -334,8 +334,9 @@ export class SubmissionApprovalService {
     }
 
     if (
-      !submission.organization
-        .verified
+      submission.organization
+        .verificationStatus !==
+      'VERIFIED'
     ) {
       throw new ConflictException(
         'A organização deixou de estar verificada e não pode emitir documentos.',
@@ -498,7 +499,7 @@ export class SubmissionApprovalService {
                       slug:
                         true,
 
-                      verified:
+                      verificationStatus:
                         true,
                     },
                   });
@@ -510,8 +511,9 @@ export class SubmissionApprovalService {
               }
 
               if (
-                !organization
-                  .verified
+                organization
+                  .verificationStatus !==
+                'VERIFIED'
               ) {
                 throw new ConflictException(
                   'A organização deixou de estar verificada e não pode emitir documentos.',

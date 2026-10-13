@@ -35,6 +35,18 @@ enum OrganizationRole {
   APPROVER
 }
 
+enum OrganizationVerificationStatus {
+  PENDING
+  VERIFIED
+  SUSPENDED
+  REVOKED
+}
+
+enum OrganizationVerificationEventSource {
+  MIGRATION
+  ADMIN
+}
+
 /**
  * ============================================================
  * DOCUMENT SUBMISSIONS
@@ -115,6 +127,8 @@ model User {
   createdSubmissions  DocumentSubmission[]         @relation("SubmissionCreator")
   submissionDecisions DocumentSubmissionDecision[] @relation("SubmissionDecisionActor")
 
+  organizationVerificationEvents OrganizationVerificationEvent[] @relation("OrganizationVerificationActor")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -149,17 +163,53 @@ model Session {
  */
 
 model Organization {
-  id       String  @id @default(cuid())
-  name     String
-  slug     String  @unique
+  id   String @id @default(cuid())
+  name String
+  slug String @unique
+
+  /**
+   * Bridge temporária durante a migração
+   * para verificationStatus.
+   * Será removida quando todos os
+   * consumidores tiverem migrado.
+   */
   verified Boolean @default(false)
 
-  documents   Document[]
-  memberships OrganizationMember[]
-  submissions DocumentSubmission[]
+  verificationStatus OrganizationVerificationStatus @default(PENDING)
+
+  documents          Document[]
+  memberships        OrganizationMember[]
+  submissions        DocumentSubmission[]
+  verificationEvents OrganizationVerificationEvent[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([verificationStatus])
+}
+
+model OrganizationVerificationEvent {
+  id String @id @default(cuid())
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  actorId String?
+  actor   User?   @relation("OrganizationVerificationActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  source OrganizationVerificationEventSource @default(ADMIN)
+
+  fromStatus OrganizationVerificationStatus?
+  toStatus   OrganizationVerificationStatus
+
+  reason String?
+
+  createdAt DateTime @default(now())
+
+  @@index([organizationId])
+  @@index([organizationId, createdAt])
+  @@index([actorId])
+  @@index([toStatus])
 }
 
 model OrganizationMember {

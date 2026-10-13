@@ -400,6 +400,7 @@ export const ModelName = {
   User: 'User',
   Session: 'Session',
   Organization: 'Organization',
+  OrganizationVerificationEvent: 'OrganizationVerificationEvent',
   OrganizationMember: 'OrganizationMember',
   DocumentSubmission: 'DocumentSubmission',
   DocumentSubmissionDecision: 'DocumentSubmissionDecision',
@@ -424,7 +425,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "session" | "organization" | "organizationMember" | "documentSubmission" | "documentSubmissionDecision" | "document" | "documentVersion" | "attestation" | "documentLifecycleEvent" | "verificationEvent" | "verificationAuditEvent"
+    modelProps: "user" | "session" | "organization" | "organizationVerificationEvent" | "organizationMember" | "documentSubmission" | "documentSubmissionDecision" | "document" | "documentVersion" | "attestation" | "documentLifecycleEvent" | "verificationEvent" | "verificationAuditEvent"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -647,6 +648,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.OrganizationCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.OrganizationCountAggregateOutputType> | number
+        }
+      }
+    }
+    OrganizationVerificationEvent: {
+      payload: Prisma.$OrganizationVerificationEventPayload<ExtArgs>
+      fields: Prisma.OrganizationVerificationEventFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.OrganizationVerificationEventFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrganizationVerificationEventPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.OrganizationVerificationEventFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrganizationVerificationEventPayload>
+        }
+        findFirst: {
+          args: Prisma.OrganizationVerificationEventFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrganizationVerificationEventPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.OrganizationVerificationEventFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrganizationVerificationEventPayload>
+        }
+        findMany: {
+          args: Prisma.OrganizationVerificationEventFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrganizationVerificationEventPayload>[]
+        }
+        create: {
+          args: Prisma.OrganizationVerificationEventCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrganizationVerificationEventPayload>
+        }
+        createMany: {
+          args: Prisma.OrganizationVerificationEventCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.OrganizationVerificationEventCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrganizationVerificationEventPayload>[]
+        }
+        delete: {
+          args: Prisma.OrganizationVerificationEventDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrganizationVerificationEventPayload>
+        }
+        update: {
+          args: Prisma.OrganizationVerificationEventUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrganizationVerificationEventPayload>
+        }
+        deleteMany: {
+          args: Prisma.OrganizationVerificationEventDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.OrganizationVerificationEventUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.OrganizationVerificationEventUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrganizationVerificationEventPayload>[]
+        }
+        upsert: {
+          args: Prisma.OrganizationVerificationEventUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrganizationVerificationEventPayload>
+        }
+        aggregate: {
+          args: Prisma.OrganizationVerificationEventAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateOrganizationVerificationEvent>
+        }
+        groupBy: {
+          args: Prisma.OrganizationVerificationEventGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.OrganizationVerificationEventGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.OrganizationVerificationEventCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.OrganizationVerificationEventCountAggregateOutputType> | number
         }
       }
     }
@@ -1389,11 +1464,26 @@ export const OrganizationScalarFieldEnum = {
   name: 'name',
   slug: 'slug',
   verified: 'verified',
+  verificationStatus: 'verificationStatus',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
 
 export type OrganizationScalarFieldEnum = (typeof OrganizationScalarFieldEnum)[keyof typeof OrganizationScalarFieldEnum]
+
+
+export const OrganizationVerificationEventScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  actorId: 'actorId',
+  source: 'source',
+  fromStatus: 'fromStatus',
+  toStatus: 'toStatus',
+  reason: 'reason',
+  createdAt: 'createdAt'
+} as const
+
+export type OrganizationVerificationEventScalarFieldEnum = (typeof OrganizationVerificationEventScalarFieldEnum)[keyof typeof OrganizationVerificationEventScalarFieldEnum]
 
 
 export const OrganizationMemberScalarFieldEnum = {
@@ -1633,6 +1723,34 @@ export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaM
  * Reference to a field of type 'Boolean'
  */
 export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
+    
+
+
+/**
+ * Reference to a field of type 'OrganizationVerificationStatus'
+ */
+export type EnumOrganizationVerificationStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'OrganizationVerificationStatus'>
+    
+
+
+/**
+ * Reference to a field of type 'OrganizationVerificationStatus[]'
+ */
+export type ListEnumOrganizationVerificationStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'OrganizationVerificationStatus[]'>
+    
+
+
+/**
+ * Reference to a field of type 'OrganizationVerificationEventSource'
+ */
+export type EnumOrganizationVerificationEventSourceFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'OrganizationVerificationEventSource'>
+    
+
+
+/**
+ * Reference to a field of type 'OrganizationVerificationEventSource[]'
+ */
+export type ListEnumOrganizationVerificationEventSourceFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'OrganizationVerificationEventSource[]'>
     
 
 
@@ -1929,6 +2047,7 @@ export type GlobalOmitConfig = {
   user?: Prisma.UserOmit
   session?: Prisma.SessionOmit
   organization?: Prisma.OrganizationOmit
+  organizationVerificationEvent?: Prisma.OrganizationVerificationEventOmit
   organizationMember?: Prisma.OrganizationMemberOmit
   documentSubmission?: Prisma.DocumentSubmissionOmit
   documentSubmissionDecision?: Prisma.DocumentSubmissionDecisionOmit

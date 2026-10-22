@@ -23,21 +23,28 @@ import {
 } from 'node:path';
 
 interface VerifySignatureInput {
-  payload: string;
+  payload:
+    string;
 
-  signature: string;
+  signature:
+    string;
 
-  algorithm: string;
+  algorithm:
+    string;
 
-  keyId: string;
+  keyId:
+    string;
 }
 
 interface SignResult {
-  signature: string;
+  signature:
+    string;
 
-  algorithm: 'Ed25519';
+  algorithm:
+    'Ed25519';
 
-  keyId: string;
+  keyId:
+    string;
 }
 
 @Injectable()
@@ -58,7 +65,7 @@ export class SigningService {
     >();
 
   private readonly publicKeysDirectory:
-    string;
+    string | null;
 
   constructor(
     private readonly configService:
@@ -87,6 +94,16 @@ export class SigningService {
       );
     }
 
+    this.activeKeyId =
+      activeKeyId;
+
+    const privateKeyBase64 =
+      this.configService
+        .get<string>(
+          'VERA_SIGNING_PRIVATE_KEY_BASE64',
+        )
+        ?.trim();
+
     const privateKeyPath =
       this.configService
         .get<string>(
@@ -94,11 +111,21 @@ export class SigningService {
         )
         ?.trim();
 
-    if (!privateKeyPath) {
+    if (
+      !privateKeyBase64 &&
+      !privateKeyPath
+    ) {
       throw new Error(
-        'VERA_SIGNING_PRIVATE_KEY_PATH is not defined',
+        'Neither VERA_SIGNING_PRIVATE_KEY_BASE64 nor VERA_SIGNING_PRIVATE_KEY_PATH is defined',
       );
     }
+
+    const publicKeysBase64Json =
+      this.configService
+        .get<string>(
+          'VERA_SIGNING_PUBLIC_KEYS_BASE64_JSON',
+        )
+        ?.trim();
 
     const publicKeysDirectory =
       this.configService
@@ -107,40 +134,34 @@ export class SigningService {
         )
         ?.trim();
 
-    if (!publicKeysDirectory) {
+    if (
+      !publicKeysBase64Json &&
+      !publicKeysDirectory
+    ) {
       throw new Error(
-        'VERA_SIGNING_PUBLIC_KEYS_DIR is not defined',
+        'Neither VERA_SIGNING_PUBLIC_KEYS_BASE64_JSON nor VERA_SIGNING_PUBLIC_KEYS_DIR is defined',
       );
     }
-
-    this.activeKeyId =
-      activeKeyId;
 
     this.publicKeysDirectory =
-      resolve(
-        process.cwd(),
-        publicKeysDirectory,
-      );
+      publicKeysDirectory
+        ? resolve(
+            process.cwd(),
+            publicKeysDirectory,
+          )
+        : null;
 
-    const resolvedPrivateKeyPath =
-      resolve(
-        process.cwd(),
-        privateKeyPath,
-      );
-
-    let privateKeyPem:
-      Buffer;
-
-    try {
-      privateKeyPem =
-        readFileSync(
-          resolvedPrivateKeyPath,
-        );
-    } catch {
-      throw new Error(
-        `Unable to read active signing private key: ${resolvedPrivateKeyPath}`,
+    if (publicKeysBase64Json) {
+      this.loadEnvironmentPublicKeys(
+        publicKeysBase64Json,
       );
     }
+
+    const privateKeyPem =
+      this.loadPrivateKeyPem(
+        privateKeyBase64,
+        privateKeyPath,
+      );
 
     try {
       this.privateKey =
@@ -178,8 +199,6 @@ export class SigningService {
      * A chave privada ativa e a public key
      * registada sob o mesmo keyId precisam
      * formar exatamente o mesmo par.
-     *
-     * Isto é validado no arranque.
      */
     const derivedPublicKey =
       createPublicKey(
@@ -268,11 +287,12 @@ export class SigningService {
   }
 
   sign(
-    payload: string,
+    payload:
+      string,
   ): SignResult {
     if (
       typeof payload !==
-        'string'
+      'string'
     ) {
       throw new Error(
         'Signing payload must be a string',
@@ -311,7 +331,7 @@ export class SigningService {
   ): boolean {
     if (
       input.algorithm !==
-        this.algorithm
+      this.algorithm
     ) {
       return false;
     }
@@ -348,11 +368,6 @@ export class SigningService {
         input.keyId,
       );
 
-    /*
-     * Nunca fazemos fallback para
-     * a chave ativa quando o keyId
-     * não é conhecido.
-     */
     if (!publicKey) {
       return false;
     }
@@ -372,7 +387,7 @@ export class SigningService {
 
     if (
       signatureBuffer.length !==
-        64
+      64
     ) {
       return false;
     }
@@ -400,8 +415,156 @@ export class SigningService {
     return this.activeKeyId;
   }
 
+  private loadPrivateKeyPem(
+    privateKeyBase64:
+      string | undefined,
+
+    privateKeyPath:
+      string | undefined,
+  ): Buffer {
+    if (privateKeyBase64) {
+      try {
+        const decoded =
+          Buffer.from(
+            privateKeyBase64,
+            'base64',
+          );
+
+        if (
+          decoded.length ===
+          0
+        ) {
+          throw new Error();
+        }
+
+        return decoded;
+      } catch {
+        throw new Error(
+          'VERA_SIGNING_PRIVATE_KEY_BASE64 is invalid',
+        );
+      }
+    }
+
+    if (!privateKeyPath) {
+      throw new Error(
+        'VERA_SIGNING_PRIVATE_KEY_PATH is not defined',
+      );
+    }
+
+    const resolvedPrivateKeyPath =
+      resolve(
+        process.cwd(),
+        privateKeyPath,
+      );
+
+    try {
+      return readFileSync(
+        resolvedPrivateKeyPath,
+      );
+    } catch {
+      throw new Error(
+        `Unable to read active signing private key: ${resolvedPrivateKeyPath}`,
+      );
+    }
+  }
+
+  private loadEnvironmentPublicKeys(
+    value:
+      string,
+  ): void {
+    let parsed:
+      unknown;
+
+    try {
+      parsed =
+        JSON.parse(
+          value,
+        );
+    } catch {
+      throw new Error(
+        'VERA_SIGNING_PUBLIC_KEYS_BASE64_JSON must be valid JSON',
+      );
+    }
+
+    if (
+      !parsed ||
+      typeof parsed !==
+        'object' ||
+      Array.isArray(
+        parsed,
+      )
+    ) {
+      throw new Error(
+        'VERA_SIGNING_PUBLIC_KEYS_BASE64_JSON must be a JSON object',
+      );
+    }
+
+    for (
+      const [
+        keyId,
+        encodedKey,
+      ] of Object.entries(
+        parsed,
+      )
+    ) {
+      if (
+        !this.isValidKeyId(
+          keyId,
+        )
+      ) {
+        throw new Error(
+          `Invalid Vera public keyId in environment configuration: ${keyId}`,
+        );
+      }
+
+      if (
+        typeof encodedKey !==
+          'string' ||
+        !encodedKey.trim()
+      ) {
+        throw new Error(
+          `Invalid public key value for keyId: ${keyId}`,
+        );
+      }
+
+      let publicKey:
+        KeyObject;
+
+      try {
+        publicKey =
+          createPublicKey(
+            Buffer.from(
+              encodedKey,
+              'base64',
+            ),
+          );
+      } catch {
+        throw new Error(
+          `Invalid Vera public key for keyId: ${keyId}`,
+        );
+      }
+
+      if (
+        publicKey
+          .asymmetricKeyType !==
+        'ed25519'
+      ) {
+        throw new Error(
+          `Vera public key must be Ed25519 for keyId: ${keyId}`,
+        );
+      }
+
+      this.publicKeyCache
+        .set(
+          keyId,
+          publicKey,
+        );
+    }
+  }
+
   private getPublicKey(
-    keyId: string,
+    keyId:
+      string,
   ):
     | KeyObject
     | null {
@@ -421,6 +584,12 @@ export class SigningService {
 
     if (cached) {
       return cached;
+    }
+
+    if (
+      !this.publicKeysDirectory
+    ) {
+      return null;
     }
 
     const publicKeyPath =
@@ -465,8 +634,9 @@ export class SigningService {
     }
 
     if (
-      publicKey.asymmetricKeyType !==
-        'ed25519'
+      publicKey
+        .asymmetricKeyType !==
+      'ed25519'
     ) {
       return null;
     }
@@ -481,7 +651,8 @@ export class SigningService {
   }
 
   private isValidKeyId(
-    keyId: string,
+    keyId:
+      string,
   ): boolean {
     return /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/
       .test(

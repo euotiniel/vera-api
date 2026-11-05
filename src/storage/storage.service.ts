@@ -1,3 +1,4 @@
+
 import {
   CreateBucketCommand,
   DeleteObjectCommand,
@@ -9,6 +10,7 @@ import {
 
 import {
   Injectable,
+  Logger,
   OnModuleInit,
 } from '@nestjs/common';
 
@@ -17,25 +19,21 @@ import {
 } from '@nestjs/config';
 
 interface PutFileInput {
-  key:
-    string;
-
-  body:
-    Buffer;
-
-  contentType:
-    string;
+  key: string;
+  body: Buffer;
+  contentType: string;
 }
 
 @Injectable()
 export class StorageService
   implements OnModuleInit
 {
-  private readonly client:
-    S3Client;
+  private readonly logger =
+    new Logger(StorageService.name);
 
-  private readonly bucket:
-    string;
+  private readonly client: S3Client;
+
+  private readonly bucket: string;
 
   private readonly createBucketIfMissing:
     boolean;
@@ -46,37 +44,27 @@ export class StorageService
   ) {
     const endpoint =
       this.configService
-        .get<string>(
-          'S3_ENDPOINT',
-        )
+        .get<string>('S3_ENDPOINT')
         ?.trim();
 
     const region =
       this.configService
-        .get<string>(
-          'S3_REGION',
-        )
+        .get<string>('S3_REGION')
         ?.trim();
 
     const accessKey =
       this.configService
-        .get<string>(
-          'S3_ACCESS_KEY',
-        )
+        .get<string>('S3_ACCESS_KEY')
         ?.trim();
 
     const secretKey =
       this.configService
-        .get<string>(
-          'S3_SECRET_KEY',
-        )
+        .get<string>('S3_SECRET_KEY')
         ?.trim();
 
     const bucket =
       this.configService
-        .get<string>(
-          'S3_BUCKET',
-        )
+        .get<string>('S3_BUCKET')
         ?.trim();
 
     if (!endpoint) {
@@ -112,17 +100,15 @@ export class StorageService
     const forcePathStyle =
       this.parseBoolean(
         'S3_FORCE_PATH_STYLE',
-        this.configService
-          .get<string>(
-            'S3_FORCE_PATH_STYLE',
-          ),
+        this.configService.get<string>(
+          'S3_FORCE_PATH_STYLE',
+        ),
         true,
       );
 
     const isProduction =
       (
-        process.env.NODE_ENV ??
-        ''
+        process.env.NODE_ENV ?? ''
       )
         .trim()
         .toLowerCase() ===
@@ -131,99 +117,180 @@ export class StorageService
     this.createBucketIfMissing =
       this.parseBoolean(
         'S3_CREATE_BUCKET_IF_MISSING',
-        this.configService
-          .get<string>(
-            'S3_CREATE_BUCKET_IF_MISSING',
-          ),
+        this.configService.get<string>(
+          'S3_CREATE_BUCKET_IF_MISSING',
+        ),
         !isProduction,
       );
 
-    this.bucket =
-      bucket;
+    this.bucket = bucket;
 
-    this.client =
-      new S3Client({
-        endpoint,
+    this.client = new S3Client({
+      endpoint,
+      region,
 
-        region,
+      credentials: {
+        accessKeyId: accessKey,
+        secretAccessKey: secretKey,
+      },
 
-        credentials: {
-          accessKeyId:
-            accessKey,
-
-          secretAccessKey:
-            secretKey,
-        },
-
-        forcePathStyle,
-      });
+      forcePathStyle,
+    });
   }
 
-  async onModuleInit() {
+  async onModuleInit(): Promise<void> {
     await this.ensureBucket();
   }
 
-  private async ensureBucket() {
+  private async ensureBucket(): Promise<void> {
     try {
       await this.client.send(
         new HeadBucketCommand({
-          Bucket:
-            this.bucket,
+          Bucket: this.bucket,
         }),
       );
 
+      this.logger.log(
+        `S3 bucket "${this.bucket}" is accessible`,
+      );
+
       return;
-    } catch {
+    } catch (error: unknown) {
+      const details =
+        this.getS3ErrorDetails(error);
+
+      this.logger.error(
+        'S3 bucket verification failed: ' +
+          JSON.stringify({
+            bucket: this.bucket,
+            errorName: details.name,
+            errorMessage: details.message,
+            httpStatus: details.status,
+          }),
+      );
+
+      const bucketMissing =
+        details.name === 'NotFound' ||
+        details.name === 'NoSuchBucket' ||
+        details.status === 404;
+
       if (
-        !this.createBucketIfMissing
+        !this.createBucketIfMissing ||
+        !bucketMissing
       ) {
         throw new Error(
-          `S3 bucket "${this.bucket}" does not exist or is not accessible`,
+          `Unable to access S3 bucket "${this.bucket}". ` +
+            `Cause: ${details.name} ` +
+            `(HTTP ${details.status ?? 'unknown'}).`,
+          {
+            cause: error,
+          },
         );
       }
     }
 
-    await this.client.send(
-      new CreateBucketCommand({
-        Bucket:
-          this.bucket,
-      }),
+    this.logger.warn(
+      `S3 bucket "${this.bucket}" was not found. ` +
+        'Attempting to create it.',
     );
+
+    try {
+      await this.client.send(
+        new CreateBucketCommand({
+          Bucket: this.bucket,
+        }),
+      );
+
+      this.logger.log(
+        `S3 bucket "${this.bucket}" created successfully`,
+      );
+    } catch (error: unknown) {
+      const details =
+        this.getS3ErrorDetails(error);
+
+      this.logger.error(
+        'S3 bucket creation failed: ' +
+          JSON.stringify({
+            bucket: this.bucket,
+            errorName: details.name,
+            errorMessage: details.message,
+            httpStatus: details.status,
+          }),
+      );
+
+      throw new Error(
+        `Unable to create S3 bucket "${this.bucket}". ` +
+          `Cause: ${details.name} ` +
+          `(HTTP ${details.status ?? 'unknown'}).`,
+        {
+          cause: error,
+        },
+      );
+    }
+  }
+
+  private getS3ErrorDetails(
+    error: unknown,
+  ): {
+    name: string;
+    message: string;
+    status?: number;
+  } {
+    if (
+      !error ||
+      typeof error !== 'object'
+    ) {
+      return {
+        name: 'UnknownError',
+        message: 'Unknown S3 error',
+      };
+    }
+
+    const candidate = error as {
+      name?: unknown;
+      message?: unknown;
+      $metadata?: {
+        httpStatusCode?: number;
+      };
+    };
+
+    return {
+      name:
+        typeof candidate.name === 'string'
+          ? candidate.name
+          : 'UnknownError',
+
+      message:
+        typeof candidate.message === 'string'
+          ? candidate.message
+          : 'Unknown S3 error',
+
+      status:
+        candidate.$metadata?.httpStatusCode,
+    };
   }
 
   async putFile(
-    input:
-      PutFileInput,
+    input: PutFileInput,
   ): Promise<void> {
     await this.client.send(
       new PutObjectCommand({
-        Bucket:
-          this.bucket,
-
-        Key:
-          input.key,
-
-        Body:
-          input.body,
-
-        ContentType:
-          input.contentType,
+        Bucket: this.bucket,
+        Key: input.key,
+        Body: input.body,
+        ContentType: input.contentType,
       }),
     );
   }
 
   async getFile(
-    key:
-      string,
+    key: string,
   ) {
     const result =
       await this.client.send(
         new GetObjectCommand({
-          Bucket:
-            this.bucket,
-
-          Key:
-            key,
+          Bucket: this.bucket,
+          Key: key,
         }),
       );
 
@@ -234,14 +301,10 @@ export class StorageService
     }
 
     const bytes =
-      await result.Body
-        .transformToByteArray();
+      await result.Body.transformToByteArray();
 
     return {
-      body:
-        Buffer.from(
-          bytes,
-        ),
+      body: Buffer.from(bytes),
 
       contentType:
         result.ContentType ??
@@ -253,16 +316,12 @@ export class StorageService
   }
 
   async deleteFile(
-    key:
-      string,
+    key: string,
   ): Promise<void> {
     await this.client.send(
       new DeleteObjectCommand({
-        Bucket:
-          this.bucket,
-
-        Key:
-          key,
+        Bucket: this.bucket,
+        Key: key,
       }),
     );
   }
@@ -275,19 +334,14 @@ export class StorageService
    * o namespace dos documentos existentes.
    */
   buildDocumentKey(
-    publicId:
-      string,
-
-    version:
-      number,
+    publicId: string,
+    version: number,
   ): string {
     return [
       'documents',
       publicId,
       'versions',
-      String(
-        version,
-      ),
+      String(version),
       'original.pdf',
     ].join('/');
   }
@@ -304,41 +358,27 @@ export class StorageService
    * de (documentId, version).
    */
   buildDocumentVersionKey(
-    publicId:
-      string,
-
-    version:
-      number,
-
-    objectId:
-      string,
+    publicId: string,
+    version: number,
+    objectId: string,
   ): string {
     return [
       'documents',
       publicId,
       'versions',
-      String(
-        version,
-      ),
+      String(version),
       objectId,
       'original.pdf',
     ].join('/');
   }
 
   private parseBoolean(
-    name:
-      string,
-
-    value:
-      string | undefined,
-
-    fallback:
-      boolean,
+    name: string,
+    value: string | undefined,
+    fallback: boolean,
   ): boolean {
     const normalized =
-      value
-        ?.trim()
-        .toLowerCase();
+      value?.trim().toLowerCase();
 
     if (!normalized) {
       return fallback;

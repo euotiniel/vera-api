@@ -169,33 +169,50 @@ async function bootstrap() {
       !isProduction,
     );
 
-  if (swaggerEnabled) {
-    const swaggerConfig =
-      new DocumentBuilder()
-        .setTitle(
-          'Vera API',
-        )
 
-        .setVersion(
-          '0.1.0',
-        )
+if (swaggerEnabled) {
+  const swaggerConfig =
+    new DocumentBuilder()
+      .setTitle(
+        'Vera API',
+      )
 
-        .addTag(
-          'System',
-          'Estado e informações básicas da API.',
-        )
+      .setVersion(
+        '0.1.0',
+      )
 
-        .addTag(
-          'Documents',
-          'Registo, consulta e obtenção de provas de documentos.',
-        )
+      .addBearerAuth(
+        {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+          description:
+            'Introduz o access token obtido no login.',
+        },
+        'bearer',
+      )
 
-        .addTag(
-          'Verifications',
-          'Verificação pública por ID, ficheiro ou QR Proof.',
-        )
+      .addSecurityRequirements(
+        'bearer',
+      )
 
-        .build();
+      .addTag(
+        'System',
+        'Estado e informações básicas da API.',
+      )
+
+      .addTag(
+        'Documents',
+        'Registo, consulta e obtenção de provas de documentos.',
+      )
+
+      .addTag(
+        'Verifications',
+        'Verificação pública por ID, ficheiro ou QR Proof.',
+      )
+
+      .build();
+
 
     const swaggerDocument =
       SwaggerModule.createDocument(

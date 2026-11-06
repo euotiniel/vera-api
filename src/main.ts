@@ -182,15 +182,15 @@ if (swaggerEnabled) {
       )
 
       .addBearerAuth(
-        {
-          type: 'http',
-          scheme: 'bearer',
-          bearerFormat: 'JWT',
-          description:
-            'Introduz o access token obtido no login.',
-        },
-        'bearer',
-      )
+  {
+    type: 'http',
+    scheme: 'bearer',
+    bearerFormat: 'JWT',
+    description:
+      'Introduz o access token obtido no login.',
+  },
+  'access-token',
+)
 
       .addSecurityRequirements(
         'bearer',
